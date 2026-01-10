@@ -14,7 +14,7 @@ import styles from './index.module.scss';
 import { type ApplicationSignInExperienceForm } from './utils';
 
 function NonThirdPartyBrandingForm() {
-  const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
+  const { t } = useTranslation(undefined, { keyPrefix: 'admin_console.application_details' });
   const {
     control,
     register,
@@ -62,7 +62,7 @@ function NonThirdPartyBrandingForm() {
           control={control}
           name="color.primaryColor"
           render={({ field: { name, value, onChange } }) => (
-            <FormField title="application_details.branding.brand_color">
+            <FormField title="branding.brand_color">
               <ColorPicker name={name} value={value} onChange={onChange} />
             </FormField>
           )}
@@ -71,7 +71,7 @@ function NonThirdPartyBrandingForm() {
           control={control}
           name="color.darkPrimaryColor"
           render={({ field: { name, value, onChange } }) => (
-            <FormField title="application_details.branding.brand_color_dark">
+            <FormField title="branding.brand_color_dark">
               <ColorPicker name={name} value={value} onChange={onChange} />
             </FormField>
           )}

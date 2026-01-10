@@ -8,7 +8,14 @@ import type {
   SignInExperience,
   SsoConnectorMetadata,
 } from '@logto/schemas';
-import { adminTenantId, ConnectorType, ForgotPasswordMethod, TenantTag } from '@logto/schemas';
+import {
+  adminTenantId,
+  ConnectorType,
+  CustomClientMetadataKey,
+  ForgotPasswordMethod,
+  SignInMode,
+  TenantTag,
+} from '@logto/schemas';
 import { deduplicate, trySafe } from '@silverhand/essentials';
 import deepmerge from 'deepmerge';
 
@@ -154,16 +161,19 @@ export const createSignInExperienceLibrary = (
 
     const found = await safeFindSignInExperienceByApplicationId(appId);
 
-    const { isThirdParty, branding, color, customCss } = found ?? {};
+    const { isThirdParty, branding, color, customCss, customClientMetadata } = found ?? {};
 
     if (isThirdParty) {
       return {};
     }
 
+    const registrationDisabled = customClientMetadata?.[CustomClientMetadataKey.RegistrationDisabled];
+
     return {
       ...(branding && { branding }),
       ...(color && { color }),
       ...(customCss && { customCss }),
+      ...(registrationDisabled && { signInMode: SignInMode.SignIn }),
     };
   };
 

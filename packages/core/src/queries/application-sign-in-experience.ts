@@ -17,7 +17,7 @@ const createApplicationSignInExperienceQueries = (pool: CommonQueryMethods) => {
   });
 
   type ApplicationSignInExperienceReturn = ApplicationSignInExperience &
-    Pick<Application, 'type' | 'isThirdParty'>;
+    Pick<Application, 'type' | 'isThirdParty' | 'customClientMetadata'>;
 
   const safeFindSignInExperienceByApplicationId = async (
     applicationId: string
@@ -29,7 +29,8 @@ const createApplicationSignInExperienceQueries = (pool: CommonQueryMethods) => {
       select
         ${sql.join(Object.values(fields), sql`, `)},
         ${applications.fields.type},
-        ${applications.fields.isThirdParty}
+        ${applications.fields.isThirdParty},
+        ${applications.fields.customClientMetadata}
       from ${table}
       join ${applications.table} on ${fields.applicationId}=${applications.fields.id}
       where ${fields.applicationId}=${applicationId}

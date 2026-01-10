@@ -223,6 +223,7 @@ function Settings({ data }: Props) {
           )}
         />
       )}
+
       <Controller
         name="customData"
         control={control}

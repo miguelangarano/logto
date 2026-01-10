@@ -89,6 +89,12 @@ export enum CustomClientMetadataKey {
    * Defaults to `false` for all new applications. Users must explicitly enable it.
    */
   AllowTokenExchange = 'allowTokenExchange',
+  /**
+   * Whether the registration is disabled for the application.
+   *
+   * If `true`, the sign-up option will be hidden in the sign-in widget.
+   */
+  RegistrationDisabled = 'registrationDisabled',
 }
 
 export const customClientMetadataGuard = z.object({
@@ -100,6 +106,7 @@ export const customClientMetadataGuard = z.object({
   [CustomClientMetadataKey.AlwaysIssueRefreshToken]: z.boolean().optional(),
   [CustomClientMetadataKey.RotateRefreshToken]: z.boolean().optional(),
   [CustomClientMetadataKey.AllowTokenExchange]: z.boolean().optional(),
+  [CustomClientMetadataKey.RegistrationDisabled]: z.boolean().optional(),
 } satisfies Record<CustomClientMetadataKey, z.ZodType>);
 
 /**

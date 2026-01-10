@@ -290,7 +290,11 @@ function ApplicationDetailsContent({ data, secrets, oidcConfig, onApplicationUpd
           className={styles.tabContainer}
         >
           {/* isActive is needed to support conditional render UnsavedChangesAlertModal */}
-          <Branding application={data} isActive={tab === ApplicationDetailsTabs.Branding} />
+          <Branding
+        application={data}
+        isActive={tab === ApplicationDetailsTabs.Branding}
+        onApplicationUpdated={onApplicationUpdated}
+      />
         </TabWrapper>
       )}
     </>

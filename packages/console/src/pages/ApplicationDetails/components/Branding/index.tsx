@@ -4,9 +4,10 @@ import {
   defaultPrimaryColor,
   type Application,
   type ApplicationSignInExperience,
+  CustomClientMetadataKey,
 } from '@logto/schemas';
 import { useCallback, useEffect } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider, Controller } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -33,10 +34,11 @@ import { type ApplicationSignInExperienceForm, formatFormToSubmitData } from './
 type Props = {
   readonly application: Application;
   readonly isActive: boolean; // Support for conditional render UnsavedChangesAlertModal component
+  readonly onApplicationUpdated: () => void;
 };
 
-function Branding({ application, isActive }: Props) {
-  const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
+function Branding({ application, isActive, onApplicationUpdated }: Props) {
+  const { t } = useTranslation(undefined, { keyPrefix: 'admin_console.application_details' });
   const { getDocumentationUrl } = useDocumentationUrl();
 
   const formMethods = useForm<ApplicationSignInExperienceForm>({
@@ -46,6 +48,8 @@ function Branding({ application, isActive }: Props) {
       isBrandingEnabled: application.isThirdParty,
       branding: emptyBranding,
       color: {},
+      registrationDisabled:
+        application.customClientMetadata?.[CustomClientMetadataKey.RegistrationDisabled] ?? false,
     },
   });
 
@@ -75,13 +79,27 @@ function Branding({ application, isActive }: Props) {
         return;
       }
 
-      const response = await api
-        .put(`api/applications/${application.id}/sign-in-experience`, {
-          json: formatFormToSubmitData(data),
-        })
-        .json<ApplicationSignInExperience>();
+      const { registrationDisabled, isBrandingEnabled } = data;
+      const finalRegistrationDisabled = isBrandingEnabled ? registrationDisabled : false;
 
-      void mutate(response);
+      await Promise.all([
+        api.patch(`api/applications/${application.id}`, {
+          json: {
+            customClientMetadata: {
+              ...application.customClientMetadata,
+              [CustomClientMetadataKey.RegistrationDisabled]: finalRegistrationDisabled,
+            },
+          },
+        }),
+        api
+          .put(`api/applications/${application.id}/sign-in-experience`, {
+            json: formatFormToSubmitData(data),
+          })
+          .json<ApplicationSignInExperience>()
+          .then((response) => void mutate(response)),
+      ]);
+
+      onApplicationUpdated();
       toast.success(t('general.saved'));
     })
   );
@@ -104,8 +122,10 @@ function Branding({ application, isActive }: Props) {
         : Object.keys(data.branding).length > 0 ||
           Object.keys(data.color).length > 0 ||
           Boolean(data.customCss),
+      registrationDisabled:
+        application.customClientMetadata?.[CustomClientMetadataKey.RegistrationDisabled] ?? false,
     });
-  }, [application.isThirdParty, data, reset]);
+  }, [application.customClientMetadata, application.isThirdParty, data, reset]);
 
   // When enabling branding for the first time, fill the default color values to ensure the form
   // is valid; otherwise, directly save the form will be a no-op.
@@ -136,8 +156,8 @@ function Branding({ application, isActive }: Props) {
           onSubmit={onSubmit}
         >
           <FormCard
-            title="application_details.branding.name"
-            description={`application_details.branding.${
+            title="branding.name"
+            description={`branding.${
               application.isThirdParty ? 'description_third_party' : 'description'
             }`}
             learnMoreLink={{
@@ -149,11 +169,11 @@ function Branding({ application, isActive }: Props) {
           >
             {application.isThirdParty && (
               <>
-                <FormField title="application_details.branding.display_name">
+                <FormField title="branding.display_name">
                   <TextInput {...register('displayName')} placeholder={application.name} />
                 </FormField>
                 <ImageInputs
-                  uploadTitle="application_details.branding.app_logo"
+                  uploadTitle="branding.app_logo"
                   control={control}
                   register={register}
                   fields={Object.values(Theme).map((theme) => ({
@@ -173,16 +193,29 @@ function Branding({ application, isActive }: Props) {
                     {...register('isBrandingEnabled')}
                   />
                 </FormField>
-                {isBrandingEnabled && <NonThirdPartyBrandingForm />}
+                {isBrandingEnabled && (
+                  <>
+                    <Controller
+                      control={control}
+                      name="registrationDisabled"
+                      render={({ field: { onChange, value } }) => (
+                        <FormField
+                          title={t('branding.disable_user_registration')}
+                          description={t('branding.disable_user_registration_description')}
+                        >
+                          <Switch checked={value} onChange={onChange} />
+                        </FormField>
+                      )}
+                    />
+                    <NonThirdPartyBrandingForm />
+                  </>
+                )}
               </>
             )}
           </FormCard>
           {application.isThirdParty && (
-            <FormCard
-              title="application_details.branding.more_info"
-              description="application_details.branding.more_info_description"
-            >
-              <FormField title="application_details.branding.terms_of_use_url">
+            <FormCard title="branding.more_info" description="branding.more_info_description">
+              <FormField title="branding.terms_of_use_url">
                 <TextInput
                   {...register('termsOfUseUrl', {
                     validate: (value) =>
@@ -192,7 +225,7 @@ function Branding({ application, isActive }: Props) {
                   placeholder="https://"
                 />
               </FormField>
-              <FormField title="application_details.branding.privacy_policy_url">
+              <FormField title="branding.privacy_policy_url">
                 <TextInput
                   {...register('privacyPolicyUrl', {
                     validate: (value) =>

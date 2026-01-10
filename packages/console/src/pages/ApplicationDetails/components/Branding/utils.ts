@@ -8,6 +8,7 @@ export type ApplicationSignInExperienceForm = ApplicationSignInExperience & {
    * Only effective for non-third-party applications.
    */
   isBrandingEnabled: boolean;
+  registrationDisabled: boolean;
 };
 
 /**
@@ -18,7 +19,16 @@ export type ApplicationSignInExperienceForm = ApplicationSignInExperience & {
 export const formatFormToSubmitData = (
   data: ApplicationSignInExperienceForm
 ): Omit<ApplicationSignInExperience, 'applicationId' | 'tenantId'> => {
-  const { branding, color, customCss, applicationId, tenantId, isBrandingEnabled, ...rest } = data;
+  const {
+    branding,
+    color,
+    customCss,
+    applicationId,
+    tenantId,
+    isBrandingEnabled,
+    registrationDisabled,
+    ...rest
+  } = data;
 
   return {
     ...rest,

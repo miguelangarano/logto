@@ -123,6 +123,9 @@ const application_details = {
     app_level_sie: 'App-level sign-in experience',
     app_level_sie_switch:
       'Enable the app-level sign-in experience and set up app-specific branding. If disabled, the omni sign-in experience will be used.',
+    disable_user_registration: 'Disable user registration',
+    disable_user_registration_description:
+      'Prevents new users from signing up to this specific application.',
     more_info: 'More info',
     more_info_description: 'Offer users more details about your application on the consent screen.',
     display_name: 'Display name',
