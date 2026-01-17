@@ -21,6 +21,7 @@ import koaPagination from '#src/middleware/koa-pagination.js';
 import { koaReportSubscriptionUpdates, koaQuotaGuard } from '#src/middleware/koa-quota-guard.js';
 import { type AllowedKeyPrefix } from '#src/queries/log.js';
 import assertThat from '#src/utils/assert-that.js';
+import { getConsoleLogFromContext } from '#src/utils/console.js';
 
 import { captureEvent } from '../utils/posthog.js';
 
@@ -207,6 +208,27 @@ export default function hookRoutes<T extends ManagementApiRouter>(
       } = ctx.guard;
 
       await triggerTestHook(id, events, config);
+
+      ctx.status = 204;
+
+      return next();
+    }
+  );
+
+  router.post(
+    '/hooks/:id/resend',
+    koaGuard({
+      params: z.object({ id: z.string() }),
+      body: z.object({ logId: z.string() }),
+      status: [204, 404, 422],
+    }),
+    async (ctx, next) => {
+      const {
+        params: { id },
+        body: { logId },
+      } = ctx.guard;
+
+      await libraries.hooks.resendWebhook(id, logId, getConsoleLogFromContext(ctx));
 
       ctx.status = 204;
 

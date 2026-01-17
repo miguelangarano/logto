@@ -214,6 +214,28 @@ export const createHookLibrary = (queries: Queries) => {
   };
 
   /**
+   * Resend a webhook request by log ID.
+   */
+  const resendWebhook = async (hookId: string, logId: string, consoleLog: ConsoleLog) => {
+    const hook = await findHookById(hookId);
+    const log = await queries.logs.findLogById(logId);
+
+    const payload = log.payload.hookRequest?.body;
+
+    if (!payload) {
+      throw new RequestError({
+        code: 'hook.log_payload_missing',
+        message: 'Log payload missing hook request body',
+        status: 422,
+      });
+    }
+
+    const { hookId: _, ...payloadWithoutHookId } = payload;
+
+    await sendWebhook(hook, payloadWithoutHookId, consoleLog);
+  };
+
+  /**
    * Shared builder to construct webhook invocation list for data-like mutation contexts.
    */
   async function buildWebhooks<Event extends HookEvent>({
@@ -257,5 +279,6 @@ export const createHookLibrary = (queries: Queries) => {
     triggerDataHooks,
     triggerExceptionHooks,
     triggerTestHook,
+    resendWebhook,
   };
 };

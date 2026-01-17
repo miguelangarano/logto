@@ -1,3 +1,12 @@
+# To test locally the changes
+docker build -t logto:local .
+docker-compose up -d
+
+# To publish image with changes
+docker login
+docker buildx build --platform linux/amd64 -t miguelangarano/logto:latest --push .
+
+
 <p align="center">
   <a href="https://logto.io/?utm_source=github&utm_medium=readme" target="_blank" align="center" alt="Go to Logto website">
     <picture>

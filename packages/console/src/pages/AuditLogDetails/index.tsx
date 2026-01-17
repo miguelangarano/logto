@@ -1,7 +1,8 @@
 /* eslint-disable complexity */
-import type { Application, Hook, Log, User } from '@logto/schemas';
-import { isBuiltInApplicationId } from '@logto/schemas';
+import { type Application, type Hook, type Log, type User, isBuiltInApplicationId } from '@logto/schemas';
 import { conditional } from '@silverhand/essentials';
+import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useParams } from 'react-router-dom';
 import useSWR from 'swr';
@@ -12,13 +13,14 @@ import DetailsPage from '@/components/DetailsPage';
 import PageMeta from '@/components/PageMeta';
 import UserName from '@/components/UserName';
 import { logEventTitle } from '@/consts/logs';
+import Button from '@/ds-components/Button';
 import Card from '@/ds-components/Card';
 import CodeEditor from '@/ds-components/CodeEditor';
 import DangerousRaw from '@/ds-components/DangerousRaw';
 import FormField from '@/ds-components/FormField';
 import TabNav, { TabNavItem } from '@/ds-components/TabNav';
 import Tag from '@/ds-components/Tag';
-import type { RequestError } from '@/hooks/use-api';
+import useApi, { type RequestError } from '@/hooks/use-api';
 import { isWebhookEventLogKey } from '@/pages/WebhookDetails/utils';
 import { getUserTitle } from '@/utils/user';
 
@@ -41,6 +43,24 @@ function AuditLogDetails() {
   const { data: hookData } = useSWR<Hook, RequestError>(hookId && `api/hooks/${hookId}`);
 
   const isLoading = !data && !error;
+  const api = useApi();
+  const [isResending, setIsResending] = useState(false);
+
+  const handleResend = async () => {
+    const targetHookId = hookId ?? (data?.payload?.hookId as string | undefined);
+
+    if (!targetHookId || !logId) {
+      return;
+    }
+
+    setIsResending(true);
+    try {
+      await api.post(`api/hooks/${targetHookId}/resend`, { json: { logId } });
+      toast.success(t('webhook_details.resend_success'));
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const backLink = getAuditLogDetailsRelatedResourceLink(pathname);
   const backLinkTitle =
@@ -144,6 +164,9 @@ function AuditLogDetails() {
                 </div>
               )}
             </div>
+            {isWebHookEvent && (
+              <Button onClick={handleResend} isLoading={isResending} title="webhook_details.resend" />
+            )}
           </Card>
           <TabNav>
             <TabNavItem href={getDetailsTabNavLink(logId, userId)}>

@@ -14,6 +14,9 @@ const webhook_details = {
   deletion_reminder:
     'You are removing this webhook. After deleting it will not send HTTP request to endpoint URL.',
   deleted: 'The webhook has been successfully deleted.',
+  resend: 'Resend',
+  resend_success: 'Webhook event resent successfully.',
+  missing_hook_id: 'Cannot resend: missing hook ID.',
   settings_tab: 'Settings',
   recent_requests_tab: 'Recent requests (24h)',
   settings: {
