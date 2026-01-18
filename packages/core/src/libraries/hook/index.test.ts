@@ -60,24 +60,26 @@ const getHookExecutionStatsByHookId = jest.fn().mockResolvedValue(mockHookState)
 const findAllHooks = jest.fn().mockResolvedValue([hook, dataHook]);
 const findHookById = jest.fn().mockResolvedValue(hook);
 const findApplicationById = jest.fn().mockResolvedValue({ id: 'app_id', extraField: 'not_ok' });
+const findLogById = jest.fn();
 
 const { createHookLibrary } = await import('./index.js');
-const { triggerInteractionHooks, triggerTestHook, triggerDataHooks } = createHookLibrary(
-  new MockQueries({
-    users: {
-      findUserById: jest.fn().mockReturnValue({
-        id: 'user_id',
-        username: 'user',
-        extraField: 'not_ok',
-      }),
-    },
-    applications: {
-      findApplicationById,
-    },
-    logs: { insertLog, getHookExecutionStatsByHookId },
-    hooks: { findAllHooks, findHookById },
-  })
-);
+const { triggerInteractionHooks, triggerTestHook, triggerDataHooks, resendWebhook } =
+  createHookLibrary(
+    new MockQueries({
+      users: {
+        findUserById: jest.fn().mockReturnValue({
+          id: 'user_id',
+          username: 'user',
+          extraField: 'not_ok',
+        }),
+      },
+      applications: {
+        findApplicationById,
+      },
+      logs: { insertLog, getHookExecutionStatsByHookId, findLogById },
+      hooks: { findAllHooks, findHookById },
+    })
+  );
 
 const { HookContextManager, InteractionHookContextManager } = await import('./context-manager.js');
 
@@ -136,6 +138,35 @@ describe('triggerInteractionHooks()', () => {
     expect(calledPayload).toHaveProperty('payload.response.statusCode', 200);
     expect(calledPayload).toHaveProperty('payload.response.body.message', 'ok');
     jest.useRealTimers();
+  });
+});
+
+describe('resendWebhook', () => {
+  it('should call sendWebhookRequest with original payload including hookId', async () => {
+    const logId = 'log_id';
+    const originalPayload = {
+      hookId: 'foo',
+      event: InteractionHookEvent.PostSignIn,
+      other: 'data',
+    };
+
+    findLogById.mockResolvedValue({
+      payload: {
+        hookRequest: {
+          body: originalPayload,
+        },
+      },
+    });
+
+    await resendWebhook('foo', logId, new ConsoleLog());
+
+    expect(findHookById).toHaveBeenCalledWith('foo');
+    expect(findLogById).toHaveBeenCalledWith(logId);
+    expect(sendWebhookRequest).toHaveBeenCalledWith({
+      hookConfig: hook.config,
+      payload: originalPayload,
+      signingKey: hook.signingKey,
+    });
   });
 });
 

@@ -51,7 +51,7 @@ export const createHookLibrary = (queries: Queries) => {
     const { id, config, signingKey } = hook;
     consoleLog.info(`\tTriggering hook ${id} due to ${payload.event} event`);
 
-    const json: HookEventPayload = { ...payload, hookId: id };
+    const json: HookEventPayload = { ...payload, hookId: id } as HookEventPayload;
     const logEntry = new LogEntry(`TriggerHook.${payload.event}`);
 
     logEntry.append({ hookId: id, hookRequest: { body: json } });
@@ -230,9 +230,10 @@ export const createHookLibrary = (queries: Queries) => {
       });
     }
 
-    const { hookId: _, ...payloadWithoutHookId } = payload;
-
-    await sendWebhook(hook, payloadWithoutHookId, consoleLog);
+    // Use the original payload to preserve the property order for signature consistency.
+    // `sendWebhook` will overwrite `hookId` with the current hook ID, but the position of `hookId`
+    // (and other properties) will remain consistent with the original payload if `hookId` matches.
+    await sendWebhook(hook, payload as HookEventPayload, consoleLog);
   };
 
   /**

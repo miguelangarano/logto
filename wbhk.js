@@ -8,11 +8,12 @@ const server = http.createServer((req, res) => {
     });
     req.on('end', () => {
       console.log('Received POST request:');
+      console.log(req.headers);
       console.log(body);
-      res.writeHead(405, { 'Content-Type': 'text/plain' });
-    res.end('Method Not Allowed');
-    //   res.writeHead(200, { 'Content-Type': 'text/plain' });
-    //   res.end('Received POST request');
+    //   res.writeHead(405, { 'Content-Type': 'text/plain' });
+    // res.end('Method Not Allowed');
+      res.writeHead(200, { 'Content-Type': 'text/plain' });
+      res.end('Received POST request');
     });
   } else {
     res.writeHead(405, { 'Content-Type': 'text/plain' });
