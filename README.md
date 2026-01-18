@@ -6,6 +6,9 @@ docker-compose up -d
 docker login
 docker buildx build --platform linux/amd64 -t miguelangarano/logto:latest --push .
 
+# To commit changes if normal commit fails
+git commit -m "description" --no-verify
+
 
 <p align="center">
   <a href="https://logto.io/?utm_source=github&utm_medium=readme" target="_blank" align="center" alt="Go to Logto website">
