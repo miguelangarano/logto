@@ -1,7 +1,4 @@
 const account_center = {
-  header: {
-    title: 'Centrum konta',
-  },
   home: {
     title: 'Nie znaleziono strony',
     description: 'Ta strona jest niedostępna.',
@@ -19,7 +16,7 @@ const account_center = {
   password_verification: {
     title: 'Zweryfikuj hasło',
     description: 'Aby chronić konto, wprowadź hasło, aby potwierdzić swoją tożsamość.',
-    error_failed: 'Weryfikacja nie powiodła się. Sprawdź swoje hasło.',
+    error_failed: 'Nieprawidłowe hasło. Sprawdź wprowadzone dane.',
   },
   verification_method: {
     password: {
@@ -77,6 +74,8 @@ const account_center = {
     description:
       'Kod weryfikacyjny został wysłany na adres {{email}}. Wprowadź kod, aby kontynuować.',
     resend: 'Nie otrzymałeś? <a>Wyślij kod weryfikacyjny ponownie</a>',
+    not_received: 'Nie otrzymałeś?',
+    resend_action: 'Wyślij kod weryfikacyjny ponownie',
     resend_countdown: 'Nie otrzymałeś? Wyślij ponownie po {{seconds}} s.',
     error_send_failed: 'Nie udało się wysłać kodu weryfikacyjnego. Spróbuj ponownie później.',
     error_verify_failed: 'Weryfikacja nie powiodła się. Wprowadź kod ponownie.',
@@ -109,7 +108,7 @@ const account_center = {
     passkey_not_enabled:
       'Passkey nie jest włączony. Skontaktuj się z administratorem, aby uzyskać pomoc.',
     passkey_already_registered:
-      'This passkey is already registered to your account. Please use a different authenticator.',
+      'Ten passkey jest już zarejestrowany na twoim koncie. Użyj innego uwierzytelniania.',
   },
   update_success: {
     default: {
@@ -174,11 +173,11 @@ const account_center = {
     delete_confirmation_description:
       'Jeśli usuniesz ten passkey, nie będziesz mógł go użyć do weryfikacji.',
     rename_passkey: 'Zmień nazwę passkey',
-    rename_description: 'Enter a new name for this passkey.',
-    name_this_passkey: 'Name this device passkey',
+    rename_description: 'Wprowadź nową nazwę dla tego passkey.',
+    name_this_passkey: 'Nazwij ten passkey urządzenia',
     name_passkey_description:
-      'You have successfully verified this device for 2-step authentication. Customize the name to recognize if you have multiple keys.',
-    name_input_label: 'Name',
+      'Pomyślnie zweryfikowano to urządzenie do uwierzytelniania dwuetapowego. Dostosuj nazwę, aby rozpoznać go, jeśli masz wiele kluczy.',
+    name_input_label: 'Nazwa',
   },
 };
 

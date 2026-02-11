@@ -18,16 +18,15 @@ import {
 } from '@logto/schemas';
 import { removeUndefinedKeys, trySafe, tryThat } from '@silverhand/essentials';
 import { type i18n } from 'i18next';
-import { Provider, errors } from 'oidc-provider';
+import { type KoaContextWithOIDC, Provider, errors } from 'oidc-provider';
 import getRawBody from 'raw-body';
 import snakecaseKeys from 'snakecase-keys';
 
 import { EnvSet } from '#src/env-set/index.js';
 import { addOidcEventListeners } from '#src/event-listeners/index.js';
-import { type CloudConnectionLibrary } from '#src/libraries/cloud-connection.js';
 import { type LogtoConfigLibrary } from '#src/libraries/logto-config.js';
 import koaAppSecretTranspilation from '#src/middleware/koa-app-secret-transpilation.js';
-import koaAuditLog from '#src/middleware/koa-audit-log.js';
+import koaAuditLog, { type WithLogContext } from '#src/middleware/koa-audit-log.js';
 import koaBodyEtag from '#src/middleware/koa-body-etag.js';
 import koaResourceParam from '#src/middleware/koa-resource-param.js';
 import postgresAdapter from '#src/oidc/adapter.js';
@@ -69,7 +68,6 @@ export default function initOidc(
   queries: Queries,
   libraries: Libraries,
   logtoConfigs: LogtoConfigLibrary,
-  cloudConnection: CloudConnectionLibrary,
   subscription: SubscriptionLibrary
 ): Provider {
   const {
@@ -260,13 +258,17 @@ export default function initOidc(
         await Promise.all([
           getExtraTokenClaimsForTokenExchange(ctx, token),
           getExtraTokenClaimsForOrganizationApiResource(ctx, token),
-          getExtraTokenClaimsForJwtCustomization(ctx, token, {
-            envSet,
-            queries,
-            libraries,
-            logtoConfigs,
-            cloudConnection,
-          }),
+          getExtraTokenClaimsForJwtCustomization(
+            // eslint-disable-next-line no-restricted-syntax -- see `oidc.use(koaAuditLog(queries))` below;
+            ctx as KoaContextWithOIDC & WithLogContext,
+            token,
+            {
+              envSet,
+              queries,
+              libraries,
+              logtoConfigs,
+            }
+          ),
         ]);
 
       if (!organizationApiResourceClaims && !jwtCustomizedClaims && !tokenExchangeClaims) {
@@ -301,12 +303,27 @@ export default function initOidc(
 
       return {
         accountId: sub,
-        claims: async (use, scope, claims, rejected) => {
+        /**
+         * The third argument `_claims` is not used since
+         * [Claims Parameter](https://github.com/panva/node-oidc-provider/tree/main/docs#featuresclaimsparameter)
+         * is not enabled.
+         */
+        claims: async (use, scope, _claims, rejected) => {
           assert(
             use === 'id_token' || use === 'userinfo',
             'use should be either `id_token` or `userinfo`'
           );
-          const acceptedClaims = getAcceptedUserClaims(use, scope, claims, rejected);
+
+          // Get the ID token config to determine which extended claims are enabled
+          const idTokenConfig =
+            use === 'id_token' ? await queries.logtoConfigs.getIdTokenConfig() : undefined;
+
+          const acceptedClaims = getAcceptedUserClaims({
+            use,
+            scope,
+            rejected,
+            enabledExtendedIdTokenClaims: idTokenConfig?.enabledExtendedClaims,
+          });
 
           return snakecaseKeys(
             {

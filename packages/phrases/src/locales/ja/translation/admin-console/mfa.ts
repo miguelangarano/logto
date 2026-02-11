@@ -6,9 +6,9 @@ const mfa = {
   multi_factors: 'マルチファクタ',
   multi_factors_description:
     'ユーザーは2段階認証のために有効になっている要因のうちの1つを検証する必要があります。',
-  totp: '認証アプリ OTP',
+  totp: '認証アプリ',
   otp_description: 'Google Authenticatorなどをリンクしてワンタイムパスワードを検証します。',
-  webauthn: 'WebAuthn（パスキー）',
+  webauthn: 'Passkeys',
   webauthn_description:
     'ブラウザでサポートされている方法を使用して検証します：生体認証、電話のスキャン、またはセキュリティキーなど。',
   webauthn_native_tip: 'WebAuthnはネイティブアプリケーションではサポートされていません。',
@@ -38,6 +38,12 @@ const mfa = {
   require_mfa: 'MFA を要求',
   require_mfa_label:
     'アプリケーションにアクセスするために 2 段階認証を必須にするには、これを有効にします。無効にすると、ユーザーは自分で MFA を有効にするかどうかを決めることができます。',
+  require_mfa_optional:
+    '任意の MFA: ユーザー自身のアカウントセキュリティのために MFA を有効にするかどうかを選択できるようにします',
+  require_mfa_adaptive:
+    'アダプティブ MFA: サインインがリスクの高い状況(新しいデバイスや場所など)の場合にのみ MFA を求めます',
+  require_mfa_mandatory:
+    '必須の MFA: すべてのユーザーに、サインインのたびに MFA を完了することを求めます',
   set_up_prompt: 'MFA の設定プロンプト',
   no_prompt: 'MFA の設定をユーザーに求めない',
   prompt_at_sign_in_and_sign_up:

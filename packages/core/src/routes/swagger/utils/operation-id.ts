@@ -27,8 +27,6 @@ const methodToVerb = Object.freeze({
 
 type RouteDictionary = Record<`${OpenAPIV3.HttpMethods} ${string}`, string>;
 
-const devFeatureCustomRoutes: RouteDictionary = Object.freeze({});
-
 export const customRoutes: Readonly<RouteDictionary> = Object.freeze({
   // Authn
   'get /authn/hasura': 'GetHasuraAuth',
@@ -96,7 +94,9 @@ export const customRoutes: Readonly<RouteDictionary> = Object.freeze({
   'delete /custom-profile-fields/:name': 'DeleteCustomProfileFieldByName',
   'post /custom-profile-fields/batch': 'CreateCustomProfileFieldsBatch',
   'post /custom-profile-fields/properties/sie-order': 'UpdateCustomProfileFieldsSieOrder',
-  ...(EnvSet.values.isDevFeaturesEnabled ? devFeatureCustomRoutes : {}),
+  // ID token config
+  'get /configs/id-token': 'GetIdTokenConfig',
+  'put /configs/id-token': 'UpsertIdTokenConfig',
 } satisfies RouteDictionary); // Key assertion doesn't work without `satisfies`
 
 /**

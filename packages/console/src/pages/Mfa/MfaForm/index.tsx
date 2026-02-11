@@ -1,5 +1,6 @@
 /* eslint-disable max-lines */
 import {
+  type AdaptiveMfa,
   ConnectorType,
   MfaFactor,
   MfaPolicy,
@@ -18,7 +19,7 @@ import FormCard from '@/components/FormCard';
 import InlineUpsell from '@/components/InlineUpsell';
 import UnsavedChangesAlertModal from '@/components/UnsavedChangesAlertModal';
 import { mfa } from '@/consts';
-import { isCloud } from '@/consts/env';
+import { isCloud, isDevFeaturesEnabled } from '@/consts/env';
 import { SubscriptionDataContext } from '@/contexts/SubscriptionDataProvider';
 import { TenantsContext } from '@/contexts/TenantsProvider';
 import DynamicT from '@/ds-components/DynamicT';
@@ -37,15 +38,24 @@ import { type MfaConfigForm, type MfaConfig } from '../types';
 import FactorLabel from './FactorLabel';
 import UpsellNotice from './UpsellNotice';
 import styles from './index.module.scss';
-import { convertMfaFormToConfig, convertMfaConfigToForm, validateBackupCodeFactor } from './utils';
+import {
+  buildMfaPatchPayload,
+  convertMfaFormToConfig,
+  convertMfaConfigToForm,
+  getMfaRequirementMode,
+  getMfaRequirementState,
+  MfaRequirementMode,
+  validateBackupCodeFactor,
+} from './utils';
 
 type Props = {
   readonly data: MfaConfig;
+  readonly adaptiveMfa?: AdaptiveMfa;
   readonly signInMethods: SignIn['methods'];
-  readonly onMfaUpdated: (updatedData: MfaConfig) => void;
+  readonly onMfaUpdated: (updatedData: MfaConfig, adaptiveMfa?: AdaptiveMfa) => void;
 };
 
-function MfaForm({ data, signInMethods, onMfaUpdated }: Props) {
+function MfaForm({ data, adaptiveMfa, signInMethods, onMfaUpdated }: Props) {
   const {
     currentSubscription: { planId, isEnterprisePlan },
     currentSubscriptionQuota,
@@ -66,7 +76,10 @@ function MfaForm({ data, signInMethods, onMfaUpdated }: Props) {
     control,
     watch,
     setValue,
-  } = useForm<MfaConfigForm>({ defaultValues: convertMfaConfigToForm(data), mode: 'onChange' });
+  } = useForm<MfaConfigForm>({
+    defaultValues: convertMfaConfigToForm(data, adaptiveMfa),
+    mode: 'onChange',
+  });
   const api = useApi();
 
   const formValues = watch();
@@ -120,6 +133,10 @@ function MfaForm({ data, signInMethods, onMfaUpdated }: Props) {
     if (formValues.organizationRequiredMfaPolicy !== OrganizationRequiredMfaPolicy.NoPrompt) {
       setValue('organizationRequiredMfaPolicy', OrganizationRequiredMfaPolicy.NoPrompt);
     }
+
+    if (formValues.adaptiveMfaEnabled) {
+      setValue('adaptiveMfaEnabled', false);
+    }
   }, [formValues, setValue]);
 
   const mfaPolicyOptions = useMemo(
@@ -154,6 +171,53 @@ function MfaForm({ data, signInMethods, onMfaUpdated }: Props) {
     [t]
   );
 
+  const mfaRequirementOptions = useMemo(
+    () => [
+      {
+        value: MfaRequirementMode.Optional,
+        title: t('mfa.require_mfa_optional'),
+      },
+      {
+        value: MfaRequirementMode.Adaptive,
+        title: t('mfa.require_mfa_adaptive'),
+      },
+      {
+        value: MfaRequirementMode.Mandatory,
+        title: t('mfa.require_mfa_mandatory'),
+      },
+    ],
+    [t]
+  );
+
+  const mfaRequirementMode = useMemo(
+    () =>
+      getMfaRequirementMode({
+        isMandatory: formValues.isMandatory,
+        adaptiveMfaEnabled: formValues.adaptiveMfaEnabled,
+      }),
+    [formValues.isMandatory, formValues.adaptiveMfaEnabled]
+  );
+
+  useEffect(() => {
+    if (mfaRequirementMode === MfaRequirementMode.Mandatory && formValues.adaptiveMfaEnabled) {
+      // This effect normalizes legacy state after form hydration/watch updates.
+      // Older data can contain { isMandatory: true, adaptiveMfaEnabled: true },
+      // but the new 3-option requirement mode treats "Mandatory" as
+      // { isMandatory: true, adaptiveMfaEnabled: false }.
+      //
+      // Use `reset()` instead of `setValue()` so the normalized snapshot becomes
+      // the form baseline and we avoid introducing extra dirty changes from this
+      // internal normalization. `keepDirty` and `keepDirtyValues` preserve any
+      // existing user edits/state instead of clearing them.
+      reset(
+        { ...formValues, adaptiveMfaEnabled: false },
+        { keepDirty: true, keepDirtyValues: true }
+      );
+    }
+  }, [mfaRequirementMode, formValues, reset]);
+
+  const shouldShowSetUpPrompts = mfaRequirementMode !== MfaRequirementMode.Mandatory;
+
   const onSubmit = handleSubmit(
     trySubmitSafe(async (formData) => {
       const mfaConfig = convertMfaFormToConfig(formData);
@@ -172,15 +236,16 @@ function MfaForm({ data, signInMethods, onMfaUpdated }: Props) {
         return;
       }
 
-      const { mfa: updatedMfaConfig } = await api
+      const payload = buildMfaPatchPayload(formData, isDevFeaturesEnabled);
+      const { mfa: updatedMfaConfig, adaptiveMfa: updatedAdaptiveMfa } = await api
         .patch('api/sign-in-exp', {
-          json: { mfa: mfaConfig },
+          json: payload,
         })
         .json<SignInExperience>();
       mutateSubscriptionQuotaAndUsages();
-      reset(convertMfaConfigToForm(updatedMfaConfig));
+      reset(convertMfaConfigToForm(updatedMfaConfig, updatedAdaptiveMfa));
       toast.success(t('general.saved'));
-      onMfaUpdated(updatedMfaConfig);
+      onMfaUpdated(updatedMfaConfig, updatedAdaptiveMfa);
     })
   );
 
@@ -287,20 +352,47 @@ function MfaForm({ data, signInMethods, onMfaUpdated }: Props) {
           description="mfa.policy_description"
           learnMoreLink={{ href: mfa }}
         >
-          <FormField title="mfa.require_mfa" headlineSpacing="large">
-            <Switch
-              disabled={isPolicySettingsDisabled}
-              label={t('mfa.require_mfa_label')}
-              {...register('isMandatory')}
-            />
-          </FormField>
-          {!formValues.isMandatory && (
+          {isDevFeaturesEnabled ? (
+            <FormField title="mfa.require_mfa" headlineSpacing="large">
+              <Select
+                hasSelectedOptionIndicator
+                value={mfaRequirementMode}
+                options={mfaRequirementOptions}
+                isReadOnly={isPolicySettingsDisabled}
+                onChange={(mode) => {
+                  if (!mode) {
+                    return;
+                  }
+
+                  const nextState = getMfaRequirementState(mode);
+                  setValue('isMandatory', nextState.isMandatory, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                  });
+                  setValue('adaptiveMfaEnabled', nextState.adaptiveMfaEnabled, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                  });
+                }}
+              />
+            </FormField>
+          ) : (
+            <FormField title="mfa.require_mfa" headlineSpacing="large">
+              <Switch
+                disabled={isPolicySettingsDisabled}
+                label={t('mfa.require_mfa_label')}
+                {...register('isMandatory')}
+              />
+            </FormField>
+          )}
+          {shouldShowSetUpPrompts && (
             <FormField title="mfa.set_up_prompt" headlineSpacing="large">
               <Controller
                 control={control}
                 name="setUpPrompt"
                 render={({ field: { onChange, value } }) => (
                   <Select
+                    hasSelectedOptionIndicator
                     value={value}
                     options={mfaPolicyOptions}
                     isReadOnly={isPolicySettingsDisabled}
@@ -310,7 +402,7 @@ function MfaForm({ data, signInMethods, onMfaUpdated }: Props) {
               />
             </FormField>
           )}
-          {!formValues.isMandatory && (
+          {shouldShowSetUpPrompts && (
             <FormField title="mfa.set_up_organization_required_mfa_prompt" headlineSpacing="large">
               <Controller
                 control={control}
@@ -318,6 +410,7 @@ function MfaForm({ data, signInMethods, onMfaUpdated }: Props) {
                 render={({ field: { onChange, value } }) => (
                   <Select
                     // Fallback to `NoPrompt` if the value is not set
+                    hasSelectedOptionIndicator
                     value={value ?? OrganizationRequiredMfaPolicy.NoPrompt}
                     options={organizationEnabledMfaPolicyOptions}
                     isReadOnly={isPolicySettingsDisabled}

@@ -49,6 +49,13 @@ const session = {
     suggest_additional_mfa:
       'Für besseren Schutz füge eine weitere MFA-Methode hinzu. Du kannst diesen Schritt überspringen und fortfahren.',
   },
+  passkey_sign_in: {
+    pending_info_not_found:
+      'Ausstehende Passkey-Anmeldeinformationen nicht gefunden. Bitte starten Sie den Anmeldeablauf erneut.',
+    conflict_rp_id:
+      'Die Relying-Party-ID stimmt nicht überein. Bitte verwenden Sie den richtigen Client zum Anmelden.',
+    sso_users_not_allowed: 'Die Passkey-Anmeldeoption ist für SSO-Benutzer nicht verfügbar.',
+  },
   sso_enabled:
     'Einmaliges Anmelden ist für diese gegebene E-Mail aktiviert. Bitte melden Sie sich mit SSO an.',
   captcha_required: 'Captcha ist erforderlich.',

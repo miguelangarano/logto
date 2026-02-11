@@ -4,6 +4,7 @@ import {
   ConnectorType,
   SignInExperiences,
   ForgotPasswordMethod,
+  MfaPolicy,
   ProductEvent,
   type SignInExperience,
 } from '@logto/schemas';
@@ -31,6 +32,12 @@ import customUiAssetsRoutes from './custom-ui-assets/index.js';
 const isMfaEnabled = (mfa: Optional<SignInExperience['mfa']>): boolean =>
   Boolean(mfa?.factors && mfa.factors.length > 0);
 
+const { isDevFeaturesEnabled } = EnvSet.values;
+const signInExperienceResponseGuard = SignInExperiences.guard;
+const signInExperienceCreateGuard = isDevFeaturesEnabled
+  ? SignInExperiences.createGuard
+  : SignInExperiences.createGuard.omit({ adaptiveMfa: true });
+
 export default function signInExperiencesRoutes<T extends ManagementApiRouter>(
   ...args: RouterInitArgs<T>
 ) {
@@ -51,7 +58,7 @@ export default function signInExperiencesRoutes<T extends ManagementApiRouter>(
   router.get(
     '/sign-in-exp',
     koaGuard({
-      response: SignInExperiences.guard,
+      response: signInExperienceResponseGuard,
       status: [200, 404],
     }),
     async (ctx, next) => {
@@ -65,7 +72,7 @@ export default function signInExperiencesRoutes<T extends ManagementApiRouter>(
     '/sign-in-exp',
     koaGuard({
       query: z.object({ removeUnusedDemoSocialConnector: z.string().optional() }),
-      body: SignInExperiences.createGuard
+      body: signInExperienceCreateGuard
         .omit({
           id: true,
           termsOfUseUrl: true,
@@ -84,10 +91,9 @@ export default function signInExperiencesRoutes<T extends ManagementApiRouter>(
           })
         )
         .partial(),
-      response: SignInExperiences.guard,
+      response: signInExperienceResponseGuard,
       status: [200, 400, 404, 422, 403],
     }),
-
     // eslint-disable-next-line complexity
     async (ctx, next) => {
       const {
@@ -99,11 +105,14 @@ export default function signInExperiencesRoutes<T extends ManagementApiRouter>(
         signUp,
         signIn,
         mfa,
+        adaptiveMfa,
         sentinelPolicy,
         captchaPolicy,
         forgotPasswordMethods,
         hideLogtoBranding,
-      } = rest;
+        // Guard omits adaptiveMfa when dev features are disabled; cast to handle both cases.
+        // eslint-disable-next-line no-restricted-syntax
+      } = rest as Partial<SignInExperience>;
 
       if (languageInfo) {
         await validateLanguageInfo(languageInfo);
@@ -140,6 +149,26 @@ export default function signInExperiencesRoutes<T extends ManagementApiRouter>(
         const { signIn: currentSignIn } = signIn ? { signIn } : currentSettings;
         validateMfa(mfa, currentSignIn);
       }
+
+      // Adaptive MFA requires MFA to be enabled when it is being enabled.
+      if (adaptiveMfa?.enabled) {
+        const effectiveMfa = mfa ?? currentSettings.mfa;
+
+        assertThat(
+          isMfaEnabled(effectiveMfa),
+          'sign_in_experiences.adaptive_mfa_requires_mfa',
+          422
+        );
+
+        assertThat(effectiveMfa.policy !== MfaPolicy.Mandatory, 'request.invalid_input', 422);
+      }
+
+      // Keep backend state aligned with console semantics:
+      // if MFA is disabled and adaptive MFA is omitted in request, reset adaptive MFA to false.
+      const normalizedAdaptiveMfa =
+        isDevFeaturesEnabled && mfa && !isMfaEnabled(mfa) && adaptiveMfa === undefined
+          ? { enabled: false }
+          : adaptiveMfa;
 
       if (forgotPasswordMethods) {
         const hasEmailConnector = connectors.some(({ type }) => type === ConnectorType.Email);
@@ -205,6 +234,7 @@ export default function signInExperiencesRoutes<T extends ManagementApiRouter>(
 
       const payload = {
         ...rest,
+        ...conditional(normalizedAdaptiveMfa && { adaptiveMfa: normalizedAdaptiveMfa }),
         ...conditional(
           filteredSocialSignInConnectorTargets && {
             socialSignInConnectorTargets: filteredSocialSignInConnectorTargets,

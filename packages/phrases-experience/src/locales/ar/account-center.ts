@@ -1,7 +1,4 @@
 const account_center = {
-  header: {
-    title: 'مركز الحساب',
-  },
   home: {
     title: 'الصفحة غير موجودة',
     description: 'هذه الصفحة غير متاحة.',
@@ -19,7 +16,7 @@ const account_center = {
   password_verification: {
     title: 'التحقق من كلمة المرور',
     description: 'لحماية أمان حسابك، أدخل كلمة المرور للتحقق من هويتك.',
-    error_failed: 'فشل التحقق. يرجى التحقق من كلمة المرور.',
+    error_failed: 'كلمة المرور غير صحيحة. يرجى التحقق من المدخلات.',
   },
   verification_method: {
     password: {
@@ -75,6 +72,8 @@ const account_center = {
     send: 'إرسال رمز التحقق',
     description: 'تم إرسال رمز التحقق إلى بريدك الإلكتروني {{email}}. أدخل الرمز للمتابعة.',
     resend: 'لم تستلمه بعد؟ <a>إعادة إرسال رمز التحقق</a>',
+    not_received: 'لم تستلمه بعد؟',
+    resend_action: 'إعادة إرسال رمز التحقق',
     resend_countdown: 'لم تستلمه بعد؟ أعد الإرسال بعد {{seconds}} ث.',
     error_send_failed: 'فشل إرسال رمز التحقق. يرجى المحاولة لاحقًا.',
     error_verify_failed: 'فشل التحقق. يرجى إدخال الرمز مرة أخرى.',
@@ -102,7 +101,7 @@ const account_center = {
     backup_code_requires_other_mfa: 'تتطلب رموز النسخ الاحتياطي إعداد طريقة MFA أخرى أولاً.',
     passkey_not_enabled: 'مفتاح المرور غير مفعّل. يرجى الاتصال بالمسؤول للحصول على المساعدة.',
     passkey_already_registered:
-      'This passkey is already registered to your account. Please use a different authenticator.',
+      'مفتاح المرور هذا مسجّل بالفعل في حسابك. يرجى استخدام أداة مصادقة مختلفة.',
   },
   update_success: {
     default: {
@@ -167,11 +166,11 @@ const account_center = {
     delete_confirmation_description:
       'إذا قمت بإزالة مفتاح المرور هذا، فلن تتمكن من التحقق باستخدامه.',
     rename_passkey: 'إعادة تسمية مفتاح المرور',
-    rename_description: 'Enter a new name for this passkey.',
-    name_this_passkey: 'Name this device passkey',
+    rename_description: 'أدخل اسمًا جديدًا لمفتاح المرور هذا.',
+    name_this_passkey: 'تسمية مفتاح المرور لهذا الجهاز',
     name_passkey_description:
-      'You have successfully verified this device for 2-step authentication. Customize the name to recognize if you have multiple keys.',
-    name_input_label: 'Name',
+      'لقد نجحت في التحقق من هذا الجهاز للمصادقة بخطوتين. خصص الاسم للتعرف عليه إذا كان لديك مفاتيح متعددة.',
+    name_input_label: 'الاسم',
   },
 };
 

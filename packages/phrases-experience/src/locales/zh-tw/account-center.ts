@@ -1,7 +1,4 @@
 const account_center = {
-  header: {
-    title: '帳戶中心',
-  },
   home: {
     title: '找不到頁面',
     description: '此頁面無法使用。',
@@ -18,7 +15,7 @@ const account_center = {
   password_verification: {
     title: '驗證密碼',
     description: '為保護帳戶安全，請輸入您的密碼完成驗證。',
-    error_failed: '驗證失敗，請檢查您的密碼。',
+    error_failed: '密碼錯誤，請重新輸入。',
   },
   verification_method: {
     password: {
@@ -74,6 +71,8 @@ const account_center = {
     send: '傳送驗證碼',
     description: '驗證碼已傳送至您的電子郵件 {{email}}。請輸入驗證碼以繼續。',
     resend: '尚未收到？<a>重新傳送驗證碼</a>',
+    not_received: '尚未收到？',
+    resend_action: '重新傳送驗證碼',
     resend_countdown: '尚未收到？{{seconds}} 秒後可重新傳送。',
     error_send_failed: '驗證碼傳送失敗，請稍後再試。',
     error_verify_failed: '驗證失敗，請重新輸入驗證碼。',
@@ -97,9 +96,8 @@ const account_center = {
     backup_code_already_added: '您已擁有有效的備份碼，請先使用或移除它們再產生新的。',
     backup_code_not_enabled: '備份碼未啟用。請聯繫管理員尋求協助。',
     backup_code_requires_other_mfa: '備份碼需要先設定其他 MFA 方式。',
-    passkey_not_enabled: 'Passkey 未啟用。請聯繫管理員尋求協助。',
-    passkey_already_registered:
-      'This passkey is already registered to your account. Please use a different authenticator.',
+    passkey_not_enabled: '通行密鑰未啟用。請聯繫管理員尋求協助。',
+    passkey_already_registered: '此通行密鑰已綁定到您的帳戶，請使用其他認證器。',
   },
   update_success: {
     default: {
@@ -132,8 +130,8 @@ const account_center = {
       description: '您的備用碼已儲存。請將它們保存在安全的地方。',
     },
     passkey: {
-      title: 'Passkey 已新增！',
-      description: 'Passkey 已成功連結至您的帳戶。',
+      title: '通行密鑰已新增！',
+      description: '通行密鑰已成功連結至您的帳戶。',
     },
     social: {
       title: '社群帳號已連結！',
@@ -149,25 +147,25 @@ const account_center = {
     generate_new: '產生新的備用碼',
   },
   passkey: {
-    title: 'Passkeys',
+    title: '通行密鑰',
     added: '新增於：{{date}}',
     last_used: '上次使用：{{date}}',
     never_used: '從未使用',
-    unnamed: '未命名的 Passkey',
-    renamed: 'Passkey 已成功重新命名。',
-    deleted: 'Passkey 已移除。',
-    add_another_title: '新增另一個 Passkey',
+    unnamed: '未命名的通行密鑰',
+    renamed: '通行密鑰已成功重新命名。',
+    deleted: '通行密鑰已移除。',
+    add_another_title: '新增另一個通行密鑰',
     add_another_description:
-      '使用設備生物識別、安全金鑰（例如 YubiKey）或其他可用方法註冊您的 Passkey。',
-    add_passkey: '新增 Passkey',
-    delete_confirmation_title: '移除您的 Passkey',
-    delete_confirmation_description: '如果您移除此 Passkey，您將無法使用它進行驗證。',
-    rename_passkey: '重新命名 Passkey',
-    rename_description: 'Enter a new name for this passkey.',
-    name_this_passkey: 'Name this device passkey',
+      '使用設備生物識別、安全金鑰（例如 YubiKey）或其他可用方法註冊您的通行密鑰。',
+    add_passkey: '新增通行密鑰',
+    delete_confirmation_title: '移除您的通行密鑰',
+    delete_confirmation_description: '如果您移除此通行密鑰，您將無法使用它進行驗證。',
+    rename_passkey: '重新命名通行密鑰',
+    rename_description: '為此通行密鑰輸入新名稱。',
+    name_this_passkey: '為此裝置通行密鑰命名',
     name_passkey_description:
-      'You have successfully verified this device for 2-step authentication. Customize the name to recognize if you have multiple keys.',
-    name_input_label: 'Name',
+      '您已成功驗證此裝置用於兩步驗證。自訂名稱以便在擁有多個密鑰時進行識別。',
+    name_input_label: '名稱',
   },
 };
 

@@ -1,5 +1,4 @@
 import {
-  CustomJwtErrorCode,
   LogtoJwtTokenKey,
   LogtoJwtTokenKeyType,
   ProductEvent,
@@ -20,7 +19,7 @@ import { JwtCustomizerLibrary } from '#src/libraries/jwt-customizer.js';
 import koaGuard, { parse } from '#src/middleware/koa-guard.js';
 import { koaQuotaGuard } from '#src/middleware/koa-quota-guard.js';
 import { getConsoleLogFromContext } from '#src/utils/console.js';
-import { parseCustomJwtResponseError } from '#src/utils/custom-jwt/index.js';
+import { isAccessDeniedError, parseCustomJwtResponseError } from '#src/utils/custom-jwt/index.js';
 
 import { captureEvent } from '../../utils/posthog.js';
 import type { ManagementApiRouter, RouterInitArgs } from '../types.js';
@@ -228,41 +227,40 @@ export default function logtoConfigJwtCustomizerRoutes<T extends ManagementApiRo
     async (ctx, next) => {
       const { body } = ctx.guard;
 
-      // Deploy the test script
-      await libraries.jwtCustomizers.deployJwtCustomizerScript(getConsoleLogFromContext(ctx), {
-        key:
-          body.tokenType === LogtoJwtTokenKeyType.AccessToken
-            ? LogtoJwtTokenKey.AccessToken
-            : LogtoJwtTokenKey.ClientCredentials,
-        value: body,
-        useCase: 'test',
-      });
-
       try {
         if (EnvSet.values.isCloud) {
-          const client = await cloudConnection.getClient();
-          ctx.body = await client.post(`/api/services/custom-jwt`, {
-            body,
-            search: { isTest: 'true' },
+          // Deploy the test script if needed.(Only for cloud worker service)
+          await libraries.jwtCustomizers.deployJwtCustomizerScript(getConsoleLogFromContext(ctx), {
+            key:
+              body.tokenType === LogtoJwtTokenKeyType.AccessToken
+                ? LogtoJwtTokenKey.AccessToken
+                : LogtoJwtTokenKey.ClientCredentials,
+            value: body,
+            useCase: 'test',
           });
+
+          ctx.body = await libraries.jwtCustomizers.runScriptRemotely(body, true);
         } else {
           ctx.body = removeUndefinedKeys(await JwtCustomizerLibrary.runScriptInLocalVm(body));
         }
       } catch (error: unknown) {
         /**
-         * All APIs should throw `RequestError` instead of `Error`.
+         * - All cloud APIs should throw `RequestError`.
+         * - All local VM errors should throw `LocalVmError` extended from `RequestError`.
+         *
          * In the admin console, we caught the error and recognized the error with the code `jwt_customizer.general`,
          * and then we extract and show the error message to the user.
-         *
-         * `ResponseError` comes from `@withtyped/client` and all `logto/core` API returns error in the
-         * format of `RequestError`, we manually transform it here to keep the error format consistent.
          */
         if (error instanceof ResponseError) {
-          const { code, message } = await parseCustomJwtResponseError(error);
+          const responseBody = await parseCustomJwtResponseError(error);
+          const { message, error: originalError } = responseBody;
 
-          const status = code === CustomJwtErrorCode.AccessDenied ? 403 : 422;
+          const status = isAccessDeniedError(originalError) ? 403 : 422;
 
-          throw new RequestError({ code: 'jwt_customizer.general', status }, { message, code });
+          throw new RequestError(
+            { code: 'jwt_customizer.general', status },
+            { message, error: originalError }
+          );
         }
 
         if (error instanceof ZodError) {

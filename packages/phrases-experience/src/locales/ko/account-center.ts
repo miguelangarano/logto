@@ -1,7 +1,4 @@
 const account_center = {
-  header: {
-    title: '계정 센터',
-  },
   home: {
     title: '페이지를 찾을 수 없음',
     description: '이 페이지는 사용할 수 없습니다.',
@@ -18,7 +15,7 @@ const account_center = {
   password_verification: {
     title: '비밀번호 확인',
     description: '계정 보안을 위해 비밀번호를 입력해 본인임을 확인하세요.',
-    error_failed: '인증에 실패했습니다. 비밀번호를 확인해주세요.',
+    error_failed: '비밀번호가 올바르지 않습니다. 입력 내용을 확인해주세요.',
   },
   verification_method: {
     password: {
@@ -75,6 +72,8 @@ const account_center = {
     description:
       '인증 코드가 이메일 {{email}}(으)로 전송되었습니다. 코드를 입력해 계속 진행하세요.',
     resend: '아직 받지 못하셨나요? <a>인증 코드 다시 보내기</a>',
+    not_received: '아직 받지 못하셨나요?',
+    resend_action: '인증 코드 다시 보내기',
     resend_countdown: '아직 받지 못하셨나요? {{seconds}}초 후에 다시 보낼 수 있습니다',
     error_send_failed: '인증 코드를 보내지 못했습니다. 잠시 후 다시 시도해주세요.',
     error_verify_failed: '인증에 실패했습니다. 코드를 다시 입력해주세요.',
@@ -102,7 +101,7 @@ const account_center = {
     backup_code_requires_other_mfa: '백업 코드를 사용하려면 다른 MFA 방법을 먼저 설정해야 합니다.',
     passkey_not_enabled: '패스키가 활성화되지 않았습니다. 관리자에게 도움을 요청하세요.',
     passkey_already_registered:
-      'This passkey is already registered to your account. Please use a different authenticator.',
+      '이 패스키는 이미 계정에 등록되어 있습니다. 다른 인증기를 사용해 주세요.',
   },
   update_success: {
     default: {
@@ -166,11 +165,11 @@ const account_center = {
     delete_confirmation_title: '패스키 삭제',
     delete_confirmation_description: '이 패스키를 삭제하면 더 이상 인증에 사용할 수 없습니다.',
     rename_passkey: '패스키 이름 변경',
-    rename_description: 'Enter a new name for this passkey.',
-    name_this_passkey: 'Name this device passkey',
+    rename_description: '이 패스키의 새 이름을 입력하세요.',
+    name_this_passkey: '이 기기 패스키 이름 지정',
     name_passkey_description:
-      'You have successfully verified this device for 2-step authentication. Customize the name to recognize if you have multiple keys.',
-    name_input_label: 'Name',
+      '2단계 인증을 위해 이 기기가 성공적으로 확인되었습니다. 여러 키가 있는 경우 식별할 수 있도록 이름을 사용자 지정하세요.',
+    name_input_label: '이름',
   },
 };
 

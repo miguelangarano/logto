@@ -28,6 +28,9 @@ const tenants = {
     production_description:
       'Intended for apps that are being used by end-users and may require a paid subscription.',
     tenant_info_saved: 'Tenant information saved successfully.',
+    tenant_mfa: 'Multi-factor authentication',
+    tenant_mfa_description:
+      'Require your members to set up multi-factor authentication to access this tenant.',
     enterprise_sso: 'Enterprise SSO',
     enterprise_sso_description:
       "Available on paid plans. Contact us to enable enterprise SSO so all members can sign in to the Logto Cloud Console using your organization's identity provider.",
@@ -53,6 +56,7 @@ const tenants = {
   create_modal: {
     title: 'Create tenant',
     subtitle: 'Create a new tenant that has isolated resources and users.',
+    tenant_id: 'Tenant ID',
     tenant_usage_purpose: 'What do you want to use this tenant for?',
     development_description:
       "For testing only and shouldn't be used in production. No subscription is required.",
@@ -67,6 +71,11 @@ const tenants = {
     invitation_failed:
       'Some invitation failed to send. Please try again in Settings -> Members later.',
     tenant_type_description: 'This cannot be changed after creation.',
+    tenant_id_invalid:
+      'Tenant ID can only contain lowercase letters, numbers, and hyphens, and must not exceed {{max}} characters.',
+    tenant_id_placeholder: 'Your tenant ID',
+    tenant_id_tip:
+      'Customize the Tenant ID. If left empty, Logto will generate a default ID. The Tenant ID cannot be changed after creation.',
   },
   dev_tenant_migration: {
     title: 'You can now try our Pro features for free by creating a new "Development tenant"!',

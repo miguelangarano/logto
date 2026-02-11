@@ -1,7 +1,4 @@
 const account_center = {
-  header: {
-    title: 'Hesap merkezi',
-  },
   home: {
     title: 'Sayfa bulunamadı',
     description: 'Bu sayfa kullanılamıyor.',
@@ -19,7 +16,7 @@ const account_center = {
   password_verification: {
     title: 'Parolayı doğrula',
     description: 'Hesabını korumak için kimliğini doğrula. Parolanı gir.',
-    error_failed: 'Doğrulama başarısız. Lütfen parolanı kontrol et.',
+    error_failed: 'Yanlış parola. Lütfen girişinizi kontrol edin.',
   },
   verification_method: {
     password: {
@@ -76,6 +73,8 @@ const account_center = {
     send: 'Doğrulama kodu gönder',
     description: 'Doğrulama kodu {{email}} adresine gönderildi. Devam etmek için kodu gir.',
     resend: 'Hâlâ gelmedi mi? <a>Doğrulama kodunu yeniden gönder</a>',
+    not_received: 'Hâlâ gelmedi mi?',
+    resend_action: 'Doğrulama kodunu yeniden gönder',
     resend_countdown: 'Hâlâ gelmedi mi? {{seconds}} sn sonra tekrar gönder.',
     error_send_failed: 'Doğrulama kodu gönderilemedi. Lütfen daha sonra tekrar dene.',
     error_verify_failed: 'Doğrulama başarısız. Lütfen kodu tekrar gir.',
@@ -107,7 +106,7 @@ const account_center = {
       'Yedek kodlar, önce başka bir MFA yönteminin ayarlanmasını gerektirir.',
     passkey_not_enabled: 'Passkey etkin değil. Yardım için lütfen yöneticinizle iletişime geçin.',
     passkey_already_registered:
-      'This passkey is already registered to your account. Please use a different authenticator.',
+      'Bu passkey zaten hesabınıza kayıtlı. Lütfen farklı bir kimlik doğrulayıcı kullanın.',
   },
   update_success: {
     default: {
@@ -172,11 +171,11 @@ const account_center = {
     delete_confirmation_description:
       "Bu passkey'i kaldırırsanız, onunla doğrulama yapamayacaksınız.",
     rename_passkey: "Passkey'i yeniden adlandır",
-    rename_description: 'Enter a new name for this passkey.',
-    name_this_passkey: 'Name this device passkey',
+    rename_description: 'Bu passkey için yeni bir ad girin.',
+    name_this_passkey: "Bu cihaz passkey'ini adlandır",
     name_passkey_description:
-      'You have successfully verified this device for 2-step authentication. Customize the name to recognize if you have multiple keys.',
-    name_input_label: 'Name',
+      'Bu cihazı 2 adımlı kimlik doğrulama için başarıyla doğruladınız. Birden fazla anahtarınız varsa tanımak için adı özelleştirin.',
+    name_input_label: 'Ad',
   },
 };
 

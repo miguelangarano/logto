@@ -1,13 +1,22 @@
 /* eslint-disable max-lines */
 import { appInsights } from '@logto/app-insights/node';
-import { InteractionEvent, MfaFactor, VerificationType, type User } from '@logto/schemas';
+import {
+  InteractionEvent,
+  MfaFactor,
+  VerificationType,
+  type User,
+  userPasskeySignInDataKey,
+  userMfaDataKey,
+} from '@logto/schemas';
 import { maskEmail, maskPhone } from '@logto/shared';
 import { conditional, trySafe } from '@silverhand/essentials';
 
+import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';
 import { type LogEntry } from '#src/middleware/koa-audit-log.js';
 import type TenantContext from '#src/tenants/TenantContext.js';
 import assertThat from '#src/utils/assert-that.js';
+import { buildAppInsightsTelemetry } from '#src/utils/request.js';
 
 import {
   interactionStorageGuard,
@@ -23,11 +32,12 @@ import {
   identifyUserByVerificationRecord,
   mergeUserMfaVerifications,
 } from './helpers.js';
+import { AdaptiveMfaValidator } from './libraries/adaptive-mfa-validator/index.js';
 import { CaptchaValidator } from './libraries/captcha-validator.js';
 import { MfaValidator } from './libraries/mfa-validator.js';
 import { ProvisionLibrary } from './libraries/provision-library.js';
 import { SignInExperienceValidator } from './libraries/sign-in-experience-validator.js';
-import { Mfa, userMfaDataKey } from './mfa.js';
+import { Mfa } from './mfa.js';
 import { Profile } from './profile.js';
 import { toUserSocialIdentityData } from './utils.js';
 import {
@@ -56,6 +66,7 @@ export default class ExperienceInteraction {
   /** The userId of the user for the current interaction. Only available once the user is identified. */
   private userId?: string;
   private userCache?: User;
+  private readonly adaptiveMfaValidator: AdaptiveMfaValidator;
 
   /** The captcha verification status for the current interaction. */
   private readonly captcha = {
@@ -87,6 +98,11 @@ export default class ExperienceInteraction {
 
     this.signInExperienceValidator = new SignInExperienceValidator(libraries, queries);
     this.provisionLibrary = new ProvisionLibrary(tenant, ctx);
+    this.adaptiveMfaValidator = new AdaptiveMfaValidator({
+      ctx,
+      queries,
+      signInExperienceValidator: this.signInExperienceValidator,
+    });
 
     const interactionContext: InteractionContext = {
       getInteractionEvent: () => this.#interactionEvent,
@@ -329,22 +345,30 @@ export default class ExperienceInteraction {
    *
    * @remarks
    * - EnterpriseSso verified interaction does not require MFA verification.
+   * - Users signing in with passkey does not require MFA verification.
    *
    * @throws {RequestError} with 404 if the if the user is not identified or not found
    * @throws {RequestError} with 403 if the mfa verification is required but not verified
    */
-  public async guardMfaVerificationStatus() {
-    if (this.hasVerifiedSsoIdentity) {
+  public async guardMfaVerificationStatus(log?: LogEntry) {
+    if (this.hasVerifiedSsoIdentity || this.hasVerifiedSignInWebAuthn) {
       return;
     }
 
     const user = await this.getIdentifiedUser();
     const mfaSettings = await this.signInExperienceValidator.getMfaSettings();
-    const mfaValidator = new MfaValidator(mfaSettings, user);
-    const isVerified = mfaValidator.isMfaVerified(this.verificationRecordsArray);
+    const adaptiveMfaResult = await this.adaptiveMfaValidator.getResult(user);
+    const mfaValidator = new MfaValidator(mfaSettings, user, adaptiveMfaResult);
+
+    if (adaptiveMfaResult) {
+      log?.append({ adaptiveMfaResult });
+    }
+
+    if (!mfaValidator.isMfaRequired) {
+      return;
+    }
 
     const { primaryEmail, primaryPhone } = user;
-    // Build masked identifiers for UX hints when applicable
     const maskedIdentifiers: Record<string, string> = {
       ...(mfaValidator.availableUserMfaVerificationTypes.includes(
         MfaFactor.EmailVerificationCode
@@ -359,7 +383,7 @@ export default class ExperienceInteraction {
     };
 
     assertThat(
-      isVerified,
+      mfaValidator.isMfaVerified(this.verificationRecordsArray),
       new RequestError(
         { code: 'session.mfa.require_mfa_verification', status: 403 },
         {
@@ -429,7 +453,7 @@ export default class ExperienceInteraction {
    * @throws {RequestError} with 422 if the required profile fields are missing
    **/
   // eslint-disable-next-line complexity
-  public async submit() {
+  public async submit(log?: LogEntry) {
     const {
       queries: { users: userQueries, userSsoIdentities: userSsoIdentityQueries },
       libraries: {
@@ -437,6 +461,11 @@ export default class ExperienceInteraction {
         ssoConnectors: { upsertEnterpriseSsoTokenSetSecret },
       },
     } = this.tenant;
+
+    const adaptiveMfaContext = this.adaptiveMfaValidator.getCurrentContext();
+    if (adaptiveMfaContext) {
+      log?.append({ adaptiveMfaContext });
+    }
 
     await this.guardCaptcha();
 
@@ -467,7 +496,7 @@ export default class ExperienceInteraction {
 
     // Verified, only SignIn requires MFA verification, for register, it does not make sense to verify MFA
     if (this.#interactionEvent === InteractionEvent.SignIn) {
-      await this.guardMfaVerificationStatus();
+      await this.guardMfaVerificationStatus(log);
     }
 
     // Revalidate the new profile data if any
@@ -478,6 +507,12 @@ export default class ExperienceInteraction {
       hasVerifiedSocialIdentity: this.hasVerifiedSocialIdentity,
       hasVerifiedSsoIdentity: this.hasVerifiedSsoIdentity,
     });
+
+    if (EnvSet.values.isDevFeaturesEnabled && !this.hasVerifiedSsoIdentity) {
+      // Check if passkey sign-in is enabled in the sign-in experience, if yes, check if user has `WebAuthn`
+      // type of MFA verification record in `users.mfaVerifications`. Suggest user to add a passkey if not.
+      await this.mfa.checkPasskeySignInAvailability();
+    }
 
     // Revalidate the new MFA data if any
     await this.mfa.checkAvailability();
@@ -496,7 +531,7 @@ export default class ExperienceInteraction {
       enterpriseSsoConnectorTokenSetSecret,
       ...rest
     } = this.profile.data;
-    const { mfaSkipped, mfaVerifications } = this.mfa.toUserMfaVerifications();
+    const { mfaSkipped, passkeySkipped, mfaVerifications } = this.mfa.toUserMfaVerifications();
 
     // Update user profile
     const updatedUser = await userQueries.updateUserById(user.id, {
@@ -524,6 +559,18 @@ export default class ExperienceInteraction {
           },
         }
       ),
+      ...conditional(
+        // Only persist passkey skipped status on sign-in event
+        passkeySkipped &&
+          this.#interactionEvent === InteractionEvent.SignIn && {
+            logtoConfig: {
+              ...user.logtoConfig,
+              [userPasskeySignInDataKey]: {
+                skipped: true,
+              },
+            },
+          }
+      ),
       lastSignInAt: Date.now(),
     });
 
@@ -547,14 +594,18 @@ export default class ExperienceInteraction {
       await trySafe(
         async () => upsertSocialTokenSetSecret(user.id, socialConnectorTokenSetSecret),
         (error) => {
-          void appInsights.trackException(error);
+          void appInsights.trackException(error, buildAppInsightsTelemetry(this.ctx));
         }
       );
     }
 
     // Sync enterprise sso token set secret
     if (enterpriseSsoConnectorTokenSetSecret) {
-      await upsertEnterpriseSsoTokenSetSecret(user.id, enterpriseSsoConnectorTokenSetSecret);
+      await upsertEnterpriseSsoTokenSetSecret(
+        user.id,
+        enterpriseSsoConnectorTokenSetSecret,
+        this.ctx
+      );
     }
 
     // Provision organizations for one-time token that carries organization IDs in the context.
@@ -572,6 +623,17 @@ export default class ExperienceInteraction {
       // Persist the interaction status to the OIDC session after interaction submission
       ...this.toJson(),
     });
+
+    // The geo context is only recorded when the `submit()` function succeeds.
+    // The recorded geo context will affect the evaluation results of the adaptive MFA afterwards.
+    if (EnvSet.values.isDevFeaturesEnabled) {
+      void trySafe(
+        async () => this.adaptiveMfaValidator.recordSignInGeoContext(user, this.#interactionEvent),
+        (error) => {
+          void appInsights.trackException(error, buildAppInsightsTelemetry(this.ctx));
+        }
+      );
+    }
 
     this.ctx.body = { redirectTo };
 
@@ -593,6 +655,7 @@ export default class ExperienceInteraction {
   /** Convert the current interaction to JSON, so that it can be stored as the OIDC provider interaction result */
   public toJson(): InteractionStorage {
     const { interactionEvent, userId, captcha } = this;
+    const signInContext = this.adaptiveMfaValidator.getSignInContext();
 
     return {
       interactionEvent,
@@ -601,19 +664,16 @@ export default class ExperienceInteraction {
       mfa: this.mfa.data,
       verificationRecords: this.verificationRecordsArray.map((record) => record.toJson()),
       captcha,
+      ...conditional(signInContext && { signInContext }),
     };
   }
 
   public toSanitizedJson(): SanitizedInteractionStorageData {
-    const { interactionEvent, userId, captcha } = this;
-
     return {
-      interactionEvent,
-      userId,
+      ...this.toJson(),
       profile: this.profile.sanitizedData,
       mfa: this.mfa.sanitizedData,
       verificationRecords: this.verificationRecordsArray.map((record) => record.toSanitizedJson()),
-      captcha,
     };
   }
 
@@ -674,6 +734,13 @@ export default class ExperienceInteraction {
   private get hasVerifiedSocialIdentity() {
     const socialVerificationRecord = this.verificationRecords.get(VerificationType.Social);
     return Boolean(socialVerificationRecord?.isVerified);
+  }
+
+  private get hasVerifiedSignInWebAuthn() {
+    const webAuthnVerificationRecord = this.verificationRecords.get(
+      VerificationType.SignInWebAuthn
+    );
+    return Boolean(webAuthnVerificationRecord?.isVerified);
   }
 
   /**

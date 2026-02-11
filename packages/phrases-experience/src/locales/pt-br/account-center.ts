@@ -1,7 +1,4 @@
 const account_center = {
-  header: {
-    title: 'Centro de contas',
-  },
   home: {
     title: 'Página não encontrada',
     description: 'Esta página não está disponível.',
@@ -19,7 +16,7 @@ const account_center = {
   password_verification: {
     title: 'Verificar senha',
     description: 'Para proteger sua conta, insira sua senha para confirmar sua identidade.',
-    error_failed: 'Falha na verificação. Verifique sua senha.',
+    error_failed: 'Senha incorreta. Verifique sua entrada.',
   },
   verification_method: {
     password: {
@@ -79,6 +76,8 @@ const account_center = {
     description:
       'O código de verificação foi enviado para o e-mail {{email}}. Digite o código para continuar.',
     resend: 'Ainda não recebeu? <a>Reenviar código de verificação</a>',
+    not_received: 'Ainda não recebeu?',
+    resend_action: 'Reenviar código de verificação',
     resend_countdown: 'Ainda não recebeu? Reenvie após {{seconds}} s.',
     error_send_failed: 'Falha ao enviar o código de verificação. Tente novamente mais tarde.',
     error_verify_failed: 'Falha na verificação. Digite o código novamente.',
@@ -112,7 +111,7 @@ const account_center = {
     passkey_not_enabled:
       'Passkey não está ativado. Entre em contato com seu administrador para obter ajuda.',
     passkey_already_registered:
-      'This passkey is already registered to your account. Please use a different authenticator.',
+      'Esta passkey já está registrada na sua conta. Por favor, use um autenticador diferente.',
   },
   update_success: {
     default: {
@@ -176,11 +175,11 @@ const account_center = {
     delete_confirmation_description:
       'Se você remover esta passkey, não poderá mais usá-la para verificação.',
     rename_passkey: 'Renomear passkey',
-    rename_description: 'Enter a new name for this passkey.',
-    name_this_passkey: 'Name this device passkey',
+    rename_description: 'Digite um novo nome para esta passkey.',
+    name_this_passkey: 'Nomear esta passkey do dispositivo',
     name_passkey_description:
-      'You have successfully verified this device for 2-step authentication. Customize the name to recognize if you have multiple keys.',
-    name_input_label: 'Name',
+      'Você verificou este dispositivo com sucesso para autenticação em duas etapas. Personalize o nome para reconhecê-lo se tiver várias chaves.',
+    name_input_label: 'Nome',
   },
 };
 

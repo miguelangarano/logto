@@ -31,6 +31,8 @@ import { createSignInExperienceQueries } from '#src/queries/sign-in-experience.j
 import SsoConnectorQueries from '#src/queries/sso-connectors.js';
 import { createSubjectTokenQueries } from '#src/queries/subject-token.js';
 import createTenantQueries from '#src/queries/tenant.js';
+import { createUserGeoLocationQueries } from '#src/queries/user-geo-location.js';
+import { createUserSignInCountriesQueries } from '#src/queries/user-sign-in-countries.js';
 import UserSsoIdentityQueries from '#src/queries/user-sso-identities.js';
 import { createUserQueries } from '#src/queries/user.js';
 import { createUsersRolesQueries } from '#src/queries/users-roles.js';
@@ -59,7 +61,7 @@ export default class Queries {
   rolesScopes = createRolesScopesQueries(this.pool);
   roles = createRolesQueries(this.pool);
   scopes = createScopeQueries(this.pool);
-  logtoConfigs = createLogtoConfigQueries(this.pool);
+  logtoConfigs = createLogtoConfigQueries(this.pool, this.wellKnownCache);
   signInExperiences = createSignInExperienceQueries(this.pool, this.wellKnownCache);
   users = createUserQueries(this.pool);
   usersRoles = createUsersRolesQueries(this.pool);
@@ -73,6 +75,8 @@ export default class Queries {
   organizations = new OrganizationQueries(this.pool);
   ssoConnectors = new SsoConnectorQueries(this.pool);
   userSsoIdentities = new UserSsoIdentityQueries(this.pool);
+  userSignInCountries = createUserSignInCountriesQueries(this.pool);
+  userGeoLocations = createUserGeoLocationQueries(this.pool);
   subjectTokens = createSubjectTokenQueries(this.pool);
   samlApplicationSecrets = createSamlApplicationSecretsQueries(this.pool);
   samlApplicationConfigs = createSamlApplicationConfigQueries(this.pool);

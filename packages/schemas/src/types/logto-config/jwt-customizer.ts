@@ -2,6 +2,8 @@ import { jsonGuard, jsonObjectGuard, socialUserInfoGuard } from '@logto/connecto
 import { type ZodType, z } from 'zod';
 
 import {
+  Applications,
+  type Application,
   Organizations,
   type Organization,
   type Role,
@@ -25,7 +27,10 @@ import { oneTimeTokenVerificationRecordDataGuard } from '../verification-records
 import { passwordVerificationRecordDataGuard } from '../verification-records/password-verification.js';
 import { socialVerificationRecordDataGuard } from '../verification-records/social-verification.js';
 import { totpVerificationRecordDataGuard } from '../verification-records/totp-verification.js';
-import { webAuthnVerificationRecordDataGuard } from '../verification-records/web-authn-verification.js';
+import {
+  webAuthnVerificationRecordDataGuard,
+  signInWebAuthnVerificationRecordDataGuard,
+} from '../verification-records/web-authn-verification.js';
 
 import { accessTokenPayloadGuard, clientCredentialsPayloadGuard } from './oidc-provider.js';
 
@@ -120,6 +125,12 @@ const jwtCustomizerUserInteractionVerificationRecordGuard = z.discriminatedUnion
     authenticationChallenge: true,
     registrationInfo: true,
   }),
+  signInWebAuthnVerificationRecordDataGuard.omit({
+    registrationChallenge: true,
+    authenticationChallenge: true,
+    registrationInfo: true,
+    authenticationRpId: true,
+  }),
   oneTimeTokenVerificationRecordDataGuard,
   newPasswordIdentityVerificationRecordDataGuard.omit({
     passwordEncrypted: true,
@@ -131,11 +142,18 @@ export const jwtCustomizerUserInteractionContextGuard = z.object({
   interactionEvent: z.nativeEnum(InteractionEvent),
   userId: z.string(),
   verificationRecords: jwtCustomizerUserInteractionVerificationRecordGuard.array(),
+  signInContext: z.record(z.string(), z.string()).optional(),
 });
 
 export type JwtCustomizerUserInteractionContext = z.infer<
   typeof jwtCustomizerUserInteractionContextGuard
 >;
+
+export type JwtCustomizerApplicationContext = Omit<Application, 'secret'>;
+
+export const jwtCustomizerApplicationContextGuard = Applications.guard.omit({
+  secret: true,
+});
 
 export const accessTokenJwtCustomizerGuard = jwtCustomizerGuard
   .extend({
@@ -146,6 +164,7 @@ export const accessTokenJwtCustomizerGuard = jwtCustomizerGuard
         user: jwtCustomizerUserContextGuard.partial(),
         grant: jwtCustomizerGrantContextGuard.partial().optional(),
         interaction: jwtCustomizerUserInteractionContextGuard.partial().optional(),
+        application: jwtCustomizerApplicationContextGuard.partial().optional(),
       })
       .optional(),
   })
@@ -157,6 +176,11 @@ export const clientCredentialsJwtCustomizerGuard = jwtCustomizerGuard
   .extend({
     // Use partial token guard since users customization may not rely on all fields.
     tokenSample: clientCredentialsPayloadGuard.partial().optional(),
+    contextSample: z
+      .object({
+        application: jwtCustomizerApplicationContextGuard.partial(),
+      })
+      .optional(),
   })
   .strict();
 
@@ -180,6 +204,7 @@ export const jwtCustomizerTestRequestBodyGuard = z.discriminatedUnion('tokenType
     tokenType: z.literal(LogtoJwtTokenKeyType.ClientCredentials),
     ...clientCredentialsJwtCustomizerGuard.pick({ environmentVariables: true, script: true }).shape,
     token: clientCredentialsJwtCustomizerGuard.required().shape.tokenSample,
+    context: clientCredentialsJwtCustomizerGuard.required().shape.contextSample,
   }),
 ]);
 
@@ -204,6 +229,7 @@ export const customJwtFetcherGuard = z.discriminatedUnion('tokenType', [
   }),
   commonJwtCustomizerGuard.extend({
     tokenType: z.literal(LogtoJwtTokenKeyType.ClientCredentials),
+    context: jsonObjectGuard,
   }),
 ]);
 

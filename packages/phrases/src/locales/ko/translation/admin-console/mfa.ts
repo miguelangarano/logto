@@ -4,9 +4,9 @@ const mfa = {
   factors: '요소',
   multi_factors: '다중 요소',
   multi_factors_description: '사용자는 2단계 인증을 위해 활성화된 요소 중 하나를 확인해야 합니다.',
-  totp: '인증기 앱 OTP',
+  totp: '인증기 앱',
   otp_description: 'Google Authenticator 등을 연결하여 일회용 암호를 확인합니다.',
-  webauthn: 'WebAuthn(패스키)',
+  webauthn: 'Passkeys',
   webauthn_description:
     '브라우저에서 지원하는 방법으로 확인합니다: 생체 인식, 휴대폰 스캔 또는 보안 키 등.',
   webauthn_native_tip: '네이티브 애플리케이션에서는 WebAuthn이 지원되지 않습니다.',
@@ -34,6 +34,11 @@ const mfa = {
   require_mfa: 'MFA 필요',
   require_mfa_label:
     '애플리케이션에 액세스하기 위해 2단계 인증을 필수로 만들려면 이것을 활성화하세요. 비활성화하면 사용자가 스스로 MFA 사용 여부를 결정할 수 있습니다.',
+  require_mfa_optional:
+    '선택형 MFA: 사용자가 자신의 계정 보안을 위해 MFA 활성화를 선택할 수 있습니다',
+  require_mfa_adaptive:
+    '적응형 MFA: 로그인에 위험 신호가 있을 때만 MFA를 요청합니다 (예: 새 기기/위치)',
+  require_mfa_mandatory: '필수 MFA: 모든 사용자가 로그인할 때마다 MFA를 완료해야 합니다',
   set_up_prompt: 'MFA 설정 프롬프트',
   no_prompt: '사용자에게 MFA 설정을 요청하지 않습니다',
   prompt_at_sign_in_and_sign_up:

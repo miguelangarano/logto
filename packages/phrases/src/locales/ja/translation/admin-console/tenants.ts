@@ -28,6 +28,9 @@ const tenants = {
     production_description:
       'エンドユーザーに使用することを意図しており、有料のサブスクリプションが必要なアプリ向け。',
     tenant_info_saved: 'テナント情報は正常に保存されました。',
+    tenant_mfa: '多要素認証',
+    tenant_mfa_description:
+      'メンバーがこのテナントにアクセスするために多要素認証を設定することを要求します。',
     enterprise_sso: 'エンタープライズ SSO',
     enterprise_sso_description:
       '有料プランで利用可能です。お問い合わせいただくと、すべてのメンバーが組織のアイデンティティプロバイダーを使用して Logto Cloud コンソールにサインインできるようになります。',
@@ -54,6 +57,7 @@ const tenants = {
   create_modal: {
     title: 'テナントを作成する',
     subtitle: '隔離されたリソースとユーザーを持つ新しいテナントを作成します。',
+    tenant_id: 'テナントID',
     tenant_usage_purpose: 'このテナントを使用する目的は何ですか？',
     development_description:
       'テスト用であり、本番で使用すべきではありません。サブスクリプションは必要ありません。',
@@ -68,6 +72,11 @@ const tenants = {
     invitation_failed:
       '一部の招待を送信できませんでした。後で設定 -> メンバーで再試行してください。',
     tenant_type_description: '作成後に変更することはできません。',
+    tenant_id_invalid:
+      'テナントIDには小文字、数字、ハイフンのみ使用でき、{{max}}文字を超えることはできません。',
+    tenant_id_placeholder: 'テナントID',
+    tenant_id_tip:
+      'テナントIDをカスタマイズします。空のままにすると、Logtoがデフォルトのidを生成します。テナントIDは作成後に変更できません。',
   },
   dev_tenant_migration: {
     title: '新しい「開発テナント」を作成して、プロの機能を無料でお試しできます！',

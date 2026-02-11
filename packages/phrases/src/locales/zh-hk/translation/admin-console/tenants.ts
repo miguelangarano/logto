@@ -26,6 +26,8 @@ const tenants = {
       '僅供測試使用，不應在生產中使用。無需訂閱。它具有所有專業功能，但存在限制，例如登錄橫幅。',
     production_description: '用於最終用戶使用並可能需要付費訂閱。',
     tenant_info_saved: '租戶信息成功保存。',
+    tenant_mfa: '多因素認證',
+    tenant_mfa_description: '要求成員設置多因素認證才能訪問此租戶。',
     enterprise_sso: '企業 SSO',
     enterprise_sso_description:
       '僅限付費計劃。聯繫我們啟用企業 SSO，讓所有成員可以使用您組織的身份提供商登錄 Logto Cloud 控制台。',
@@ -49,6 +51,7 @@ const tenants = {
   create_modal: {
     title: '創建租戶',
     subtitle: '創建一個擁有獨立資源和用戶的新租戶。',
+    tenant_id: '租戶ID',
     tenant_usage_purpose: '你希望使用此租戶做什麼？',
     development_description: '僅供測試使用，不應在生產中使用。無需訂閱。',
     development_description_for_private_regions: '僅供測試使用，不應在生產中使用。',
@@ -60,6 +63,9 @@ const tenants = {
     tenant_created: '租戶創建成功。',
     invitation_failed: '部分邀請發送失敗。請稍後在設定 -> 成員中再試。',
     tenant_type_description: '這無法在創建後更改。',
+    tenant_id_invalid: '租戶 ID 只能包含小寫字母、數字和連字符，且不能超過 {{max}} 個字符。',
+    tenant_id_placeholder: '你的租戶 ID',
+    tenant_id_tip: '自訂租戶 ID。如果留空，Logto 將產生預設 ID。租戶 ID 在建立後無法更改。',
   },
   dev_tenant_migration: {
     title: '現在，你可以通過創建新的“開發租戶”免費試用我們的專業功能！',

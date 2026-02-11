@@ -1,5 +1,5 @@
 import LogtoSignature from '@experience/shared/components/LogtoSignature';
-import { LogtoProvider, Prompt, useLogto, UserScope } from '@logto/react';
+import { LogtoProvider, Prompt, ReservedScope, useLogto, UserScope } from '@logto/react';
 import { accountCenterApplicationId, SignInIdentifier } from '@logto/schemas';
 import { useContext, useEffect } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
@@ -13,7 +13,7 @@ import ErrorBoundary from './Providers/AppBoundary/ErrorBoundary';
 import LogtoErrorBoundary from './Providers/AppBoundary/LogtoErrorBoundary';
 import PageContextProvider from './Providers/PageContextProvider';
 import PageContext from './Providers/PageContextProvider/PageContext';
-import BrandingHeader from './components/BrandingHeader';
+import GlobalLoading from './components/GlobalLoading';
 import {
   emailRoute,
   emailSuccessRoute,
@@ -56,9 +56,9 @@ const redirectUri = `${window.location.origin}${accountCenterBasePath}`;
 const Main = () => {
   const params = new URLSearchParams(window.location.search);
   const isInCallback = Boolean(params.get('code'));
-  const expectedUserId = params.get('user_id');
   const { isAuthenticated, isLoading, signIn } = useLogto();
-  const { isLoadingExperience, userInfo } = useContext(PageContext);
+  const { isLoadingExperience, isLoadingUserInfo, userInfo, userInfoError } =
+    useContext(PageContext);
   const isInitialAuthLoading = !isAuthenticated && isLoading;
 
   useEffect(() => {
@@ -71,28 +71,32 @@ const Main = () => {
     }
   }, [isAuthenticated, isInCallback, isInitialAuthLoading, signIn]);
 
-  // Check if the current user matches the expected user ID from URL parameter
   useEffect(() => {
-    if (!isAuthenticated || !userInfo?.id || !expectedUserId) {
+    if (isInCallback || isInitialAuthLoading || !isAuthenticated || isLoadingUserInfo) {
       return;
     }
 
-    // If user ID doesn't match, force re-login
-    if (userInfo.id !== expectedUserId) {
+    if (userInfoError) {
       void signIn({ redirectUri, prompt: Prompt.Login });
     }
-  }, [expectedUserId, isAuthenticated, signIn, userInfo?.id]);
-
+  }, [
+    isAuthenticated,
+    isInCallback,
+    isInitialAuthLoading,
+    isLoadingUserInfo,
+    signIn,
+    userInfoError,
+  ]);
   if (isInCallback) {
     return <Callback />;
   }
 
-  if (isInitialAuthLoading || isLoadingExperience) {
-    return <div className={styles.status}>Loading…</div>;
+  if (isInitialAuthLoading || isLoadingExperience || isLoadingUserInfo) {
+    return <GlobalLoading />;
   }
 
-  if (!isAuthenticated) {
-    return <div className={styles.status}>Redirecting to sign in…</div>;
+  if (!userInfo) {
+    return <GlobalLoading />;
   }
 
   return (
@@ -141,7 +145,6 @@ const Layout = () => {
 
   return (
     <div className={styles.app}>
-      <BrandingHeader />
       <div className={styles.layout}>
         <div className={styles.container}>
           <main className={styles.main}>
@@ -164,7 +167,14 @@ const App = () => (
       config={{
         endpoint: window.location.origin,
         appId: accountCenterApplicationId,
-        scopes: [UserScope.Profile, UserScope.Email, UserScope.Phone, UserScope.Identities],
+        includeReservedScopes: false,
+        scopes: [
+          ReservedScope.OpenId,
+          UserScope.Profile,
+          UserScope.Email,
+          UserScope.Phone,
+          UserScope.Identities,
+        ],
       }}
     >
       <LoadingContextProvider>

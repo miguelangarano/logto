@@ -1,18 +1,29 @@
 const jwt_claims = {
   title: 'Custom JWT',
   description:
-    'Set up custom claims in the access token. These claims can be used to pass additional information to your application.',
+    'Customize access token or ID token, providing extra information to your application.',
+  access_token: {
+    card_title: 'Access token',
+    card_description:
+      'Access token is the credential used by APIs to authorize requests, containing only the necessary claims for access decisions.',
+  },
   user_jwt: {
-    card_title: 'For user',
     card_field: 'User access token',
     card_description: 'Add user-specific data during access token issuance.',
     for: 'for user',
   },
   machine_to_machine_jwt: {
-    card_title: 'For M2M',
-    card_field: 'Machine-to-machine token',
+    card_field: 'Machine-to-machine access token',
     card_description: 'Add extra data during machine-to-machine token issuance.',
     for: 'for M2M',
+  },
+  id_token: {
+    card_title: 'ID token',
+    card_description:
+      'ID token is an identity assertion received after sign-in, containing user identity claims for the client to use for display or session creation.',
+    card_field: 'User ID token',
+    card_field_description:
+      "Claims 'sub', 'email', 'phone', 'profile', and 'address' are always available. Other claims must be enabled here first. In all cases, your app must request the matching scopes during integration to receive them.",
   },
   code_editor_title: 'Customize the {{token}} claims',
   custom_jwt_create_button: 'Add custom claims',
@@ -39,6 +50,11 @@ const jwt_claims = {
     title: 'User interaction context',
     subtitle:
       "Use the `context.interaction` parameter to access the user's interaction details for the current authentication session, including `interactionEvent`, `userId`, and `verificationRecords`.",
+  },
+  application_data: {
+    title: 'Application context',
+    subtitle:
+      'Use `context.application` input parameter to provide the application info associated with the token.',
   },
   token_data: {
     title: 'Token payload',

@@ -30,6 +30,9 @@ const tenants = {
     production_description:
       'Przeznaczony dla aplikacji używanych przez użytkowników końcowych i może wymagać płatnej subskrypcji.',
     tenant_info_saved: 'Informacje o najemcy zostały pomyślnie zapisane.',
+    tenant_mfa: 'Uwierzytelnianie wieloskładnikowe',
+    tenant_mfa_description:
+      'Wymagaj od członków skonfigurowania uwierzytelniania wieloskładnikowego, aby uzyskać dostęp do tego najemcy.',
     enterprise_sso: 'Enterprise SSO',
     enterprise_sso_description:
       'Dostępne w płatnych planach. Skontaktuj się z nami, aby włączyć Enterprise SSO, dzięki czemu wszyscy członkowie będą mogli logować się do konsoli Logto Cloud za pomocą dostawcy tożsamości Twojej organizacji.',
@@ -56,6 +59,7 @@ const tenants = {
   create_modal: {
     title: 'Utwórz nowego najemcę',
     subtitle: 'Utwórz nowego najemcę z izolowanymi zasobami i użytkownikami.',
+    tenant_id: 'ID Najemcy',
     tenant_usage_purpose: 'Co chcesz zrobić z tym najemcą?',
     development_description:
       'Wyłącznie do testów i nie powinien być używany w produkcji. Nie jest wymagana subskrypcja.',
@@ -72,6 +76,11 @@ const tenants = {
     invitation_failed:
       'Niektóre zaproszenia nie udało się wysłać. Spróbuj ponownie później w Ustawienia -> Członkowie.',
     tenant_type_description: 'Tego nie można zmienić po utworzeniu.',
+    tenant_id_invalid:
+      'Identyfikator najemcy może zawierać tylko małe litery, cyfry i myślniki oraz nie może przekraczać {{max}} znaków.',
+    tenant_id_placeholder: 'Identyfikator najemcy',
+    tenant_id_tip:
+      'Dostosuj identyfikator najemcy. Jeśli pozostawisz puste, Logto wygeneruje domyślny identyfikator. Identyfikator najemcy nie może zostać zmieniony po utworzeniu.',
   },
   dev_tenant_migration: {
     title:

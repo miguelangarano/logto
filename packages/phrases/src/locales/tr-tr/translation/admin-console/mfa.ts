@@ -6,15 +6,15 @@ const mfa = {
   multi_factors: 'Çoklu faktörler',
   multi_factors_description:
     'Kullanıcılar, 2 aşamalı doğrulama için etkinleştirilmiş faktörlerden birini doğrulamalıdır.',
-  totp: 'Authenticator uygulama OTP',
+  totp: 'Authenticator uygulaması',
   otp_description: 'Google Authenticator vb. bağlayarak tek kullanımlık şifreleri doğrulamak için.',
-  webauthn: 'WebAuthn (Pas anahtarı)',
+  webauthn: 'Passkeys',
   webauthn_description:
     'Tarayıcı tarafından desteklenen yöntemle doğrulama yapın: biyometri, telefon tarama veya güvenlik anahtarı vb.',
   webauthn_native_tip: 'WebAuthn, Native uygulamalar için desteklenmiyor.',
   webauthn_domain_tip:
     'WebAuthn, genel anahtarları belirli bir alanla ilişkilendirir. Hizmet alanınızı değiştirmek, kullanıcıların mevcut geçiş anahtarları aracılığıyla kimlik doğrulamasını engeller.',
-  backup_code: 'Yedek kod',
+  backup_code: 'Yedek kodlar',
   backup_code_description:
     'Kullanıcılar herhangi bir MFA yöntemini ayarladıktan sonra 10 tek kullanımlık yedek kod üretir.',
   backup_code_setup_hint:
@@ -40,6 +40,12 @@ const mfa = {
   require_mfa: 'MFA Gerektir',
   require_mfa_label:
     "Uygulamalarınıza erişim için 2 aşamalı doğrulamayı zorunlu hale getirmek üzere bunu etkinleştirin. Eğer devre dışıysa, kullanıcılar MFA'yı kendileri için etkinleştirip etkinleştirmemeye karar verebilir.",
+  require_mfa_optional:
+    "İsteğe bağlı MFA: Kullanıcıların kendi hesap güvenlikleri için MFA'yı etkinleştirmeyi seçmelerine izin verin",
+  require_mfa_adaptive:
+    'Uyarlanabilir MFA: Yalnızca oturum açma riskli göründüğünde (ör. yeni cihaz / konum) MFA isteyin',
+  require_mfa_mandatory:
+    "Zorunlu MFA: Tüm kullanıcıların her oturum açışlarında MFA'yı tamamlamasını gerektirir",
   set_up_prompt: 'MFA kurulum istemi',
   no_prompt: 'Kullanıcılardan MFA kurmalarını istemeyin',
   prompt_at_sign_in_and_sign_up:

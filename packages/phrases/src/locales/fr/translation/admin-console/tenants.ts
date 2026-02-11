@@ -30,6 +30,9 @@ const tenants = {
     production_description:
       'Destiné aux applications utilisées par les utilisateurs finaux et pouvant nécessiter une souscription payante.',
     tenant_info_saved: 'Les informations du locataire ont été enregistrées avec succès.',
+    tenant_mfa: 'Authentification multi-facteurs',
+    tenant_mfa_description:
+      "Exiger que vos membres configurent l'authentification multi-facteurs pour accéder à ce locataire.",
     enterprise_sso: 'Enterprise SSO',
     enterprise_sso_description:
       "Disponible sur les plans payants. Contactez-nous pour activer Enterprise SSO afin que tous les membres puissent se connecter à la console Logto Cloud en utilisant le fournisseur d'identité de votre organisation.",
@@ -56,6 +59,7 @@ const tenants = {
   create_modal: {
     title: 'Créer un locataire',
     subtitle: "Créer un nouveau locataire qui dispose de ressources et d'utilisateurs isolés.",
+    tenant_id: 'ID du locataire',
     tenant_usage_purpose: 'Dans quel but souhaitez-vous utiliser ce locataire?',
     development_description:
       "Uniquement pour les tests et ne devrait pas être utilisé en production. Aucune souscription n'est requise.",
@@ -72,6 +76,11 @@ const tenants = {
     invitation_failed:
       "Certaines invitations n'ont pas pu être envoyées. Veuillez réessayer plus tard dans Paramètres -> Membres.",
     tenant_type_description: 'Cela ne peut pas être changé après la création.',
+    tenant_id_invalid:
+      "L'identifiant du locataire ne peut contenir que des lettres minuscules, des chiffres et des tirets, et ne doit pas dépasser {{max}} caractères.",
+    tenant_id_placeholder: 'Votre identifiant de locataire',
+    tenant_id_tip:
+      "Personnalisez l'identifiant du locataire. Si laissé vide, Logto générera un identifiant par défaut. L'identifiant du locataire ne peut pas être modifié après la création.",
   },
   dev_tenant_migration: {
     title:

@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import {
   createDefaultAdminConsoleConfig,
+  createDefaultIdTokenConfig,
   defaultTenantId,
   adminTenantId,
   defaultManagementApi,
@@ -201,15 +202,15 @@ export const seedTables = async (
     connection.query(
       insertInto(createDefaultAdminConsoleConfig(adminTenantId), LogtoConfigs.table)
     ),
+    connection.query(insertInto(createDefaultIdTokenConfig(defaultTenantId), LogtoConfigs.table)),
+    connection.query(insertInto(createDefaultIdTokenConfig(adminTenantId), LogtoConfigs.table)),
     connection.query(
       insertInto(createDefaultSignInExperience(defaultTenantId, isCloud), SignInExperiences.table)
     ),
     connection.query(insertInto(createAdminTenantSignInExperience(), SignInExperiences.table)),
     connection.query(insertInto(createDefaultAdminConsoleApplication(), Applications.table)),
     connection.query(insertInto(createDefaultAccountCenter(defaultTenantId), AccountCenters.table)),
-    connection.query(
-      insertInto(createAdminTenantAccountCenter(adminTenantId), AccountCenters.table)
-    ),
+    connection.query(insertInto(createAdminTenantAccountCenter(), AccountCenters.table)),
   ]);
 
   // The below seed data is for the Logto Cloud only. We put it here for the sake of simplicity.

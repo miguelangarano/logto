@@ -1,7 +1,4 @@
 const account_center = {
-  header: {
-    title: 'ศูนย์บัญชี',
-  },
   home: {
     title: 'ไม่พบหน้าเว็บ',
     description: 'ไม่สามารถใช้หน้านี้ได้',
@@ -19,7 +16,7 @@ const account_center = {
   password_verification: {
     title: 'ยืนยันรหัสผ่าน',
     description: 'เพื่อปกป้องบัญชี กรุณากรอกรหัสผ่านเพื่อยืนยันตัวตน',
-    error_failed: 'การยืนยันล้มเหลว โปรดตรวจสอบรหัสผ่านของคุณ',
+    error_failed: 'รหัสผ่านไม่ถูกต้อง โปรดตรวจสอบข้อมูลที่ป้อน',
   },
   verification_method: {
     password: {
@@ -76,6 +73,8 @@ const account_center = {
     send: 'ส่งรหัสยืนยัน',
     description: 'ได้ส่งรหัสยืนยันไปยังอีเมล {{email}} แล้ว กรุณากรอกรหัสเพื่อดำเนินการต่อ',
     resend: 'ยังไม่ได้รับใช่ไหม? <a>ส่งรหัสยืนยันอีกครั้ง</a>',
+    not_received: 'ยังไม่ได้รับใช่ไหม?',
+    resend_action: 'ส่งรหัสยืนยันอีกครั้ง',
     resend_countdown: 'ยังไม่ได้รับใช่ไหม? ส่งใหม่ได้หลัง {{seconds}} วินาที',
     error_send_failed: 'ส่งรหัสยืนยันไม่สำเร็จ โปรดลองอีกครั้งในภายหลัง',
     error_verify_failed: 'ยืนยันไม่สำเร็จ กรุณากรอกรหัสอีกครั้ง',
@@ -102,8 +101,7 @@ const account_center = {
     backup_code_not_enabled: 'รหัสสำรองไม่ได้เปิดใช้งาน กรุณาติดต่อผู้ดูแลระบบเพื่อขอความช่วยเหลือ',
     backup_code_requires_other_mfa: 'รหัสสำรองต้องมีการตั้งค่าวิธี MFA อื่นก่อน',
     passkey_not_enabled: 'Passkey ไม่ได้เปิดใช้งาน กรุณาติดต่อผู้ดูแลระบบเพื่อขอความช่วยเหลือ',
-    passkey_already_registered:
-      'This passkey is already registered to your account. Please use a different authenticator.',
+    passkey_already_registered: 'Passkey นี้ลงทะเบียนกับบัญชีของคุณแล้ว กรุณาใช้ตัวยืนยันตัวตนอื่น',
   },
   update_success: {
     default: {
@@ -167,11 +165,11 @@ const account_center = {
     delete_confirmation_title: 'ลบ Passkey ของคุณ',
     delete_confirmation_description: 'หากคุณลบ Passkey นี้ คุณจะไม่สามารถใช้เพื่อยืนยันตัวตนได้',
     rename_passkey: 'เปลี่ยนชื่อ Passkey',
-    rename_description: 'Enter a new name for this passkey.',
-    name_this_passkey: 'Name this device passkey',
+    rename_description: 'ป้อนชื่อใหม่สำหรับ Passkey นี้',
+    name_this_passkey: 'ตั้งชื่อ Passkey ของอุปกรณ์นี้',
     name_passkey_description:
-      'You have successfully verified this device for 2-step authentication. Customize the name to recognize if you have multiple keys.',
-    name_input_label: 'Name',
+      'คุณยืนยันอุปกรณ์นี้สำหรับการยืนยันตัวตนแบบ 2 ขั้นตอนสำเร็จแล้ว ปรับแต่งชื่อเพื่อให้จดจำได้หากคุณมีหลายคีย์',
+    name_input_label: 'ชื่อ',
   },
 };
 

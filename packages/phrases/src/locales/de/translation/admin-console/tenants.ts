@@ -30,6 +30,9 @@ const tenants = {
     production_description:
       'Vorgesehen für Apps, die von Endbenutzern verwendet werden und möglicherweise ein kostenpflichtiges Abonnement erfordern.',
     tenant_info_saved: 'Mieterinformationen erfolgreich gespeichert.',
+    tenant_mfa: 'Multi-Faktor-Authentifizierung',
+    tenant_mfa_description:
+      'Verlangen Sie von Ihren Mitgliedern, dass sie die Multi-Faktor-Authentifizierung einrichten, um auf diesen Mandanten zuzugreifen.',
     enterprise_sso: 'Enterprise SSO',
     enterprise_sso_description:
       'Verfügbar in kostenpflichtigen Plänen. Kontaktieren Sie uns, um Enterprise SSO zu aktivieren, damit alle Mitglieder sich mit dem Identitätsanbieter Ihrer Organisation bei der Logto Cloud Console anmelden können.',
@@ -56,6 +59,7 @@ const tenants = {
   create_modal: {
     title: 'Mieter erstellen',
     subtitle: 'Erstellen Sie einen neuen Mandanten, der isolierte Ressourcen und Benutzer hat.',
+    tenant_id: 'Mieter-ID',
     tenant_usage_purpose: 'Wofür möchten Sie diesen Mieter verwenden?',
     development_description:
       'Nur für Tests und sollte nicht in der Produktion verwendet werden. Es ist kein Abonnement erforderlich.',
@@ -72,6 +76,11 @@ const tenants = {
     invitation_failed:
       'Einige Einladungen konnten nicht gesendet werden. Bitte versuchen Sie es später erneut unter Einstellungen -> Mitglieder.',
     tenant_type_description: 'Dies kann nach Erstellung nicht geändert werden.',
+    tenant_id_invalid:
+      'Die Mandanten-ID darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten und darf {{max}} Zeichen nicht überschreiten.',
+    tenant_id_placeholder: 'Ihre Mandanten-ID',
+    tenant_id_tip:
+      'Passen Sie die Mandanten-ID an. Wenn leer gelassen, generiert Logto eine Standard-ID. Die Mandanten-ID kann nach der Erstellung nicht geändert werden.',
   },
   dev_tenant_migration: {
     title:

@@ -1,20 +1,31 @@
 const jwt_claims = {
   title: 'JWT personnalisé',
   description:
-    "Configurer des revendications JWT personnalisées à inclure dans le jeton d'accès. Ces revendications peuvent être utilisées pour transmettre des informations supplémentaires à votre application.",
+    "Personnalisez le jeton d'accès ou le jeton d'identité, fournissant des informations supplémentaires à votre application.",
+  access_token: {
+    card_title: "Jeton d'accès",
+    card_description:
+      "Le jeton d'accès est l'identifiant utilisé par les API pour autoriser les demandes, contenant uniquement les revendications nécessaires aux décisions d'accès.",
+  },
   user_jwt: {
-    card_title: "Pour l'utilisateur",
     card_field: "Jeton d'accès utilisateur",
     card_description:
       "Ajouter des données spécifiques à l'utilisateur lors de l'émission du jeton d'accès.",
     for: "pour l'utilisateur",
   },
   machine_to_machine_jwt: {
-    card_title: 'Pour M2M',
-    card_field: 'Jeton machine-à-machine',
+    card_field: "Jeton d'accès machine-à-machine",
     card_description:
       "Ajouter des données supplémentaires lors de l'émission du jeton machine-à-machine.",
     for: 'pour M2M',
+  },
+  id_token: {
+    card_title: "Jeton d'identité",
+    card_description:
+      "Le jeton d'identité est une assertion d'identité reçue après la connexion, contenant des revendications d'identité utilisateur pour que le client les utilise pour l'affichage ou la création de session.",
+    card_field: "Jeton d'identité utilisateur",
+    card_field_description:
+      "Les revendications 'sub', 'email', 'phone', 'profile' et 'address' sont toujours disponibles. Les autres revendications doivent d'abord être activées ici. Dans tous les cas, votre application doit demander les scopes correspondants lors de l'intégration pour les recevoir.",
   },
   code_editor_title: 'Personnalisez les revendications {{token}}',
   custom_jwt_create_button: 'Ajouter des revendications personnalisées',
@@ -43,6 +54,11 @@ const jwt_claims = {
     title: "Contexte d'interaction utilisateur",
     subtitle:
       "Utilisez le paramètre `context.interaction` pour accéder aux détails de l'interaction de l'utilisateur pour la session d'authentification en cours, y compris `interactionEvent`, `userId` et `verificationRecords`.",
+  },
+  application_data: {
+    title: "Contexte de l'application",
+    subtitle:
+      "Utilisez le paramètre d'entrée `context.application` pour fournir les informations d'application associées au jeton.",
   },
   token_data: {
     title: 'Données du jeton',

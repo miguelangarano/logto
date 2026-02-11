@@ -1,20 +1,31 @@
 const jwt_claims = {
   title: 'Benutzerdefiniertes JWT',
   description:
-    'Legen Sie benutzerdefinierte JWT-Ansprüche fest, die im Zugriffstoken enthalten sein sollen. Diese Ansprüche können verwendet werden, um zusätzliche Informationen an Ihre Anwendung zu übergeben.',
+    'Passen Sie Zugriffstoken oder ID-Token an und stellen Sie Ihrer Anwendung zusätzliche Informationen zur Verfügung.',
+  access_token: {
+    card_title: 'Zugriffstoken',
+    card_description:
+      'Das Zugriffstoken ist die von APIs zur Autorisierung von Anfragen verwendete Berechtigung und enthält nur die für Zugriffsentscheidungen erforderlichen Ansprüche.',
+  },
   user_jwt: {
-    card_title: 'Für Benutzer',
     card_field: 'Benutzerzugriffstoken',
     card_description:
       'Fügen Sie benutzerspezifische Daten während der Ausstellung des Zugriffstokens hinzu.',
     for: 'für Benutzer',
   },
   machine_to_machine_jwt: {
-    card_title: 'Für M2M',
-    card_field: 'Maschine-zu-Maschine-Token',
+    card_field: 'Maschine-zu-Maschine-Zugriffstoken',
     card_description:
       'Fügen Sie zusätzliche Daten während der Ausstellung des Maschine-zu-Maschine-Tokens hinzu.',
     for: 'für M2M',
+  },
+  id_token: {
+    card_title: 'ID-Token',
+    card_description:
+      'Das ID-Token ist eine Identitätsaussage, die nach der Anmeldung empfangen wird und Benutzeridentitätsansprüche enthält, die der Client zur Anzeige oder Sitzungserstellung verwenden kann.',
+    card_field: 'Benutzer-ID-Token',
+    card_field_description:
+      "Die Ansprüche 'sub', 'email', 'phone', 'profile' und 'address' sind immer verfügbar. Andere Ansprüche müssen hier zuerst aktiviert werden. In allen Fällen muss Ihre App die entsprechenden Scopes bei der Integration anfordern, um sie zu erhalten.",
   },
   code_editor_title: 'Passen Sie die {{token}}-Ansprüche an',
   custom_jwt_create_button: 'Benutzerdefinierte Ansprüche hinzufügen',
@@ -44,6 +55,11 @@ const jwt_claims = {
     title: 'Benutzerinteraktionskontext',
     subtitle:
       'Verwenden Sie den Parameter `context.interaction`, um auf die Interaktionsdetails des Benutzers der aktuellen Authentifizierungssitzung zuzugreifen, einschließlich `interactionEvent`, `userId` und `verificationRecords`.',
+  },
+  application_data: {
+    title: 'Anwendungskontext',
+    subtitle:
+      'Verwenden Sie den Eingabeparameter `context.application`, um Anwendungsinformationen bereitzustellen, die dem Token zugeordnet sind.',
   },
   token_data: {
     title: 'Token-Daten',

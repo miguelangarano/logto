@@ -31,6 +31,9 @@ const tenants = {
     production_description:
       'Destinato alle app utilizzate dagli utenti finali e potrebbe richiedere un abbonamento a pagamento.',
     tenant_info_saved: "Le informazioni dell'inquilino sono state salvate correttamente.",
+    tenant_mfa: 'Autenticazione a più fattori',
+    tenant_mfa_description:
+      "Richiedi ai tuoi membri di configurare l'autenticazione a più fattori per accedere a questo inquilino.",
     enterprise_sso: 'Enterprise SSO',
     enterprise_sso_description:
       'Disponibile nei piani a pagamento. Contattaci per abilitare Enterprise SSO in modo che tutti i membri possano accedere alla console Logto Cloud utilizzando il provider di identità della tua organizzazione.',
@@ -57,6 +60,7 @@ const tenants = {
   create_modal: {
     title: 'Crea nuovo inquilino',
     subtitle: 'Crea un nuovo inquilino che ha risorse e utenti isolati.',
+    tenant_id: 'ID Inquilino',
     tenant_usage_purpose: 'Per cosa desideri utilizzare questo inquilino?',
     development_description:
       'Solo per scopi di test e non dovrebbe essere utilizzato in produzione. Non è richiesto alcun abbonamento.',
@@ -73,6 +77,11 @@ const tenants = {
     invitation_failed:
       'Alcuni inviti non sono riusciti a essere inviati. Prova di nuovo in Impostazioni -> Membri più tardi.',
     tenant_type_description: 'Questo non può essere cambiato dopo la creazione.',
+    tenant_id_invalid:
+      "L'ID del tenant può contenere solo lettere minuscole, numeri e trattini e non deve superare {{max}} caratteri.",
+    tenant_id_placeholder: 'Il tuo ID tenant',
+    tenant_id_tip:
+      "Personalizza l'ID tenant. Se lasciato vuoto, Logto genererà un ID predefinito. L'ID tenant non può essere modificato dopo la creazione.",
   },
   dev_tenant_migration: {
     title:

@@ -6,15 +6,15 @@ const mfa = {
   multi_factors: 'Multi-Faktoren',
   multi_factors_description:
     'Benutzer müssen einen der aktivierten Faktoren für die Zwei-Schritt-Verifizierung überprüfen.',
-  totp: 'Authenticator-App OTP',
+  totp: 'Authenticator-App',
   otp_description: 'Verknüpfen Sie Google Authenticator usw., um Einmalpasswörter zu überprüfen.',
-  webauthn: 'WebAuthn (Passwort)',
+  webauthn: 'Passkeys',
   webauthn_description:
     'Überprüfen Sie über browserunterstützte Methoden: Biometrie, Handy-Scan oder Sicherheitsschlüssel usw.',
   webauthn_native_tip: 'WebAuthn wird für native Anwendungen nicht unterstützt.',
   webauthn_domain_tip:
     'WebAuthn bindet öffentliche Schlüssel an die spezifische Domain. Das Ändern Ihrer Servicedomain blockiert Benutzer daran, sich über vorhandene Passwörter zu authentifizieren.',
-  backup_code: 'Backup-Code',
+  backup_code: 'Backup-Codes',
   backup_code_description:
     'Generieren Sie nach Einrichtung einer beliebigen MFA-Methode 10 einmalige Backup-Codes.',
   backup_code_setup_hint:
@@ -39,6 +39,12 @@ const mfa = {
   require_mfa: 'MFA erforderlich',
   require_mfa_label:
     'Aktivieren Sie dies, um die Zwei-Schritt-Verifizierung für den Zugriff auf Ihre Anwendungen obligatorisch zu machen. Wenn deaktiviert, können Benutzer entscheiden, ob sie MFA für sich selbst aktivieren möchten.',
+  require_mfa_optional:
+    'Optionale MFA: Ermöglicht Benutzern, MFA für die Sicherheit ihres eigenen Kontos zu aktivieren',
+  require_mfa_adaptive:
+    'Adaptive MFA: Nur nach MFA fragen, wenn eine Anmeldung riskant erscheint (z. B. neues Gerät/Standort)',
+  require_mfa_mandatory:
+    'Obligatorische MFA: Erfordert, dass alle Benutzer bei jeder Anmeldung MFA abschließen',
   set_up_prompt: 'MFA-Einrichtungsaufforderung',
   no_prompt: 'Benutzer nicht zur Einrichtung von MFA auffordern',
   prompt_at_sign_in_and_sign_up:

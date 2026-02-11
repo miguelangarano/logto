@@ -1,3 +1,4 @@
+import { appInsights } from '@logto/app-insights/node';
 import {
   type Json,
   LogtoJwtTokenKey,
@@ -6,10 +7,8 @@ import {
   jwtCustomizer as jwtCustomizerLog,
   type CustomJwtFetcher,
   GrantType,
-  CustomJwtErrorCode,
   jwtCustomizerUserInteractionContextGuard,
 } from '@logto/schemas';
-import { generateStandardId } from '@logto/shared';
 import { conditional, trySafe } from '@silverhand/essentials';
 import { ResponseError } from '@withtyped/client';
 import {
@@ -21,14 +20,13 @@ import {
 import { z } from 'zod';
 
 import { EnvSet } from '#src/env-set/index.js';
-import { type CloudConnectionLibrary } from '#src/libraries/cloud-connection.js';
 import { JwtCustomizerLibrary } from '#src/libraries/jwt-customizer.js';
 import { type LogtoConfigLibrary } from '#src/libraries/logto-config.js';
-import { LogEntry } from '#src/middleware/koa-audit-log.js';
+import { type LogEntry, type WithLogContext } from '#src/middleware/koa-audit-log.js';
 import type Libraries from '#src/tenants/Libraries.js';
 import type Queries from '#src/tenants/Queries.js';
-
-import { parseCustomJwtResponseError } from '../utils/custom-jwt/index.js';
+import { isAccessDeniedError, parseCustomJwtResponseError } from '#src/utils/custom-jwt/index.js';
+import { buildAppInsightsTelemetry } from '#src/utils/request.js';
 
 import { tokenExchangeActGuard } from './grants/token-exchange/types.js';
 
@@ -122,22 +120,45 @@ const getInteractionLastSubmission = async (
   return interactionData.data;
 };
 
+/**
+ * Safely retrieves the associated subject token for a given access token.
+ *
+ * - Only processes tokens issued via the Token Exchange grant type.
+ * - Safely parses the `extra` field of the access token to extract the `subjectTokenId`.
+ * - Fetches the subject token if the `subjectTokenId` is present and valid.
+ */
+const getAssociatedSubjectToken = async (queries: Queries, token: AccessToken) => {
+  if (token.gty !== GrantType.TokenExchange) {
+    return;
+  }
+
+  const tokenExtraResult = z
+    .object({
+      subjectTokenId: z.string(),
+    })
+    .safeParse(token.extra);
+
+  if (!tokenExtraResult.success) {
+    return;
+  }
+
+  return queries.subjectTokens.findSubjectToken(tokenExtraResult.data.subjectTokenId);
+};
+
 /* eslint-disable complexity */
 export const getExtraTokenClaimsForJwtCustomization = async (
-  ctx: KoaContextWithOIDC,
+  ctx: KoaContextWithOIDC & WithLogContext,
   token: unknown,
   {
     envSet,
     queries,
     libraries,
     logtoConfigs,
-    cloudConnection,
   }: {
     envSet: EnvSet;
     queries: Queries;
     libraries: Libraries;
     logtoConfigs: LogtoConfigLibrary;
-    cloudConnection: CloudConnectionLibrary;
   }
 ): Promise<UnknownObject | undefined> => {
   // Narrow down the token type to `AccessToken` and `ClientCredentials`.
@@ -148,7 +169,9 @@ export const getExtraTokenClaimsForJwtCustomization = async (
     return;
   }
 
-  const isTokenClientCredentials = token instanceof ctx.oidc.provider.ClientCredentials;
+  const isClientCredentialsToken = token instanceof ctx.oidc.provider.ClientCredentials;
+
+  const customTokenClaimsLogEntries = new Set<LogEntry>();
 
   try {
     /**
@@ -159,7 +182,7 @@ export const getExtraTokenClaimsForJwtCustomization = async (
     const { script, environmentVariables } =
       (await trySafe(
         logtoConfigs.getJwtCustomizer(
-          isTokenClientCredentials
+          isClientCredentialsToken
             ? LogtoJwtTokenKey.ClientCredentials
             : LogtoJwtTokenKey.AccessToken
         )
@@ -169,48 +192,77 @@ export const getExtraTokenClaimsForJwtCustomization = async (
       return;
     }
 
-    const pickedFields = isTokenClientCredentials
+    // Pick only the fields that will be included in the token payload based on the token type.
+    const pickedFields = isClientCredentialsToken
       ? ctx.oidc.provider.ClientCredentials.IN_PAYLOAD
       : ctx.oidc.provider.AccessToken.IN_PAYLOAD;
-    const readOnlyToken = Object.fromEntries(
+
+    const originalTokenPayload = Object.fromEntries(
       pickedFields
         .filter((field) => Reflect.get(token, field) !== undefined)
         .map((field) => [field, Reflect.get(token, field)])
     );
 
-    // We pass context to the cloud API only when it is a user's access token.
+    // Fetch user info context for user access token.
     const logtoUserInfo = conditional(
-      !isTokenClientCredentials &&
+      !isClientCredentialsToken &&
         token.accountId &&
         (await libraries.jwtCustomizers.getUserContext(token.accountId))
     );
 
-    const interactionContext = isTokenClientCredentials
-      ? undefined
-      : await getInteractionLastSubmission(queries, token);
+    // Fetch user interaction context for user access token.
+    const interactionContext = conditional(
+      !isClientCredentialsToken && (await getInteractionLastSubmission(queries, token))
+    );
 
-    const subjectTokenResult = z
-      .object({
-        subjectTokenId: z.string(),
-      })
-      .safeParse(token.extra);
-    const subjectToken =
-      isTokenClientCredentials || token.gty !== GrantType.TokenExchange
-        ? undefined
-        : subjectTokenResult.success
-          ? await queries.subjectTokens.findSubjectToken(subjectTokenResult.data.subjectTokenId)
-          : undefined;
+    // Safely retrieve the associated subject token for user access token (Token Exchange grant type only).
+    const subjectToken = conditional(
+      !isClientCredentialsToken && (await getAssociatedSubjectToken(queries, token))
+    );
+
+    // DEV: application context in JWT customizer
+    const clientId = token.clientId ?? ctx.oidc.client?.clientId;
+    const applicationContext = conditional(
+      EnvSet.values.isDevFeaturesEnabled &&
+        clientId &&
+        (await libraries.jwtCustomizers.getApplicationContext(envSet.tenantId, clientId))
+    );
+
+    const logEntry = ctx.createLog(
+      `${jwtCustomizerLog.prefix}.${
+        isClientCredentialsToken
+          ? jwtCustomizerLog.Type.ClientCredentials
+          : jwtCustomizerLog.Type.AccessToken
+      }`
+    );
+
+    customTokenClaimsLogEntries.add(logEntry);
+
+    logEntry.append({
+      sessionId: ctx.oidc.session?.uid,
+      applicationId: ctx.oidc.client?.clientId,
+      ...conditional(logtoUserInfo && { userId: logtoUserInfo.id }),
+      tenantId: envSet.tenantId,
+    });
 
     const payload: CustomJwtFetcher = {
       script,
       environmentVariables,
-      token: readOnlyToken,
-      ...(isTokenClientCredentials
-        ? { tokenType: LogtoJwtTokenKeyType.ClientCredentials }
+      token: originalTokenPayload,
+      ...(isClientCredentialsToken
+        ? {
+            tokenType: LogtoJwtTokenKeyType.ClientCredentials,
+            context: {
+              ...conditional(
+                applicationContext && {
+                  application: applicationContext,
+                }
+              ),
+            },
+          }
         : {
             tokenType: LogtoJwtTokenKeyType.AccessToken,
             // TODO (LOG-8555): the newly added `UserProfile` type includes undefined fields and can not be directly assigned to `Json` type. And the `undefined` fields should be removed by zod guard.
-            // `context` parameter is only eligible for user's access token for now.
             context: {
               // eslint-disable-next-line no-restricted-syntax
               user: logtoUserInfo as Record<string, Json>,
@@ -227,51 +279,47 @@ export const getExtraTokenClaimsForJwtCustomization = async (
                   interaction: interactionContext,
                 }
               ),
+              ...conditional(
+                applicationContext && {
+                  application: applicationContext,
+                }
+              ),
             },
           }),
     };
 
-    if (EnvSet.values.isCloud) {
-      const client = await cloudConnection.getClient();
-      return await client.post(`/api/services/custom-jwt`, {
-        body: payload,
-        search: {},
+    // DOT not log custom script and environment variables for security reason.
+    const { script: _script, environmentVariables: _environmentVariables, ...logPayload } = payload;
+    logEntry.append({
+      payload: logPayload,
+    });
+
+    const result = EnvSet.values.isCloud
+      ? await libraries.jwtCustomizers.runScriptRemotely(payload)
+      : await JwtCustomizerLibrary.runScriptInLocalVm(payload);
+
+    ctx.prependAllLogEntries({ customTokenClaims: result });
+
+    return result;
+  } catch (error: unknown) {
+    void appInsights.trackException(error, buildAppInsightsTelemetry(ctx));
+
+    for (const logEntry of customTokenClaimsLogEntries) {
+      logEntry.append({
+        result: LogResult.Error,
       });
     }
-    return await JwtCustomizerLibrary.runScriptInLocalVm(payload);
-  } catch (error: unknown) {
-    const entry = new LogEntry(
-      `${jwtCustomizerLog.prefix}.${
-        isTokenClientCredentials
-          ? jwtCustomizerLog.Type.ClientCredentials
-          : jwtCustomizerLog.Type.AccessToken
-      }`
-    );
 
-    entry.append({
-      result: LogResult.Error,
-      error: { message: String(error) },
-    });
-
-    const { payload } = entry;
-
-    await queries.logs.insertLog({
-      id: generateStandardId(),
-      key: payload.key,
-      payload: {
-        ...payload,
-        tenantId: envSet.tenantId,
-        token,
-      },
-    });
-
-    // If the error is an instance of `ResponseError`, we need to parse the customJwtError body to get the error code.
     if (error instanceof ResponseError) {
-      const customJwtError = await trySafe(async () => parseCustomJwtResponseError(error));
+      const errorResponse = await trySafe(async () => parseCustomJwtResponseError(error));
+      ctx.prependAllLogEntries({ customJwtError: errorResponse });
 
-      if (customJwtError?.code === CustomJwtErrorCode.AccessDenied) {
-        throw new errors.AccessDenied(customJwtError.message);
+      // Deny the token exchange request if access is denied by the custom JWT script.
+      if (errorResponse && isAccessDeniedError(errorResponse.error)) {
+        throw new errors.AccessDenied(errorResponse.message);
       }
+    } else {
+      ctx.prependAllLogEntries({ customJwtError: String(error) });
     }
   }
 };

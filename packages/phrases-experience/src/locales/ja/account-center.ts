@@ -1,7 +1,4 @@
 const account_center = {
-  header: {
-    title: 'アカウントセンター',
-  },
   home: {
     title: 'ページが見つかりません',
     description: 'このページは利用できません。',
@@ -19,7 +16,7 @@ const account_center = {
   password_verification: {
     title: 'パスワードを確認',
     description: 'アカウントを保護するため、パスワードを入力して本人確認してください。',
-    error_failed: '認証に失敗しました。パスワードを確認してください。',
+    error_failed: 'パスワードが正しくありません。入力内容を確認してください。',
   },
   verification_method: {
     password: {
@@ -77,6 +74,8 @@ const account_center = {
     description:
       '認証コードをメールアドレス {{email}} に送信しました。コードを入力して続行してください。',
     resend: 'まだ届きませんか？ <a>認証コードを再送</a>',
+    not_received: 'まだ届きませんか？',
+    resend_action: '認証コードを再送',
     resend_countdown: 'まだ届きませんか？ {{seconds}} 秒後に再送できます',
     error_send_failed: '認証コードの送信に失敗しました。しばらくしてからもう一度お試しください。',
     error_verify_failed: '認証に失敗しました。もう一度コードを入力してください。',
@@ -106,7 +105,7 @@ const account_center = {
       'バックアップコードを使用するには、まず他の MFA メソッドを設定する必要があります。',
     passkey_not_enabled: 'パスキーが有効になっていません。管理者にお問い合わせください。',
     passkey_already_registered:
-      'This passkey is already registered to your account. Please use a different authenticator.',
+      'このパスキーはすでにアカウントに登録されています。別の認証器をご使用ください。',
   },
   update_success: {
     default: {
@@ -170,11 +169,11 @@ const account_center = {
     delete_confirmation_title: 'パスキーを削除',
     delete_confirmation_description: 'このパスキーを削除すると、認証に使用できなくなります。',
     rename_passkey: 'パスキー名を変更',
-    rename_description: 'Enter a new name for this passkey.',
-    name_this_passkey: 'Name this device passkey',
+    rename_description: 'このパスキーの新しい名前を入力してください。',
+    name_this_passkey: 'このデバイスのパスキーに名前を付ける',
     name_passkey_description:
-      'You have successfully verified this device for 2-step authentication. Customize the name to recognize if you have multiple keys.',
-    name_input_label: 'Name',
+      'このデバイスの2段階認証の確認が完了しました。複数のキーがある場合に識別できるよう名前をカスタマイズしてください。',
+    name_input_label: '名前',
   },
 };
 

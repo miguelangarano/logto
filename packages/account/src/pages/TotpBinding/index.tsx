@@ -40,8 +40,8 @@ const TotpBinding = () => {
     setToast,
     userInfo,
   } = useContext(PageContext);
-  const getMfaRequest = useApi(getMfaVerifications);
-  const generateSecretRequest = useApi(generateTotpSecret);
+  const getMfaRequest = useApi(getMfaVerifications, { silent: true });
+  const generateSecretRequest = useApi(generateTotpSecret, { silent: true });
   const addTotpRequest = useApi(addTotpMfa);
   const handleError = useErrorHandler();
 
@@ -143,7 +143,7 @@ const TotpBinding = () => {
       // (when loading state changes, handleSubmit gets recreated, which triggers the effect again)
       setCodeInput([]);
 
-      void navigate(authenticatorAppSuccessRoute, { replace: true });
+      navigate(authenticatorAppSuccessRoute, { replace: true });
     },
     [
       addTotpRequest,

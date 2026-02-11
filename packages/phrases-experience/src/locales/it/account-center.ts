@@ -1,7 +1,4 @@
 const account_center = {
-  header: {
-    title: 'Centro account',
-  },
   home: {
     title: 'Pagina non trovata',
     description: 'Questa pagina non è disponibile.',
@@ -20,7 +17,7 @@ const account_center = {
     title: 'Verifica la password',
     description:
       'Per proteggere il tuo account, inserisci la password per confermare la tua identità.',
-    error_failed: 'Verifica non riuscita. Controlla la tua password.',
+    error_failed: 'Password errata. Controlla il tuo inserimento.',
   },
   verification_method: {
     password: {
@@ -81,6 +78,8 @@ const account_center = {
     description:
       "Il codice di verifica è stato inviato all'e-mail {{email}}. Inserisci il codice per continuare.",
     resend: "Non l'hai ricevuto? <a>Reinvia il codice di verifica</a>",
+    not_received: "Non l'hai ricevuto?",
+    resend_action: 'Reinvia il codice di verifica',
     resend_countdown: "Non l'hai ricevuto? Reinvia dopo {{seconds}} s.",
     error_send_failed: 'Invio del codice di verifica non riuscito. Riprova più tardi.',
     error_verify_failed: 'Verifica non riuscita. Inserisci di nuovo il codice.',
@@ -113,7 +112,7 @@ const account_center = {
       'I codici di backup richiedono che venga prima configurato un altro metodo MFA.',
     passkey_not_enabled: 'Passkey non è abilitato. Per assistenza, contatta il tuo amministratore.',
     passkey_already_registered:
-      'This passkey is already registered to your account. Please use a different authenticator.',
+      'Questa passkey è già registrata nel tuo account. Utilizza un autenticatore diverso.',
   },
   update_success: {
     default: {
@@ -177,11 +176,11 @@ const account_center = {
     delete_confirmation_description:
       'Se rimuovi questa passkey, non potrai più utilizzarla per la verifica.',
     rename_passkey: 'Rinomina passkey',
-    rename_description: 'Enter a new name for this passkey.',
-    name_this_passkey: 'Name this device passkey',
+    rename_description: 'Inserisci un nuovo nome per questa passkey.',
+    name_this_passkey: 'Nomina questa passkey del dispositivo',
     name_passkey_description:
-      'You have successfully verified this device for 2-step authentication. Customize the name to recognize if you have multiple keys.',
-    name_input_label: 'Name',
+      "Hai verificato con successo questo dispositivo per l'autenticazione a due fattori. Personalizza il nome per riconoscerlo se hai più chiavi.",
+    name_input_label: 'Nome',
   },
 };
 

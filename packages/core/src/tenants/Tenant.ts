@@ -122,15 +122,7 @@ export default class Tenant implements TenantContext {
     app.use(koaSecurityHeaders(mountedApps, id));
 
     // Mount OIDC
-    const provider = initOidc(
-      id,
-      envSet,
-      queries,
-      libraries,
-      logtoConfigs,
-      cloudConnection,
-      subscription
-    );
+    const provider = initOidc(id, envSet, queries, libraries, logtoConfigs, subscription);
     app.use(mount('/oidc', provider.app));
 
     const tenantContext: TenantContext = {
@@ -199,23 +191,21 @@ export default class Tenant implements TenantContext {
           })
         )
       );
-
-      if (EnvSet.values.isDevFeaturesEnabled) {
-        // Mount account center
-        app.use(
-          mount(
-            '/' + UserApps.AccountCenter,
-            koaSpaProxy({
-              mountedApps,
-              queries,
-              packagePath: UserApps.AccountCenter,
-              port: 5004,
-              prefix: UserApps.AccountCenter,
-            })
-          )
-        );
-      }
     }
+
+    // Mount account center for all tenants (including admin tenant for profile MFA management)
+    app.use(
+      mount(
+        '/' + UserApps.AccountCenter,
+        koaSpaProxy({
+          mountedApps,
+          queries,
+          packagePath: UserApps.AccountCenter,
+          port: 5004,
+          prefix: UserApps.AccountCenter,
+        })
+      )
+    );
 
     // Mount experience app
     app.use(

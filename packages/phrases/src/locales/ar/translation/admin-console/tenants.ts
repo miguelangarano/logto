@@ -28,6 +28,8 @@ const tenants = {
     production_description:
       'مخصص للتطبيقات التي يستخدمها المستخدمون النهائيون وقد تتطلب اشتراكًا مدفوعًا.',
     tenant_info_saved: 'تم حفظ معلومات المستأجر بنجاح.',
+    tenant_mfa: 'المصادقة متعددة العوامل',
+    tenant_mfa_description: 'اطلب من أعضائك إعداد المصادقة متعددة العوامل للوصول إلى هذا المستأجر.',
     enterprise_sso: 'Enterprise SSO',
     enterprise_sso_description:
       'متاح في الخطط المدفوعة. اتصل بنا لتمكين Enterprise SSO حتى يتمكن جميع الأعضاء من تسجيل الدخول إلى Logto Cloud Console باستخدام موفر هوية مؤسستك.',
@@ -53,6 +55,7 @@ const tenants = {
   create_modal: {
     title: 'إنشاء مستأجر',
     subtitle: 'إنشاء مستأجر جديد يحتوي على موارد ومستخدمين معزولين.',
+    tenant_id: 'معرف المستأجر',
     tenant_usage_purpose: 'ماذا تريد استخدام هذا المستأجر ل؟',
     development_description: 'للاختبار فقط ويجب ألا يستخدم في الإنتاج. لا يلزم اشتراك.',
     development_description_for_private_regions: 'للاختبار فقط ويجب ألا يستخدم في الإنتاج.',
@@ -65,6 +68,11 @@ const tenants = {
     invitation_failed:
       'فشل إرسال بعض الدعوات. يرجى المحاولة مرة أخرى في الإعدادات -> الأعضاء لاحقًا.',
     tenant_type_description: 'لا يمكن تغييره بعد الإنشاء.',
+    tenant_id_invalid:
+      'يمكن أن يحتوي معرف المستأجر فقط على أحرف صغيرة وأرقام وواصلات، ويجب ألا يتجاوز {{max}} حرفًا.',
+    tenant_id_placeholder: 'معرف المستأجر الخاص بك',
+    tenant_id_tip:
+      'قم بتخصيص معرف المستأجر. إذا ترك فارغًا، سيقوم Logto بإنشاء معرف افتراضي. لا يمكن تغيير معرف المستأجر بعد الإنشاء.',
   },
   dev_tenant_migration: {
     title: 'يمكنك الآن تجربة ميزاتنا المهنية مجانًا عن طريق إنشاء "مستأجر تطوير جديد"!',

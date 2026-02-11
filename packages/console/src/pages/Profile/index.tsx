@@ -1,7 +1,9 @@
-import type { ConnectorResponse } from '@logto/schemas';
+import type { ConnectorResponse, SignInExperience } from '@logto/schemas';
+import ky from 'ky';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRoutes } from 'react-router-dom';
+import useSWR from 'swr';
 import useSWRImmutable from 'swr/immutable';
 
 import FormCard from '@/components/FormCard';
@@ -19,21 +21,22 @@ import { profile } from '@/hooks/use-console-routes/routes/profile';
 import useCurrentUser from '@/hooks/use-current-user';
 import { usePlausiblePageview } from '@/hooks/use-plausible-pageview';
 import useSwrFetcher from '@/hooks/use-swr-fetcher';
-import useTenantPathname from '@/hooks/use-tenant-pathname';
 import useUserAssetsService from '@/hooks/use-user-assets-service';
 import pageLayout from '@/scss/page-layout.module.scss';
 
 import BasicUserInfoSection from './components/BasicUserInfoSection';
 import CardContent from './components/CardContent';
 import LinkAccountSection from './components/LinkAccountSection';
+import MfaSection from './components/MfaSection';
 import NotSet from './components/NotSet';
 import Skeleton from './components/Skeleton';
 import DeleteAccountModal from './containers/DeleteAccountModal';
+import { useNavigateToAccountCenter } from './hooks';
 import styles from './index.module.scss';
 
 function Profile() {
   const { t } = useTranslation(undefined, { keyPrefix: 'admin_console' });
-  const { navigate } = useTenantPathname();
+  const navigateToAccountCenter = useNavigateToAccountCenter();
   const childrenRoutes = useRoutes(profile);
   usePlausiblePageview(profile, 'profile');
 
@@ -46,6 +49,10 @@ function Profile() {
   const isLoadingConnectors = !connectors && !fetchConnectorsError;
   const { user, reload, isLoading: isLoadingUser } = useCurrentUser();
   const { isLoading: isUserAssetServiceLoading } = useUserAssetsService();
+  const { data: signInExperience } = useSWR<SignInExperience>(
+    new URL('api/.well-known/sign-in-exp', adminTenantEndpoint).toString(),
+    async (url: string) => ky.get(url).json<SignInExperience>()
+  );
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
 
   // Avoid unnecessary re-renders in child components
@@ -89,15 +96,14 @@ function Profile() {
                         action: {
                           name: 'profile.change',
                           handler: () => {
-                            navigate(user.hasPassword ? 'verify-password' : 'change-password', {
-                              state: { email: user.primaryEmail, action: 'changePassword' },
-                            });
+                            navigateToAccountCenter('/account/password');
                           },
                         },
                       },
                     ]}
                   />
                 </FormCard>
+                <MfaSection user={user} signInExperience={signInExperience} />
                 {isCloud && (
                   <FormCard title="profile.delete_account.title">
                     <div className={styles.deleteAccount}>

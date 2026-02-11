@@ -169,6 +169,12 @@ export class SignInExperienceValidator {
     return mfa;
   }
 
+  public async getPasskeySignInSettings() {
+    const { passkeySignIn } = await this.getSignInExperienceData();
+
+    return passkeySignIn;
+  }
+
   public async getPasswordPolicy() {
     const { passwordPolicy } = await this.getSignInExperienceData();
 
@@ -307,6 +313,7 @@ export class SignInExperienceValidator {
     const {
       signIn: { methods: signInMethods },
       singleSignOnEnabled,
+      passkeySignIn,
     } = await this.getSignInExperienceData();
 
     switch (verificationRecord.type) {
@@ -339,6 +346,14 @@ export class SignInExperienceValidator {
           singleSignOnEnabled,
           new RequestError({ code: 'user.sign_in_method_not_enabled', status: 422 })
         );
+        break;
+      }
+      case VerificationType.SignInWebAuthn: {
+        assertThat(
+          passkeySignIn.enabled,
+          new RequestError({ code: 'user.sign_in_method_not_enabled', status: 422 })
+        );
+        await this.guardPasskeySignInAgainstSsoUsers(verificationRecord.userId);
         break;
       }
       default: {
@@ -377,5 +392,18 @@ export class SignInExperienceValidator {
         );
       }
     }
+  }
+
+  /**
+   * Passkey sign-in is not allowed for SSO users.
+   * @throws {RequestError} with status 422 if the user is an SSO user
+   */
+  private async guardPasskeySignInAgainstSsoUsers(userId?: string) {
+    assertThat(userId, 'session.identifier_not_found');
+
+    const ssoIdentities =
+      await this.queries.userSsoIdentities.findUserSsoIdentitiesByUserId(userId);
+
+    assertThat(ssoIdentities.length === 0, 'session.passkey_sign_in.sso_users_not_allowed');
   }
 }

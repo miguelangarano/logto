@@ -1,19 +1,30 @@
 const jwt_claims = {
   title: 'Niestandardowe JWT',
   description:
-    'Ustaw niestandardowe roszczenia JWT, które mają być dołączone do tokenu dostępowego. Te roszczenia mogą być wykorzystane do przekazywania dodatkowych informacji do Twojej aplikacji.',
+    'Dostosuj token dostępowy lub token ID, dostarczając dodatkowe informacje do Twojej aplikacji.',
+  access_token: {
+    card_title: 'Token dostępowy',
+    card_description:
+      'Token dostępowy to uprawnienie używane przez interfejsy API do autoryzacji żądań, zawierające tylko roszczenia niezbędne do decyzji o dostępie.',
+  },
   user_jwt: {
-    card_title: 'Dla użytkownika',
     card_field: 'Token dostępowy użytkownika',
     card_description:
       'Dodaj dane specyficzne dla użytkownika podczas wydawania tokenu dostępowego.',
     for: 'dla użytkownika',
   },
   machine_to_machine_jwt: {
-    card_title: 'Dla M2M',
-    card_field: 'Token maszynowy do maszyny',
+    card_field: 'Token dostępowy maszynowy do maszyny',
     card_description: 'Dodaj dodatkowe dane podczas wydawania tokena maszynowego do maszyny.',
     for: 'dla M2M',
+  },
+  id_token: {
+    card_title: 'Token ID',
+    card_description:
+      'Token ID to twierdzenie tożsamości otrzymane po zalogowaniu, zawierające roszczenia tożsamości użytkownika dla klienta do wykorzystania w celu wyświetlenia lub tworzenia sesji.',
+    card_field: 'Token ID użytkownika',
+    card_field_description:
+      "Roszczenia 'sub', 'email', 'phone', 'profile' i 'address' są zawsze dostępne. Inne roszczenia muszą być najpierw włączone tutaj. We wszystkich przypadkach Twoja aplikacja musi zażądać odpowiednich zakresów podczas integracji, aby je otrzymać.",
   },
   code_editor_title: 'Dostosuj roszczenia {{token}}',
   custom_jwt_create_button: 'Dodaj niestandardowe roszczenia',
@@ -42,6 +53,11 @@ const jwt_claims = {
     title: 'Kontekst interakcji użytkownika',
     subtitle:
       'Użyj parametru `context.interaction`, aby uzyskać dostęp do szczegółów interakcji użytkownika dla bieżącej sesji uwierzytelniania, w tym `interactionEvent`, `userId`, i `verificationRecords`.',
+  },
+  application_data: {
+    title: 'Kontekst aplikacji',
+    subtitle:
+      'Użyj parametru wejściowego `context.application`, aby dostarczć informacje o aplikacji powiązanej z tokenem.',
   },
   token_data: {
     title: 'Dane tokenu',

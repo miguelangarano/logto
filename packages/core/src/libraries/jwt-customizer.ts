@@ -1,19 +1,31 @@
 import {
   type CustomJwtErrorBody,
   CustomJwtErrorCode,
-  LogtoJwtTokenKeyType,
   jwtCustomizerUserContextGuard,
   userInfoSelectFields,
   type CustomJwtFetcher,
   type JwtCustomizerType,
   type JwtCustomizerUserContext,
+  type JwtCustomizerApplicationContext,
   type LogtoJwtTokenKey,
   type CustomJwtApiContext,
   type CustomJwtScriptPayload,
+  jsonObjectGuard,
+  isBuiltInApplicationId,
+  buildBuiltInApplicationDataForTenant,
 } from '@logto/schemas';
 import { type ConsoleLog } from '@logto/shared';
-import { assert, deduplicate, pick, pickState } from '@silverhand/essentials';
+import {
+  assert,
+  deduplicate,
+  type Optional,
+  pick,
+  pickState,
+  trySafe,
+} from '@silverhand/essentials';
 import deepmerge from 'deepmerge';
+import { got, HTTPError } from 'got';
+import { type UnknownObject } from 'oidc-provider';
 import { ZodError, z } from 'zod';
 
 import { EnvSet } from '#src/env-set/index.js';
@@ -28,6 +40,7 @@ import {
   runScriptFunctionInLocalVm,
   buildLocalVmErrorBody,
   type CustomJwtDeployRequestBody,
+  parseAzureFunctionsResponseError,
 } from '#src/utils/custom-jwt/index.js';
 
 import { type CloudConnectionLibrary } from './cloud-connection.js';
@@ -54,9 +67,7 @@ export class JwtCustomizerLibrary {
   static async runScriptInLocalVm(data: CustomJwtFetcher) {
     try {
       const payload: CustomJwtScriptPayload = {
-        ...(data.tokenType === LogtoJwtTokenKeyType.AccessToken
-          ? pick(data, 'token', 'context', 'environmentVariables')
-          : pick(data, 'token', 'environmentVariables')),
+        ...pick(data, 'token', 'context', 'environmentVariables'),
         api: apiContext,
       };
 
@@ -95,6 +106,12 @@ export class JwtCustomizerLibrary {
     private readonly userLibrary: UserLibrary,
     private readonly scopeLibrary: ScopeLibrary
   ) {}
+
+  get isRegionalAzureFunctionAppConfigured(): boolean {
+    const { azureFunctionUntrustedAppKey, azureFunctionUntrustedAppEndpoint } = EnvSet.values;
+
+    return Boolean(azureFunctionUntrustedAppKey && azureFunctionUntrustedAppEndpoint);
+  }
 
   /**
    * We does not include org roles' scopes for the following reason:
@@ -144,6 +161,22 @@ export class JwtCustomizerLibrary {
     return jwtCustomizerUserContextGuard.parse(userContext);
   }
 
+  async getApplicationContext(
+    tenantId: string,
+    clientId: string
+  ): Promise<JwtCustomizerApplicationContext | undefined> {
+    const application = isBuiltInApplicationId(clientId)
+      ? buildBuiltInApplicationDataForTenant(tenantId, clientId)
+      : await trySafe(this.queries.applications.findApplicationById(clientId));
+
+    if (!application) {
+      return;
+    }
+
+    const { secret: _, ...rest } = application;
+    return rest;
+  }
+
   /**
    * This method is used to deploy the give JWT customizer scripts to the cloud worker service.
    *
@@ -167,6 +200,13 @@ export class JwtCustomizerLibrary {
     if (!EnvSet.values.isCloud) {
       consoleLog.warn(
         'Early terminate `deployJwtCustomizerScript` since we do not provide dedicated computing resource for OSS version.'
+      );
+      return;
+    }
+
+    if (this.isRegionalAzureFunctionAppConfigured) {
+      consoleLog.info(
+        'Skipping Cloudflare Workers deployment since regional Azure Function App is configured.'
       );
       return;
     }
@@ -209,6 +249,13 @@ export class JwtCustomizerLibrary {
       return;
     }
 
+    if (this.isRegionalAzureFunctionAppConfigured) {
+      consoleLog.info(
+        'Skipping Cloudflare Workers undeployment since regional Azure Function App is configured.'
+      );
+      return;
+    }
+
     const [client, jwtCustomizers] = await Promise.all([
       this.cloudConnection.getClient(),
       this.logtoConfigs.getJwtCustomizers(consoleLog),
@@ -233,6 +280,51 @@ export class JwtCustomizerLibrary {
 
     await client.put(`/api/services/custom-jwt/worker`, {
       body: deepmerge(customizerScriptsFromDatabase, newCustomizerScripts),
+    });
+  }
+
+  /**
+   * @remarks
+   * For Logto cloud use only. Run the custom JWT claims script remotely in an isolated environment.
+   * For OSS version, use @see JwtCustomizerLibrary.runScriptInLocalVm instead.
+   *
+   * @param payload - The custom JWT fetcher payload.
+   * @param isTest - Whether to run the script in test mode.
+   */
+  async runScriptRemotely(
+    payload: CustomJwtFetcher,
+    isTest?: boolean
+  ): Promise<Optional<UnknownObject>> {
+    const { azureFunctionUntrustedAppKey, azureFunctionUntrustedAppEndpoint } = EnvSet.values;
+
+    if (this.isRegionalAzureFunctionAppConfigured) {
+      try {
+        const result = await got
+          .post(new URL('/api/custom-jwt', azureFunctionUntrustedAppEndpoint), {
+            json: payload,
+            headers: {
+              'x-functions-key': azureFunctionUntrustedAppKey,
+            },
+          })
+          .json<unknown>();
+
+        const parsedResult = jsonObjectGuard.parse(result);
+        return parsedResult;
+      } catch (error: unknown) {
+        // Convert got HTTPError to WithTyped client ResponseError for unified error handling.
+        if (error instanceof HTTPError) {
+          throw parseAzureFunctionsResponseError(error);
+        }
+
+        throw error;
+      }
+    }
+
+    // Fallback to use cloud connection to call the custom JWT API.
+    const client = await this.cloudConnection.getClient();
+    return client.post(`/api/services/custom-jwt`, {
+      body: payload,
+      search: isTest ? { isTest: 'true' } : {},
     });
   }
 }

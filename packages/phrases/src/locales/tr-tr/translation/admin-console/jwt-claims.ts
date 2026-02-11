@@ -1,18 +1,29 @@
 const jwt_claims = {
   title: 'Özel JWT',
   description:
-    'Erişim belgesine dahil edilecek özel JWT iddialarını ayarlayın. Bu iddialar, uygulamanıza ek bilgi iletmek için kullanılabilir.',
+    'Erişim belgesini veya kimlik belgesini özelleştirerek uygulamanıza ek bilgi sağlayın.',
+  access_token: {
+    card_title: 'Erişim belgesi',
+    card_description:
+      "Erişim belgesi, API'ler tarafından istekleri yetkilendirmek için kullanılan kimlik bilgisidir ve yalnızca erişim kararları için gerekli iddialari içerir.",
+  },
   user_jwt: {
-    card_title: 'Kullanıcı İçin',
     card_field: 'Kullanıcı erişim belgesi',
     card_description: 'Erişim belgesi verilirken kullanıcıya özgü veri ekleyin.',
     for: 'kullanıcı için',
   },
   machine_to_machine_jwt: {
-    card_title: 'Makine için',
-    card_field: 'Makine-makine belgesi',
+    card_field: 'Makine-makine erişim belgesi',
     card_description: 'Makine-makine belgesi verilirken ek veri ekleyin.',
     for: 'M2M için',
+  },
+  id_token: {
+    card_title: 'Kimlik belgesi',
+    card_description:
+      'Kimlik belgesi, oturum açma sonrasında alınan bir kimlik ifadesidir ve istemcinin görüntüleme veya oturum oluşturma için kullanabileceği kullanıcı kimlik iddialarını içerir.',
+    card_field: 'Kullanıcı kimlik belgesi',
+    card_field_description:
+      "'sub', 'email', 'phone', 'profile' ve 'address' iddiaları her zaman kullanılabilir. Diğer iddiaların önce burada etkinleştirilmesi gerekir. Tüm durumlarda, uygulamanız bunları almak için entegrasyon sırasında eşleşen kapsamları talep etmelidir.",
   },
   code_editor_title: 'Özel {{token}} iddialarını özelleştirin',
   custom_jwt_create_button: 'Özel iddialar ekle',
@@ -41,6 +52,11 @@ const jwt_claims = {
     title: 'Kullanıcı etkileşim bağlamı',
     subtitle:
       'Kullanıcının etkileşim ayrıntılarına, mevcut kimlik doğrulama oturumu için `context.interaction` parametresini kullanarak erişin, `interactionEvent`, `userId` ve `verificationRecords` dahil.',
+  },
+  application_data: {
+    title: 'Uygulama bağlamı',
+    subtitle:
+      'Token ile ilişkili uygulama bilgilerini sağlamak için `context.application` giriş parametresini kullanın.',
   },
   token_data: {
     title: 'Belge verisi',

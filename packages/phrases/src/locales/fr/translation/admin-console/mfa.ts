@@ -6,16 +6,16 @@ const mfa = {
   multi_factors: 'Multi-facteurs',
   multi_factors_description:
     "Les utilisateurs doivent vérifier l'un des facteurs activés pour la vérification en deux étapes.",
-  totp: "OTP de l'application authentificatrice",
+  totp: 'Application authentificatrice',
   otp_description:
     'Liez Google Authenticator, etc., pour vérifier les mots de passe à usage unique.',
-  webauthn: 'WebAuthn (Passkey)',
+  webauthn: 'Passkeys',
   webauthn_description:
     'Vérifiez via une méthode prise en charge par le navigateur : biométrie, scan de téléphone ou clé de sécurité, etc.',
   webauthn_native_tip: "WebAuthn n'est pas pris en charge pour les applications natives.",
   webauthn_domain_tip:
     "WebAuthn lie les clés publiques au domaine spécifique. Modifier votre domaine de service bloquera les utilisateurs pour l'authentification via les passkeys existantes.",
-  backup_code: 'Code de secours',
+  backup_code: 'Codes de secours',
   backup_code_description:
     'Générez 10 codes de secours à usage unique après que les utilisateurs aient configuré une méthode de MFA.',
   backup_code_setup_hint:
@@ -40,6 +40,12 @@ const mfa = {
   require_mfa: 'Exiger MFA',
   require_mfa_label:
     "Activez cette option pour rendre la vérification en deux étapes obligatoire pour accéder à vos applications. Si désactivé, les utilisateurs peuvent décider eux-mêmes d'activer MFA.",
+  require_mfa_optional:
+    "MFA facultative : laissez les utilisateurs choisir d'activer MFA pour la sécurité de leur propre compte",
+  require_mfa_adaptive:
+    'MFA adaptative : ne demandez MFA que lorsque une connexion semble risquée (par ex. nouvel appareil / localisation)',
+  require_mfa_mandatory:
+    'MFA obligatoire : exige que tous les utilisateurs effectuent MFA à chaque connexion',
   set_up_prompt: 'Invite de configuration MFA',
   no_prompt: 'Ne pas demander aux utilisateurs de configurer MFA',
   prompt_at_sign_in_and_sign_up:

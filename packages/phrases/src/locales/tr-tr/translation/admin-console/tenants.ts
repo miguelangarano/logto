@@ -29,6 +29,9 @@ const tenants = {
     production_description:
       'Son kullanıcılar tarafından kullanılan uygulamalar için tasarlanmıştır ve ücretli abonelik gerektirebilir.',
     tenant_info_saved: 'Kiracı bilgileri başarıyla kaydedildi.',
+    tenant_mfa: 'Çok faktörlü kimlik doğrulama',
+    tenant_mfa_description:
+      'Üyelerinizin bu kiracıya erişmek için çok faktörlü kimlik doğrulamayı yapılandırmasını zorunlu kılın.',
     enterprise_sso: 'Enterprise SSO',
     enterprise_sso_description:
       'Ücretli planlarda kullanılabilir. Tüm üyelerin kuruluşunuzun kimlik sağlayıcısını kullanarak Logto Cloud Konsoluna giriş yapabilmesi için Enterprise SSO etkinleştirmek üzere bizimle iletişime geçin.',
@@ -55,6 +58,7 @@ const tenants = {
   create_modal: {
     title: 'Kiracı Oluştur',
     subtitle: 'İzolasyonlu kaynaklara ve kullanıcılara sahip yeni bir kiracı oluşturun.',
+    tenant_id: 'Kiracı Kimliği',
     tenant_usage_purpose: 'Bu kiracıyı ne için kullanmak istiyorsunuz?',
     development_description:
       'Yalnızca test amacıyla ve üretimde kullanılmamalıdır. Abonelik gerekli değildir.',
@@ -71,6 +75,11 @@ const tenants = {
     invitation_failed:
       'Bazı davetler gönderilemedi. Lütfen daha sonra Ayarlar -> Üyeler üzerinden tekrar deneyin.',
     tenant_type_description: 'Bu, oluşturulduktan sonra değiştirilemez.',
+    tenant_id_invalid:
+      'Kiracı kimliği yalnızca küçük harfler, sayılar ve kısa çizgiler içerebilir ve {{max}} karakteri aşmamalıdır.',
+    tenant_id_placeholder: 'Kiracı kimliğiniz',
+    tenant_id_tip:
+      'Kiracı kimliğini özelleştirin. Boş bırakılırsa, Logto varsayılan bir kimlik oluşturur. Kiracı kimliği oluşturulduktan sonra değiştirilemez.',
   },
   dev_tenant_migration: {
     title:

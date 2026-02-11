@@ -22,6 +22,7 @@ import { exportJWK } from '#src/utils/jwks.js';
 
 import type { ManagementApiRouter, RouterInitArgs } from '../types.js';
 
+import idTokenRoutes from './id-token.js';
 import logtoConfigJwtCustomizerRoutes from './jwt-customizer.js';
 
 /**
@@ -187,4 +188,6 @@ export default function logtoConfigRoutes<T extends ManagementApiRouter>(
   );
 
   logtoConfigJwtCustomizerRoutes(router, tenant);
+
+  idTokenRoutes(router, tenant);
 }

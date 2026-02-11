@@ -6,15 +6,15 @@ const mfa = {
   multi_factors: 'Vários fatores',
   multi_factors_description:
     'Os usuários precisam verificar um dos fatores habilitados para a verificação em duas etapas.',
-  totp: 'OTP do aplicativo autenticador',
+  totp: 'Aplicativo autenticador',
   otp_description: 'Vincule o Google Authenticator, etc., para verificar senhas únicas.',
-  webauthn: 'WebAuthn (Senha)',
+  webauthn: 'Passkeys',
   webauthn_description:
     'Verifique por meio de um método suportado pelo navegador: biometria, digitalização de telefone ou chave de segurança, etc.',
   webauthn_native_tip: 'O WebAuthn não é suportado para aplicativos nativos.',
   webauthn_domain_tip:
     'O WebAuthn vincula chaves públicas ao domínio específico. Modificar o domínio do seu serviço bloqueará usuários de autenticar via senhas existentes.',
-  backup_code: 'Código de backup',
+  backup_code: 'Códigos de backup',
   backup_code_description:
     'Gere 10 códigos de backup únicos após os usuários configurarem qualquer método MFA.',
   backup_code_setup_hint:
@@ -39,6 +39,12 @@ const mfa = {
   require_mfa: 'Exigir MFA',
   require_mfa_label:
     'Ative isto para tornar a verificação em duas etapas obrigatória para acessar as suas aplicações. Se desativado, os usuários podem decidir se ativam o MFA por si mesmos.',
+  require_mfa_optional:
+    'MFA opcional: permita que os utilizadores escolham ativar o MFA para a segurança da própria conta',
+  require_mfa_adaptive:
+    'MFA adaptativo: peça o MFA apenas quando o início de sessão parecer arriscado (por exemplo, novo dispositivo/localização)',
+  require_mfa_mandatory:
+    'MFA obrigatório: exige que todos os utilizadores concluam o MFA sempre que iniciarem sessão',
   set_up_prompt: 'Prompt de configuração do MFA',
   no_prompt: 'Não pedir aos usuários para configurar o MFA',
   prompt_at_sign_in_and_sign_up:

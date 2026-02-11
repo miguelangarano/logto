@@ -1,19 +1,30 @@
 const jwt_claims = {
   title: 'JWT Personalizado',
   description:
-    'Configure los reclamos personalizados del JWT para incluir en el token de acceso. Estos reclamos se pueden usar para pasar información adicional a su aplicación.',
+    'Personalice el token de acceso o token de ID, proporcionando información adicional a su aplicación.',
+  access_token: {
+    card_title: 'Token de acceso',
+    card_description:
+      'El token de acceso es la credencial utilizada por las API para autorizar solicitudes, conteniendo solo los reclamos necesarios para las decisiones de acceso.',
+  },
   user_jwt: {
-    card_title: 'Para usuario',
     card_field: 'Token de acceso de usuario',
     card_description:
       'Añadir datos específicos del usuario durante la emisión del token de acceso.',
     for: 'para usuario',
   },
   machine_to_machine_jwt: {
-    card_title: 'Para M2M',
-    card_field: 'Token de máquina a máquina',
+    card_field: 'Token de acceso de máquina a máquina',
     card_description: 'Añadir datos adicionales durante la emisión del token de máquina a máquina.',
     for: 'para M2M',
+  },
+  id_token: {
+    card_title: 'Token de ID',
+    card_description:
+      'El token de ID es una aserción de identidad recibida después del inicio de sesión, que contiene reclamos de identidad de usuario para que el cliente los use para la visualización o creación de sesión.',
+    card_field: 'Token de ID de usuario',
+    card_field_description:
+      "Los reclamos 'sub', 'email', 'phone', 'profile' y 'address' siempre están disponibles. Los demás reclamos deben habilitarse aquí primero. En todos los casos, su aplicación debe solicitar los scopes correspondientes durante la integración para recibirlos.",
   },
   code_editor_title: 'Personalizar los reclamos de {{token}}',
   custom_jwt_create_button: 'Añadir reclamos personalizados',
@@ -42,6 +53,11 @@ const jwt_claims = {
     title: 'Contexto de interacción del usuario',
     subtitle:
       'Use el parámetro `context.interaction` para acceder a los detalles de la interacción del usuario para la sesión de autenticación actual, incluidos `interactionEvent`, `userId` y `verificationRecords`.',
+  },
+  application_data: {
+    title: 'Contexto de la aplicación',
+    subtitle:
+      'Use el parámetro de entrada `context.application` para proporcionar la información de la aplicación asociada con el token.',
   },
   token_data: {
     title: 'Datos del token',

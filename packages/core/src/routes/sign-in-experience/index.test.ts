@@ -1,4 +1,9 @@
-import type { SignInExperience, CreateSignInExperience } from '@logto/schemas';
+import {
+  MfaFactor,
+  MfaPolicy,
+  type SignInExperience,
+  type CreateSignInExperience,
+} from '@logto/schemas';
 import { pickDefault, createMockUtils } from '@logto/shared/esm';
 
 import {
@@ -70,6 +75,49 @@ const signInExperienceRequester = createRequester({
   authedRoutes: signInExperiencesRoutes,
   tenantContext,
 });
+
+const createDevFeaturesDisabledRequester = async () => {
+  jest.resetModules();
+
+  await mockEsmWithActual('#src/env-set/index.js', () => ({
+    EnvSet: {
+      values: {
+        isDevFeaturesEnabled: false,
+        isCloud: false,
+        isProduction: false,
+        isUnitTest: true,
+      },
+    },
+  }));
+
+  const updateDefaultSignInExperience = jest.fn(
+    async (data: Partial<CreateSignInExperience>): Promise<SignInExperience> => ({
+      ...mockSignInExperience,
+      ...data,
+    })
+  );
+
+  const tenant = new MockTenant(
+    undefined,
+    {
+      signInExperiences: {
+        updateDefaultSignInExperience,
+        findDefaultSignInExperience: jest.fn().mockResolvedValue(mockSignInExperience),
+      },
+      customPhrases: { findAllCustomLanguageTags: async () => [] },
+    },
+    { getLogtoConnectors: jest.fn().mockResolvedValue([]) },
+    { signInExperiences: { validateLanguageInfo: jest.fn() } }
+  );
+
+  const routes = await pickDefault(import('./index.js'));
+  const requester = createRequester({
+    authedRoutes: routes,
+    tenantContext: tenant,
+  });
+
+  return { requester, updateDefaultSignInExperience };
+};
 
 describe('GET /sign-in-exp', () => {
   afterAll(() => {
@@ -190,6 +238,107 @@ describe('PATCH /sign-in-exp', () => {
     });
   });
 
+  it('should reject adaptive mfa enablement when mfa is disabled', async () => {
+    const adaptiveMfa = { enabled: true };
+
+    const response = await signInExperienceRequester.patch('/sign-in-exp').send({ adaptiveMfa });
+
+    expect(response).toMatchObject({
+      status: 422,
+    });
+  });
+
+  it('should update adaptive mfa config when enabling mfa in the same request', async () => {
+    const adaptiveMfa = { enabled: true };
+    const mfa = {
+      policy: MfaPolicy.PromptAtSignInAndSignUp,
+      factors: [MfaFactor.TOTP],
+    };
+
+    const response = await signInExperienceRequester
+      .patch('/sign-in-exp')
+      .send({ adaptiveMfa, mfa });
+
+    expect(response).toMatchObject({
+      status: 200,
+      body: {
+        ...mockSignInExperience,
+        adaptiveMfa,
+        mfa,
+      },
+    });
+  });
+
+  it('should update adaptive mfa config when mfa is already enabled', async () => {
+    findDefaultSignInExperience.mockResolvedValueOnce({
+      ...mockSignInExperience,
+      mfa: {
+        policy: MfaPolicy.PromptAtSignInAndSignUp,
+        factors: [MfaFactor.TOTP],
+      },
+    });
+
+    const adaptiveMfa = { enabled: true };
+
+    const response = await signInExperienceRequester.patch('/sign-in-exp').send({ adaptiveMfa });
+
+    expect(response.status).toEqual(200);
+  });
+
+  it('should allow disabling mfa when adaptive mfa is already enabled', async () => {
+    findDefaultSignInExperience.mockResolvedValueOnce({
+      ...mockSignInExperience,
+      adaptiveMfa: {
+        enabled: true,
+      },
+      mfa: {
+        policy: MfaPolicy.PromptAtSignInAndSignUp,
+        factors: [MfaFactor.TOTP],
+      },
+    });
+
+    const response = await signInExperienceRequester.patch('/sign-in-exp').send({
+      mfa: {
+        policy: MfaPolicy.PromptAtSignInAndSignUp,
+        factors: [],
+      },
+    });
+
+    expect(response).toMatchObject({
+      status: 200,
+      body: {
+        ...mockSignInExperience,
+        adaptiveMfa: {
+          enabled: false,
+        },
+        mfa: {
+          policy: MfaPolicy.PromptAtSignInAndSignUp,
+          factors: [],
+        },
+      },
+    });
+  });
+
+  it('should reject adaptive mfa when effective mfa policy is mandatory', async () => {
+    findDefaultSignInExperience.mockResolvedValueOnce({
+      ...mockSignInExperience,
+      mfa: {
+        policy: MfaPolicy.Mandatory,
+        factors: [MfaFactor.TOTP],
+      },
+    });
+
+    const response = await signInExperienceRequester.patch('/sign-in-exp').send({
+      adaptiveMfa: {
+        enabled: true,
+      },
+    });
+
+    expect(response).toMatchObject({
+      status: 422,
+    });
+  });
+
   it('should guard support email field format', async () => {
     const exception = await signInExperienceRequester
       .patch('/sign-in-exp')
@@ -274,5 +423,26 @@ describe('PATCH /sign-in-exp', () => {
         forgotPasswordMethods: [],
       },
     });
+  });
+});
+
+describe('sign-in experience routes with dev features disabled', () => {
+  it('should include adaptive mfa in GET response', async () => {
+    const { requester } = await createDevFeaturesDisabledRequester();
+
+    const response = await requester.get('/sign-in-exp');
+
+    expect(response.status).toEqual(200);
+    expect(response.body).toEqual(mockSignInExperience);
+  });
+
+  it('should ignore adaptive mfa updates', async () => {
+    const { requester, updateDefaultSignInExperience } = await createDevFeaturesDisabledRequester();
+
+    const response = await requester.patch('/sign-in-exp').send({ adaptiveMfa: { enabled: true } });
+
+    expect(updateDefaultSignInExperience).toHaveBeenCalledWith({});
+    expect(response.status).toEqual(200);
+    expect(response.body).toEqual(mockSignInExperience);
   });
 });
