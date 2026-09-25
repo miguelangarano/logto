@@ -1,3 +1,5 @@
+import concurrent_device_limit from './concurrent-device-limit.js';
+
 const application_details = {
   page_title: "Dettagli dell'applicazione",
   back_to_applications: 'Torna alle applicazioni',
@@ -86,6 +88,10 @@ const application_details = {
     'Consenti a questa applicazione di avviare richieste di scambio di token. È necessario per <impersonationLink>l’impersonificazione dell’utente</impersonationLink> e per i <patLink>token di accesso personali</patLink>.',
   allow_token_exchange_public_client_warning:
     'Non è consigliato abilitare lo scambio di token per client pubblici (app a pagina singola / app native). I client pubblici non possono archiviare le credenziali in modo sicuro, il che può esporre la tua applicazione a rischi di impersonificazione dei token.',
+  device_flow_tag: 'Flusso dispositivo',
+  device_flow_notification:
+    "Questa app abilita il flusso di autorizzazione dispositivo OAuth 2.0 (Device Authorization Flow) per dispositivi con input limitato o app headless (ad es., TV, CLI). Gli utenti completano l'accesso su un dispositivo separato inserendo un codice dispositivo o scansionando un QR code. <a>Scopri di più</a>",
+  device_flow_try_demo: 'Prova la demo',
   delete_description:
     "Questa azione non può essere annullata. Eliminerà definitivamente l'applicazione. Inserisci il nome dell'applicazione <span>{{name}}</span> per confermare.",
   enter_your_application_name: 'Inserisci il nome della tua applicazione',
@@ -116,6 +122,45 @@ const application_details = {
   field_custom_data_tip:
     "Ulteriori informazioni personalizzate sull'applicazione non elencate nelle proprietà predefinite dell'applicazione, come impostazioni e configurazioni specifiche del business.",
   custom_data_invalid: 'I dati personalizzati devono essere un oggetto JSON valido',
+  access_control: {
+    name: 'Regole',
+    title: 'Controllo accessi',
+    description: 'Personalizza le regole per il controllo accessi a livello di app.',
+    enable: 'Abilita controllo accessi a livello di app',
+    enable_description:
+      'Abilita un controllo accessi granulare per limitare quali utenti possono accedere a questa applicazione. Se disabilitato, tutti gli utenti registrati nel sistema possono accedervi.',
+    enable_without_rules_notice:
+      'Aggiungi almeno una regola di accesso prima di abilitare il controllo accessi.',
+    load_error: 'Impossibile caricare le regole di controllo accessi.',
+    custom_allow_rules: 'Regole di autorizzazione personalizzate',
+    custom_allow_rules_description:
+      'Crea regole affinché gli utenti con determinati attributi possano accedere automaticamente. Quando è abilitato, è richiesta almeno una regola.',
+    rules: 'Regole di accesso',
+    add_rules: 'Aggiungi regole',
+    rules_description:
+      'Gli utenti possono accedere a questa app quando corrispondono a una qualsiasi delle regole configurate.',
+    empty_rules_description: 'Non è stata ancora configurata alcuna regola.',
+    delete_rule_confirmation: 'Vuoi davvero rimuovere questa regola?',
+    rule_table_rules: 'Regole',
+    rule_table_description: 'Descrizione',
+    rule_table_users: 'Utenti',
+    rule_table_members: 'Membri',
+    rule_table_user_id: 'ID utente',
+    rule_count: '{{count}} regola',
+    rule_count_other: '{{count}} regole',
+    rule_users: 'Utenti',
+    rule_users_description: 'Utenti specifici possono accedere a questa app.',
+    rule_roles: 'Ruoli',
+    rule_user_roles: 'Ruoli utente',
+    rule_user_roles_description:
+      'Gli utenti assegnati ai ruoli utente selezionati possono accedere a questa app.',
+    rule_organizations: 'Organizzazioni',
+    rule_organizations_description:
+      'Tutti i membri attuali e futuri delle organizzazioni selezionate possono accedere a questa app.',
+    rule_organization_roles: 'Ruoli organizzazione',
+    rule_organization_roles_description:
+      'I membri con i ruoli organizzazione selezionati nelle organizzazioni selezionate possono accedere a questa app.',
+  },
   branding: {
     name: 'Marchio',
     description: "Personalizza il nome e il logo dell'applicazione sullo schermo del consenso.",
@@ -259,6 +304,13 @@ const application_details = {
     email_address: 'Indirizzo email',
     email_address_description: "Usa l'indirizzo email come Name ID",
   },
+  saml_idp_authentication: {
+    always_force_authn: "Forza sempre l'autenticazione",
+    always_force_authn_description:
+      'Richiedi agli utenti di accedere nuovamente ogni volta che accedono a questa applicazione, anche se hanno già una sessione Logto.',
+    always_force_authn_tip:
+      'Quando abilitato, Logto chiede sempre agli utenti di accedere nuovamente per questa applicazione. Quando disabilitato, una sessione Logto esistente viene riutilizzata a meno che il provider di servizi richieda una nuova autenticazione con ForceAuthn.',
+  },
   saml_encryption_config: {
     encrypt_assertion: 'Cifra dichiarazione SAML',
     encrypt_assertion_description:
@@ -284,6 +336,7 @@ const application_details = {
     col_sp_claims: 'Nome valore della tua applicazione',
     add_button: 'Aggiungi un altro',
   },
+  concurrent_device_limit,
 };
 
 export default Object.freeze(application_details);

@@ -1,15 +1,17 @@
 import { SignInIdentifier, Theme } from '@logto/schemas';
 import type { TFuncKey } from 'i18next';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import PageContext from '@ac/Providers/PageContextProvider/PageContext';
 import successDarkIllustration from '@ac/assets/icons/success-dark.svg';
 import successIllustration from '@ac/assets/icons/success.svg';
 import ErrorPage from '@ac/components/ErrorPage';
 import {
-  clearRedirectUrl,
+  clearPendingReturn,
   clearShowSuccess,
-  getRedirectUrl,
+  getAccountCenterInternalRoute,
+  getPendingReturn,
   getShowSuccess,
 } from '@ac/utils/account-center-route';
 
@@ -17,9 +19,11 @@ type IdentifierType =
   | SignInIdentifier
   | 'password'
   | 'totp'
+  | 'totp_replaced'
   | 'backup_code'
   | 'backup_code_deleted'
-  | 'passkey';
+  | 'passkey'
+  | 'social';
 
 type TranslationMap = Partial<
   Record<IdentifierType, { readonly titleKey: TFuncKey; readonly messageKey: TFuncKey }>
@@ -48,6 +52,10 @@ const translationMap: TranslationMap = {
     titleKey: 'account_center.update_success.totp.title',
     messageKey: 'account_center.update_success.totp.description',
   },
+  totp_replaced: {
+    titleKey: 'account_center.update_success.totp_replaced.title',
+    messageKey: 'account_center.update_success.totp_replaced.description',
+  },
   backup_code: {
     titleKey: 'account_center.update_success.backup_code.title',
     messageKey: 'account_center.update_success.backup_code.description',
@@ -67,6 +75,7 @@ type Props = {
 };
 
 const UpdateSuccess = ({ identifierType }: Props) => {
+  const navigate = useNavigate();
   const { theme } = useContext(PageContext);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [redirectUrl, setRedirectUrl] = useState<string>();
@@ -81,30 +90,47 @@ const UpdateSuccess = ({ identifierType }: Props) => {
     return translationMap[identifierType] ?? translationMap.default;
   }, [identifierType]);
 
-  useEffect(() => {
-    const storedRedirectUrl = getRedirectUrl();
-    const showSuccess = getShowSuccess();
+  const returnToUrl = useCallback(
+    (url: string) => {
+      setIsRedirecting(true);
+      clearPendingReturn();
 
-    if (storedRedirectUrl) {
-      // If show_success is set, show the success page with a Done button
-      if (showSuccess) {
-        setRedirectUrl(storedRedirectUrl);
+      const internalRoute = getAccountCenterInternalRoute(url);
+
+      if (internalRoute) {
+        navigate(internalRoute, { replace: true });
         return;
       }
 
-      // Otherwise, redirect immediately
-      setIsRedirecting(true);
-      clearRedirectUrl();
-      window.location.assign(storedRedirectUrl);
+      window.location.assign(url);
+    },
+    [navigate]
+  );
+
+  useEffect(() => {
+    const storedPendingReturn = getPendingReturn();
+
+    if (storedPendingReturn) {
+      if (identifierType === 'social') {
+        setRedirectUrl(() => storedPendingReturn);
+        return;
+      }
+
+      const showSuccess = getShowSuccess();
+
+      if (showSuccess) {
+        setRedirectUrl(() => storedPendingReturn);
+        return;
+      }
+
+      returnToUrl(storedPendingReturn);
     }
-  }, []);
+  }, [identifierType, returnToUrl]);
 
   const handleDoneClick = () => {
     if (redirectUrl) {
-      setIsRedirecting(true);
-      clearRedirectUrl();
       clearShowSuccess();
-      window.location.assign(redirectUrl);
+      returnToUrl(redirectUrl);
     }
   };
 

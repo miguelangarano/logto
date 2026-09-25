@@ -8,7 +8,6 @@ import { Action } from '@logto/schemas/lib/types/log/interaction.js';
 import type Router from 'koa-router';
 import { z } from 'zod';
 
-import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';
 import type TenantContext from '#src/tenants/TenantContext.js';
@@ -93,20 +92,24 @@ export default function totpVerificationRoutes<T extends ExperienceInteractionRo
       verificationAuditLog.append({
         payload: {
           verificationId,
-          code,
         },
       });
 
       assertThat(
-        experienceInteraction.identifiedUserId,
+        experienceInteraction.subjectUserId,
         new RequestError({
           code: 'session.identifier_not_found',
           status: 404,
         })
       );
 
-      // Verify new generated secret
+      // Verify new generated secret; enrolling requires a verified identity, not just a subject
       if (verificationId) {
+        assertThat(
+          experienceInteraction.identifiedUserId,
+          new RequestError({ code: 'session.identifier_not_found', status: 404 })
+        );
+
         const totpVerificationRecord = experienceInteraction.getVerificationRecordByTypeAndId(
           VerificationType.TOTP,
           verificationId
@@ -135,28 +138,28 @@ export default function totpVerificationRoutes<T extends ExperienceInteractionRo
       const totpVerificationRecord = TotpVerification.create(
         libraries,
         queries,
-        experienceInteraction.identifiedUserId
+        experienceInteraction.subjectUserId
       );
 
-      await (EnvSet.values.isDevFeaturesEnabled
-        ? withSentinel(
-            {
-              ctx,
-              sentinel,
-              action: SentinelActivityAction.MfaTotp,
-              identifier: {
-                type: AdditionalIdentifier.UserId,
-                value: experienceInteraction.identifiedUserId,
-              },
-              payload: {
-                verificationId: totpVerificationRecord.id,
-              },
-            },
-            totpVerificationRecord.verifyUserExistingTotp(code)
-          )
-        : totpVerificationRecord.verifyUserExistingTotp(code));
+      await withSentinel(
+        {
+          ctx,
+          sentinel,
+          queries,
+          action: SentinelActivityAction.MfaTotp,
+          identifier: {
+            type: AdditionalIdentifier.UserId,
+            value: experienceInteraction.subjectUserId,
+          },
+          payload: {
+            verificationId: totpVerificationRecord.id,
+          },
+        },
+        totpVerificationRecord.verifyUserExistingTotp(code)
+      );
 
       ctx.experienceInteraction.setVerificationRecord(totpVerificationRecord);
+      ctx.experienceInteraction.consumeForMfa(VerificationType.TOTP, totpVerificationRecord.id);
 
       await ctx.experienceInteraction.save();
 

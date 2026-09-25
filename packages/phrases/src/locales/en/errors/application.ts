@@ -9,6 +9,8 @@ const application = {
     'Third-party applications are not allowed to enable token exchange.',
   user_consent_scopes_not_found: 'Invalid user consent scopes.',
   consent_management_api_scopes_not_allowed: 'Management API scopes are not allowed.',
+  device_flow_native_only: 'Device flow is only available for native applications.',
+  device_flow_not_changeable: 'Device flow cannot be changed after application creation.',
   protected_app_metadata_is_required: 'Protected app metadata is required.',
   protected_app_not_configured:
     'Protected app provider is not configured. This feature is not available for open source version.',
@@ -22,12 +24,15 @@ const application = {
   should_delete_custom_domains_first: 'Should delete custom domains first.',
   no_legacy_secret_found: 'The application does not have a legacy secret.',
   secret_name_exists: 'Secret name already exists.',
+  sync_application_secret_failed: 'Sync application secret failed.',
   saml: {
     use_saml_app_api: 'Use `[METHOD] /saml-applications(/.*)?` API to operate SAML app.',
     saml_application_only: 'The API is only available for SAML applications.',
     reach_oss_limit: 'You CAN NOT create more SAML apps since the limit of {{limit}} is hit.',
     acs_url_binding_not_supported:
       'Only HTTP-POST binding is supported for receiving SAML assertions.',
+    acs_url_scheme_not_supported:
+      'Only the HTTP and HTTPS schemes are supported for the Assertion Consumer Service URL.',
     can_not_delete_active_secret: 'Can not delete the active secret.',
     no_active_secret: 'No active secret found.',
     entity_id_required: 'Entity ID is required to generate metadata.',

@@ -1,6 +1,7 @@
 import { MfaFactor, experience } from '@logto/schemas';
 import { Route, Routes, BrowserRouter } from 'react-router-dom';
 
+import { isDevFeaturesEnabled } from '@/constants/env';
 import { handleSearchParametersData } from '@/shared/utils/search-parameters';
 
 import AppLayout from './Layout/AppLayout';
@@ -10,11 +11,14 @@ import LoadingLayerProvider from './Providers/LoadingLayerProvider';
 import PageContextProvider from './Providers/PageContextProvider';
 import SettingsProvider from './Providers/SettingsProvider';
 import UserInteractionContextProvider from './Providers/UserInteractionContextProvider';
-import { isDevFeaturesEnabled } from './constants/env';
 import DevelopmentTenantNotification from './containers/DevelopmentTenantNotification';
+import MfaVerificationGuard from './containers/MfaVerificationGuard';
+import StepUpGuard from './containers/StepUpGuard';
 import Callback from './pages/Callback';
 import Consent from './pages/Consent';
 import Continue from './pages/Continue';
+import Device from './pages/Device';
+import DeviceSuccess from './pages/Device/Success';
 import DirectSignIn from './pages/DirectSignIn';
 import ErrorPage from './pages/ErrorPage';
 import ForgotPassword from './pages/ForgotPassword';
@@ -26,6 +30,7 @@ import EmailMfaBinding from './pages/MfaBinding/EmailMfaBinding';
 import PhoneMfaBinding from './pages/MfaBinding/PhoneMfaBinding';
 import TotpBinding from './pages/MfaBinding/TotpBinding';
 import WebAuthnBinding from './pages/MfaBinding/WebAuthnBinding';
+import MfaOnboarding from './pages/MfaOnboarding';
 import MfaVerification from './pages/MfaVerification';
 import BackupCodeVerification from './pages/MfaVerification/BackupCodeVerification';
 import EmailVerificationCode from './pages/MfaVerification/EmailVerificationCode';
@@ -40,15 +45,20 @@ import RegisterPassword from './pages/RegisterPassword';
 import ResetPassword from './pages/ResetPassword';
 import ResetPasswordLanding from './pages/ResetPasswordLanding';
 import SignIn from './pages/SignIn';
+import SignInPasskeyVerification from './pages/SignInPasskeyVerification';
 import SignInPassword from './pages/SignInPassword';
+import SignInVerificationMethods from './pages/SignInVerificationMethods';
 import SingleSignOnConnectors from './pages/SingleSignOnConnectors';
 import SingleSignOnEmail from './pages/SingleSignOnEmail';
 import SingleSignOnLanding from './pages/SingleSignOnLanding';
 import SocialLanding from './pages/SocialLanding';
 import SocialLinkAccount from './pages/SocialLinkAccount';
 import SocialSignInWebCallback from './pages/SocialSignInWebCallback';
-import Springboard from './pages/Springboard';
+import StepUp from './pages/StepUp';
+import StepUpPassword from './pages/StepUp/Password';
+import StepUpVerificationCode from './pages/StepUp/VerificationCode';
 import SwitchAccount from './pages/SwitchAccount';
+import TrustedDevice from './pages/TrustedDevice';
 import VerificationCode from './pages/VerificationCode';
 import { UserMfaFlow } from './types';
 import 'overlayscrollbars/overlayscrollbars.css';
@@ -68,7 +78,6 @@ const App = () => {
               <AppBoundary>
                 <Routes>
                   <Route element={<LoadingLayerProvider />}>
-                    <Route path="springboard" element={<Springboard />} />
                     <Route path="callback/:connectorId" element={<Callback />} />
                     <Route
                       path="callback/social/:connectorId"
@@ -86,17 +95,38 @@ const App = () => {
                         path="unknown-session"
                         element={<ErrorPage message="error.invalid_session" />}
                       />
+                      <Route
+                        path={experience.routes.accountSuspended}
+                        element={
+                          <ErrorPage
+                            isNavbarHidden
+                            title="error.account_suspended"
+                            message="error.account_suspended_description"
+                            primaryAction={{
+                              title: 'description.back_to_sign_in',
+                              to: `/${experience.routes.signIn}`,
+                              replace: true,
+                            }}
+                          />
+                        }
+                      />
 
                       {/* Sign-in */}
                       <Route path={experience.routes.signIn}>
                         <Route index element={<SignIn />} />
                         <Route path="password" element={<SignInPassword />} />
+                        <Route path="passkey" element={<SignInPasskeyVerification />} />
+                        <Route
+                          path="verification-methods"
+                          element={<SignInVerificationMethods />}
+                        />
                       </Route>
 
                       {/* Create passkey for sign-in */}
-                      {isDevFeaturesEnabled && (
-                        <Route path="create-passkey" element={<PasskeySetup />} />
-                      )}
+                      <Route path="create-passkey" element={<PasskeySetup />} />
+
+                      {/* Trusted device */}
+                      <Route path={experience.routes.trustedDevice} element={<TrustedDevice />} />
 
                       {/* Register */}
                       <Route path={experience.routes.register}>
@@ -112,6 +142,9 @@ const App = () => {
 
                       {/* Passwordless verification code */}
                       <Route path=":flow/verification-code" element={<VerificationCode />} />
+
+                      {/* Mfa onboarding page. Prompt users to turn on 2-step verification. */}
+                      <Route path="mfa-onboarding" element={<MfaOnboarding />} />
 
                       {/* Mfa binding */}
                       <Route path={UserMfaFlow.MfaBinding}>
@@ -130,7 +163,11 @@ const App = () => {
                       </Route>
 
                       {/* Mfa verification */}
-                      <Route path={UserMfaFlow.MfaVerification}>
+                      <Route
+                        path={UserMfaFlow.MfaVerification}
+                        // Step-up MFA pages recover their state from the interaction.
+                        element={isDevFeaturesEnabled ? <MfaVerificationGuard /> : undefined}
+                      >
                         <Route index element={<MfaVerification />} />
                         <Route path={MfaFactor.TOTP} element={<TotpVerification />} />
                         <Route path={MfaFactor.WebAuthn} element={<WebAuthnVerification />} />
@@ -150,6 +187,23 @@ const App = () => {
                         <Route path=":method" element={<Continue />} />
                       </Route>
 
+                      {/*
+                       * Step-up: an authenticated session proves the missing assurance. The guard
+                       * loads the server-driven context, the landing dispatches on it, and the
+                       * pinned-user first-factor pages verify the pinned subject. Dev-only
+                       * feature: remove the flag when the flow is released.
+                       */}
+                      {isDevFeaturesEnabled && (
+                        <Route path={experience.routes.stepUp} element={<StepUpGuard />}>
+                          <Route index element={<StepUp />} />
+                          <Route path="password" element={<StepUpPassword />} />
+                          <Route
+                            path="verification-code/:type"
+                            element={<StepUpVerificationCode />}
+                          />
+                        </Route>
+                      )}
+
                       {/* Social sign-in pages */}
                       <Route path="social">
                         <Route path="link/:connectorId" element={<SocialLinkAccount />} />
@@ -166,6 +220,13 @@ const App = () => {
 
                       {/* Consent */}
                       <Route path="consent" element={<Consent />} />
+
+                      {/* Device flow */}
+                      <Route path={experience.routes.device} element={<Device />} />
+                      <Route
+                        path={`${experience.routes.device}/success`}
+                        element={<DeviceSuccess />}
+                      />
 
                       {/*
                        * Identifier sign-in (first screen)

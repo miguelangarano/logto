@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 
-import { decodeAccessToken } from '@logto/js';
+import { decodeAccessToken, decodeIdToken } from '@logto/js';
 import { type LogtoConfig, Prompt, PersistKey } from '@logto/node';
 import { GrantType, InteractionEvent, demoAppApplicationId } from '@logto/schemas';
 import { formUrlEncodedHeaders } from '@logto/shared';
@@ -8,10 +8,12 @@ import { isKeyInObject, removeUndefinedKeys } from '@silverhand/essentials';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import ky, { HTTPError } from 'ky';
 
-import { putInteraction } from '#src/api/index.js';
-import MockClient, { defaultConfig } from '#src/client/index.js';
+import { updateUser } from '#src/api/index.js';
+import { ExperienceClient } from '#src/client/experience/index.js';
+import { defaultConfig } from '#src/client/index.js';
 import { demoAppRedirectUri } from '#src/constants.js';
 import { processSession } from '#src/helpers/client.js';
+import { identifyUserWithUsernamePassword } from '#src/helpers/experience/index.js';
 import { OrganizationApiTest } from '#src/helpers/organization.js';
 import { enableAllPasswordSignInMethods } from '#src/helpers/sign-in-experience.js';
 import { UserApiTest } from '#src/helpers/user.js';
@@ -45,7 +47,7 @@ const accessDeniedError = grantErrorContaining(
 
 const issuer = defaultConfig.endpoint + '/oidc';
 
-class MockOrganizationClient extends MockClient {
+class MockOrganizationClient extends ExperienceClient {
   /** Perform the organization token grant. It may be replaced once our SDK supports it. */
   async fetchOrganizationToken(organizationId?: string, scopes?: string[]) {
     const refreshToken = await this.getRefreshToken();
@@ -100,10 +102,8 @@ describe('`refresh_token` grant (for organization tokens)', () => {
       ...configOverrides,
     });
     await client.initSession(demoAppRedirectUri);
-    await client.successSend(putInteraction, {
-      event: InteractionEvent.SignIn,
-      identifier: { username, password },
-    });
+    await client.initInteraction({ interactionEvent: InteractionEvent.SignIn });
+    await identifyUserWithUsernamePassword(client, username, password);
     const { redirectTo } = await client.submitInteraction();
     await processSession(client, redirectTo);
     return client;
@@ -407,6 +407,32 @@ describe('`refresh_token` grant (for organization tokens)', () => {
         organizationId: orgs[1].id,
         scopes: [],
       });
+    });
+
+    it('should drop scope-gated claims from the ID token when the refresh request narrows the scope', async () => {
+      // The ID token claims must follow the scope of the current token request, not the full
+      // scope of the refresh token. Runs last in this suite since it mutates the shared user.
+      const email = `${generateUsername()}@example.com`;
+      await updateUser(userId, { primaryEmail: email });
+
+      // `openid`, `offline_access`, and `profile` are always appended by the SDK.
+      const client = await initClient({ scopes: ['email'], resources: [] });
+
+      const fullScope = await client.fetchOrganizationToken();
+      assert(
+        isObject(fullScope) && typeof fullScope.id_token === 'string',
+        new Error('id_token is not issued for the full-scope request')
+      );
+      expect(decodeIdToken(fullScope.id_token)).toMatchObject({ email });
+
+      const downScoped = await client.fetchOrganizationToken(undefined, ['openid', 'profile']);
+      assert(
+        isObject(downScoped) && typeof downScoped.id_token === 'string',
+        new Error('id_token is not issued for the down-scoped request')
+      );
+      const claims = decodeIdToken(downScoped.id_token);
+      expect(claims).not.toHaveProperty('email');
+      expect(claims).not.toHaveProperty('email_verified');
     });
   });
 });

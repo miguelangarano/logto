@@ -8,7 +8,6 @@ const mfa = {
   otp_description: '将 Google Authenticator 等链接，以验证一次性密码。',
   webauthn: 'Passkeys',
   webauthn_description: '通过浏览器支持的方法进行验证：生物识别、手机扫描或安全密钥等。',
-  webauthn_native_tip: 'WebAuthn 不支持原生应用。',
   webauthn_domain_tip:
     'WebAuthn 将公钥绑定到特定域。修改服务域将阻止用户通过现有的密码进行身份验证。',
   backup_code: '备份代码',
@@ -30,14 +29,16 @@ const mfa = {
   require_mfa_label:
     '启用此选项以使两步验证成为访问你的应用程序的强制要求。如果禁用，用户可以决定是否为自己启用 MFA。',
   require_mfa_optional: '可选 MFA：允许用户自行选择是否为其账号启用 MFA',
-  require_mfa_adaptive: '自适应 MFA：仅在登录存在风险（例如新设备/地点）时要求 MFA',
+  require_mfa_adaptive: '自适应 MFA：仅在登录存在风险（例如新国家/长期未活动）时要求 MFA',
   require_mfa_mandatory: '强制 MFA：要求所有用户在每次登录时完成 MFA',
   set_up_prompt: 'MFA 设置提示',
   no_prompt: '不要要求用户设置 MFA',
   prompt_at_sign_in_and_sign_up: '在注册时要求用户设置 MFA （可跳过，一次性提示）',
   prompt_only_at_sign_in: '在注册后的下次登录尝试时要求用户设置 MFA （可跳过，一次性提示）',
+  prompt_at_sign_in_and_sign_up_mandatory: '在注册时要求用户设置 MFA。（不可跳过）',
+  prompt_only_at_sign_in_mandatory: '在注册后的下次登录尝试时要求用户设置 MFA。（不可跳过）',
   set_up_organization_required_mfa_prompt: '组织启用 MFA 后，提示用户设置 MFA',
-  prompt_at_sign_in_no_skip: '在下次登录时要求用户设置 MFA （不可跳过）',
+  prompt_at_sign_in_non_skippable: '在下次登录时要求用户设置 MFA （不可跳过）',
   email_primary_method_tip: '邮件验证码已经是你的主要登录方式。为了确保安全性，不能再次用于 MFA。',
   phone_primary_method_tip: '短信验证码已经是你的主要登录方式。为了确保安全性，不能再次用于 MFA。',
   no_email_connector_warning:
@@ -47,6 +48,26 @@ const mfa = {
   no_email_connector_error: '无法在没有邮件连接器的情况下启用邮件验证码 MFA。请先配置邮件连接器。',
   no_sms_connector_error: '无法在没有短信连接器的情况下启用短信验证码 MFA。请先配置短信连接器。',
   setup_link: '设置',
+  trusted_device: {
+    title: '可信设备',
+    description: '允许可信浏览器在当前 MFA 流程要求验证时自动完成 MFA 验证。',
+    enable_title: '启用可信设备',
+    enable_description: '允许用户在完成符合条件的 MFA 因素验证后信任此浏览器。',
+    duration_title: '信任时长（天）',
+    duration_error: '请输入 {{min}} 到 {{max}} 之间的整数。',
+    duration_note: '信任时长的更改仅适用于之后添加的可信设备。',
+    organization_allow_title: '允许可信设备',
+    organization_allow_tip: '组织只能收紧租户可信设备策略；租户策略关闭时，组织无法启用此功能。',
+    organization_allow_description: '允许此组织的成员使用可信设备完成验证。',
+    organization_global_disabled: '请先在租户 MFA 设置中启用可信设备，再为此组织允许该功能。',
+    management_description:
+      '管理此用户完成 MFA 后信任的浏览器。移除后，该浏览器在下次登录时需要再次完成 MFA。',
+    management_hint: '最近的位置仅供参考。',
+    management_empty: '此用户没有有效的可信设备。',
+    management_deletion_confirmation:
+      '确定要移除 {{name}} 吗？该浏览器在下次登录时需要再次完成 MFA。',
+    management_removed: '可信设备已移除。',
+  },
 };
 
 export default Object.freeze(mfa);

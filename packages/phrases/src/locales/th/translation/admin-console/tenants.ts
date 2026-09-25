@@ -1,12 +1,49 @@
 const tenants = {
   title: 'การตั้งค่า',
   description: 'จัดการการตั้งค่าผู้เช่าอย่างมีประสิทธิภาพและปรับแต่งโดเมนของคุณ',
+  oss_description:
+    'เปลี่ยนการตั้งค่าบัญชีและจัดการข้อมูลส่วนตัวของคุณที่นี่เพื่อให้มั่นใจถึงความปลอดภัยของบัญชีของคุณ',
   tabs: {
     settings: 'การตั้งค่า',
     members: 'สมาชิก',
     domains: 'โดเมน',
+    oidc_configs: 'การกำหนดค่า OIDC',
     subscription: 'แผนและการเรียกเก็บเงิน',
     billing_history: 'ประวัติการเรียกเก็บเงิน',
+    license: 'ใบอนุญาต',
+  },
+  license: {
+    purchase_title: 'แผนแบบ SELF-HOSTED',
+    purchase_description:
+      'แผน Pro และแผนองค์กรแบบ self-hosted จะปลดล็อกฟีเจอร์แบบชำระเงินบนอินสแตนซ์ของคุณเอง เช่น การซ่อนแบรนด์ Logto การใช้ UI ของคุณเอง SSO ที่เริ่มโดย IdP การทำงานร่วมกันในคอนโซล และแอปพลิเคชัน SAML ไม่จำกัด ซื้อแผนเพื่อรับคีย์ใบอนุญาตของคุณ',
+    purchase_button: 'ดูแผนแบบ self-hosted',
+    install_title: 'ติดตั้งใบอนุญาต',
+    install_description: 'วางคีย์ใบอนุญาตที่คุณได้รับหลังจากซื้อแผนแบบ self-hosted',
+    install_button: 'ติดตั้งใบอนุญาต',
+    key_field: 'คีย์ใบอนุญาต',
+    key_field_description:
+      'คีย์จะถูกตรวจสอบบนอินสแตนซ์ของคุณและไม่ถูกส่งออกไปที่ใด หากคีย์ที่คุณมีหมดอายุแล้ว ให้รับคีย์ใหม่จากบัญชี Logto ของคุณ',
+    key_placeholder: 'วางคีย์ใบอนุญาตของคุณที่นี่',
+    installed_toast: 'ติดตั้งใบอนุญาตเรียบร้อยแล้ว',
+    details_title: 'ใบอนุญาต',
+    details_description: 'ใบอนุญาตที่ติดตั้งบนอินสแตนซ์นี้และสิทธิ์ที่ได้รับ',
+    plan_field: 'แผน',
+    environment_field: 'สภาพแวดล้อม',
+    environment_production: 'โปรดักชัน',
+    environment_non_production: 'ไม่ใช่โปรดักชัน',
+    expires_at_field: 'หมดอายุวันที่',
+    installed_at_field: 'ติดตั้งเมื่อ',
+    replace_button: 'เปลี่ยนใบอนุญาต',
+  },
+  members: {
+    card_title: 'จัดการเทนแนนต์ได้อย่างปลอดภัยยิ่งขึ้นด้วย Logto Cloud',
+    card_description:
+      'เพิ่มผู้ดูแลระบบหรือผู้ทำงานร่วมกันให้กับเทนแนนต์ของคุณได้โดยไม่ต้องแชร์บัญชีผู้ดูแลระบบเพียงบัญชีเดียว',
+    card_action: 'สำรวจ Logto Cloud',
+    self_hosted_card_title: 'จัดการเทนแนนต์ได้อย่างปลอดภัยยิ่งขึ้นด้วยแผน self-hosted',
+    self_hosted_card_description:
+      'เพิ่มผู้ดูแลระบบหรือผู้ทำงานร่วมกันให้กับเทนแนนต์ของคุณได้โดยไม่ต้องแชร์บัญชีผู้ดูแลระบบเพียงบัญชีเดียว',
+    self_hosted_card_action: 'สำรวจแผน self-hosted',
   },
   settings: {
     title: 'การตั้งค่า',

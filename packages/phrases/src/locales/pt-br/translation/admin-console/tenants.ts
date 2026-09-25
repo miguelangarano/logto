@@ -1,12 +1,50 @@
 const tenants = {
   title: 'Configurações',
   description: 'Gerencie eficientemente as configurações do locatário e personalize seu domínio.',
+  oss_description:
+    'Altere as configurações da sua conta e gerencie suas informações pessoais aqui para garantir a segurança da sua conta.',
   tabs: {
     settings: 'Configurações',
     members: 'Membros',
     domains: 'Domínios',
+    oidc_configs: 'Configurações de OIDC',
     subscription: 'Plano e faturamento',
     billing_history: 'Histórico de faturamento',
+    license: 'Licença',
+  },
+  license: {
+    purchase_title: 'PLANOS SELF-HOSTED',
+    purchase_description:
+      'Os planos Pro e Empresa self-hosted liberam recursos pagos na sua própria instância, como ocultar a marca Logto, usar sua própria interface, SSO iniciado pelo IdP, colaboração no console e aplicações SAML ilimitadas. Compre um plano para receber sua chave de licença.',
+    purchase_button: 'Ver planos self-hosted',
+    install_title: 'INSTALAR LICENÇA',
+    install_description:
+      'Cole a chave de licença que você recebeu ao comprar um plano self-hosted.',
+    install_button: 'Instalar licença',
+    key_field: 'Chave de licença',
+    key_field_description:
+      'A chave é verificada na sua instância e nunca sai dela. Pegue uma chave nova na sua conta Logto se a que você tem expirou.',
+    key_placeholder: 'Cole sua chave de licença aqui',
+    installed_toast: 'Licença instalada com sucesso.',
+    details_title: 'LICENÇA',
+    details_description: 'A licença instalada nesta instância e o que ela concede.',
+    plan_field: 'Plano',
+    environment_field: 'Ambiente',
+    environment_production: 'Produção',
+    environment_non_production: 'Não produção',
+    expires_at_field: 'Expira em',
+    installed_at_field: 'Instalada em',
+    replace_button: 'Substituir licença',
+  },
+  members: {
+    card_title: 'Gerencie tenants com mais segurança usando o Logto Cloud',
+    card_description:
+      'Adicione administradores ou colaboradores ao seu tenant sem compartilhar uma única conta de administrador.',
+    card_action: 'Explorar o Logto Cloud',
+    self_hosted_card_title: 'Gerencie tenants com mais segurança usando os planos self-hosted',
+    self_hosted_card_description:
+      'Adicione administradores ou colaboradores ao seu tenant sem compartilhar uma única conta de administrador.',
+    self_hosted_card_action: 'Explorar os planos self-hosted',
   },
   settings: {
     title: 'CONFIGURAÇÕES',

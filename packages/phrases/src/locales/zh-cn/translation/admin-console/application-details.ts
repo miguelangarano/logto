@@ -1,3 +1,5 @@
+import concurrent_device_limit from './concurrent-device-limit.js';
+
 const application_details = {
   page_title: '应用详情',
   back_to_applications: '返回全部应用',
@@ -81,6 +83,10 @@ const application_details = {
     '允许此应用程序发起令牌交换请求。这是 <impersonationLink>用户冒充</impersonationLink> 和 <patLink>个人访问令牌</patLink> 所必需的。',
   allow_token_exchange_public_client_warning:
     '不建议为公共客户端（单页应用/原生应用）启用令牌交换。公共客户端无法安全存储凭据，可能会使你的应用暴露于令牌冒充风险。',
+  device_flow_tag: '设备流',
+  device_flow_notification:
+    '此应用启用了 OAuth 2.0 Device Authorization Flow，适用于输入受限的设备或无界面应用（如电视、CLI）。用户在另一台设备上通过输入设备码或扫描二维码完成登录。<a>了解更多</a>',
+  device_flow_try_demo: '试用演示',
   delete_description: '本操作会永久性地删除该应用，且不可撤销。输入 <span>{{name}}</span> 确认。',
   enter_your_application_name: '输入你的应用名称',
   application_deleted: '应用 {{name}} 成功删除。',
@@ -108,6 +114,40 @@ const application_details = {
   field_custom_data_tip:
     '不在预定义的应用程序属性中列出的其他自定义应用程序信息，例如业务特定的设置和配置。',
   custom_data_invalid: '自定义数据必须是有效的 JSON 对象',
+  access_control: {
+    name: '规则',
+    title: '访问控制',
+    description: '自定义应用级访问控制规则。',
+    enable: '启用应用级访问控制',
+    enable_description:
+      '启用精细化访问控制，以限制哪些用户可以访问此应用。如果关闭，系统中的所有已注册用户都可以访问。',
+    enable_without_rules_notice: '请先添加至少一条访问规则，再启用访问控制。',
+    load_error: '加载访问控制规则失败。',
+    custom_allow_rules: '自定义允许规则',
+    custom_allow_rules_description:
+      '创建规则，让具备特定属性的用户可以自动访问。启用时至少需要一条规则。',
+    rules: '访问规则',
+    add_rules: '添加规则',
+    rules_description: '用户匹配任意一条已配置规则时即可访问此应用。',
+    empty_rules_description: '尚未配置任何规则。',
+    delete_rule_confirmation: '确定要移除此规则吗？',
+    rule_table_rules: '规则',
+    rule_table_description: '描述',
+    rule_table_users: '用户',
+    rule_table_members: '成员',
+    rule_table_user_id: '用户 ID',
+    rule_count: '{{count}} 条规则',
+    rule_count_other: '{{count}} 条规则',
+    rule_users: '用户',
+    rule_users_description: '指定用户可以访问此应用。',
+    rule_roles: '角色',
+    rule_user_roles: '用户角色',
+    rule_user_roles_description: '拥有所选用户角色的用户可以访问此应用。',
+    rule_organizations: '组织',
+    rule_organizations_description: '所选组织中的当前和未来成员都可以访问此应用。',
+    rule_organization_roles: '组织角色',
+    rule_organization_roles_description: '在所选组织中拥有所选组织角色的成员可以访问此应用。',
+  },
   branding: {
     name: '品牌化',
     description: '在授权屏幕上自定义应用程序的显示名称和标识。',
@@ -238,6 +278,13 @@ const application_details = {
     email_address: '电子邮件地址',
     email_address_description: '使用电子邮件地址作为名称 ID',
   },
+  saml_idp_authentication: {
+    always_force_authn: '总是强制认证',
+    always_force_authn_description:
+      '要求用户每次访问此应用时重新登录，即使他们已经有一个 Logto 会话。',
+    always_force_authn_tip:
+      '启用后，Logto 总是要求用户为此应用重新登录。禁用时，除非服务提供者请求新的认证（使用 ForceAuthn），否则将重用现有的 Logto 会话。',
+  },
   saml_encryption_config: {
     encrypt_assertion: '加密 SAML 断言',
     encrypt_assertion_description: '启用此选项后，SAML 断言将被加密。',
@@ -259,6 +306,7 @@ const application_details = {
     col_sp_claims: '你应用中的值名称',
     add_button: '添加另一个',
   },
+  concurrent_device_limit,
 };
 
 export default Object.freeze(application_details);

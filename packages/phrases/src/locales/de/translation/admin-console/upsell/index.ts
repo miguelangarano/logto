@@ -5,7 +5,9 @@ import paywall from './paywall.js';
 const upsell = {
   upgrade_plan: 'Upgrade-Plan',
   compare_plans: 'Pläne vergleichen',
+  try_with_product_name: 'Jetzt {{productName}} ausprobieren',
   view_plans: 'Pläne anzeigen',
+  explore_self_hosted_plans: 'Self-Hosted-Pläne entdecken',
   create_tenant: {
     title: 'Wählen Sie Ihren Tenant-Plan aus',
     description:

@@ -5,6 +5,7 @@ import { useCallback, useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDebouncedLoader } from 'use-debounced-loader';
 
+import PageContext from '@/Providers/PageContextProvider/PageContext';
 import WebAuthnContext from '@/Providers/WebAuthnContextProvider/WebAuthnContext';
 import PasskeyIcon from '@/assets/icons/passkey-icon.svg?react';
 import usePasskeySignIn from '@/hooks/use-passkey-sign-in';
@@ -16,17 +17,20 @@ import styles from './index.module.scss';
 
 const PasskeySignInButton = () => {
   const { t } = useTranslation();
+  const { isPreview } = useContext(PageContext);
   const {
     authenticationOptions,
     isLoading: isPreparing,
+    isPasskeyFlowProcessing,
+    setIsPasskeyFlowProcessing,
     markAuthenticationOptionsConsumed,
     abortConditionalUI,
   } = useContext(WebAuthnContext);
   const { handleVerifyPasskey } = usePasskeySignIn();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const isLoadingActive = useDebouncedLoader(isPreparing || isSubmitting, 300);
-  const isDisabled = isPreparing || !authenticationOptions;
+  const isLoadingActive = useDebouncedLoader(isSubmitting, 300);
+  const isDisabled = isPreparing || !authenticationOptions || isPasskeyFlowProcessing;
 
   const preSignInErrorHandler = useSubmitInteractionErrorHandler(InteractionEvent.SignIn, {
     replace: true,
@@ -40,10 +44,12 @@ const PasskeySignInButton = () => {
     // to prevent `OperationError: A request is already pending`.
     abortConditionalUI();
     setIsSubmitting(true);
+    setIsPasskeyFlowProcessing(true);
     try {
       await handleVerifyPasskey(authenticationOptions, preSignInErrorHandler);
     } finally {
       markAuthenticationOptionsConsumed();
+      setIsPasskeyFlowProcessing(false);
       setIsSubmitting(false);
     }
   }, [
@@ -52,6 +58,7 @@ const PasskeySignInButton = () => {
     handleVerifyPasskey,
     markAuthenticationOptionsConsumed,
     preSignInErrorHandler,
+    setIsPasskeyFlowProcessing,
   ]);
 
   if (!browserSupportsWebAuthn()) {
@@ -60,18 +67,18 @@ const PasskeySignInButton = () => {
 
   return (
     <button
-      disabled={isDisabled}
+      disabled={isDisabled && !isPreview}
       className={classNames(
         buttonStyles.button,
         buttonStyles.secondary,
         buttonStyles.large,
         styles.button,
-        isDisabled && buttonStyles.disabled
+        isDisabled && !isPreview && buttonStyles.disabled
       )}
       type="button"
       onClick={onPasskeySignIn}
     >
-      {!isLoadingActive && <PasskeyIcon />}
+      {!isLoadingActive && <PasskeyIcon className={styles.icon} />}
       {isLoadingActive && (
         <span className={styles.loadingIcon}>
           <RotatingRingIcon />
@@ -79,7 +86,7 @@ const PasskeySignInButton = () => {
       )}
       <div className={styles.name}>
         <div className={styles.placeHolder} />
-        <span>{t('action.sign_in_with', { name: t('mfa.webauthn') })}</span>
+        <span>{t('action.sign_in_with', { name: t('mfa.webauthn').toLowerCase() })}</span>
         <div className={styles.placeHolder} />
       </div>
     </button>

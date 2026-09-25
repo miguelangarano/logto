@@ -43,6 +43,8 @@ const paywall = {
     'Hai raggiunto il limite di {{count, number}} autorizzazioni per ruolo di <planName/>. Aggiorna il piano per aggiungere ruoli e autorizzazioni aggiuntive. Non esitare a <a>contattarci</a> se hai bisogno di assistenza.',
   saml_applications_oss:
     "L'app SAML aggiuntiva è disponibile con il piano Logto Enterprise. Contattaci se hai bisogno di assistenza.",
+  saml_applications_oss_limit_notice:
+    'La tua istanza open source supporta fino a {{limit}} applicazioni SAML. Puoi usare Logto Cloud o contattarci per ulteriori opzioni.',
   logto_pricing_button_text: 'Prezzi del Logto Cloud',
   saml_applications:
     "L'app SAML aggiuntiva è disponibile con il piano Logto Enterprise. Contattaci se hai bisogno di assistenza.",
@@ -76,6 +78,8 @@ const paywall = {
     'Sblocca funzionalità di sicurezza avanzate passando al piano Pro. Non esitare a <a>contattarci</a> se hai domande.',
   collect_user_profile:
     'Aggiorna a un piano a pagamento per raccogliere informazioni aggiuntive del profilo utente durante la registrazione. Non esitare a <a>contattarci</a> se hai domande.',
+  passkey_sign_in:
+    'Passa a un piano a pagamento per ottenere la funzionalità di accesso con passkey e vantaggi premium. Non esitare a <a>contattarci</a> se hai domande.',
 };
 
 export default Object.freeze(paywall);

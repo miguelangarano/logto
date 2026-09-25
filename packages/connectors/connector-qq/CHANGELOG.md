@@ -1,5 +1,35 @@
 # @logto/connector-qq
 
+## 1.1.6
+
+### Patch Changes
+
+- @logto/connector-kit@5.1.1
+
+## 1.1.5
+
+### Patch Changes
+
+- 0b371f66c6: support QQ social identity verification with stored redirect URI
+- Updated dependencies [e7b6e9de1]
+- Updated dependencies [b7386a5113]
+  - @logto/connector-kit@5.1.0
+
+## 1.1.4
+
+### Patch Changes
+
+- Updated dependencies [41a56f79e3]
+  - @logto/connector-kit@5.0.1
+
+## 1.1.3
+
+### Patch Changes
+
+- Updated dependencies [4e25126228]
+- Updated dependencies [4e25126228]
+  - @logto/connector-kit@5.0.0
+
 ## 1.1.2
 
 ### Patch Changes

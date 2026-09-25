@@ -8,7 +8,6 @@ const mfa = {
   otp_description: '將 Google Authenticator 等連接起來，以驗證一次性密碼。',
   webauthn: 'Passkeys',
   webauthn_description: '通過瀏覽器支持的方法進行驗證：生物識別、手機掃描或安全密鑰等。',
-  webauthn_native_tip: '本地應用不支持 WebAuthn。',
   webauthn_domain_tip:
     'WebAuthn 將公共密鑰綁定到特定域。修改服務域將阻止用戶通過現有通行證進行身份驗證。',
   backup_code: '備份代碼',
@@ -30,14 +29,16 @@ const mfa = {
   require_mfa_label:
     '啟用此功能可使雙步驗證成為訪問你的應用的必須步驟。如果禁用，用戶可以自行決定是否啟用 MFA。',
   require_mfa_optional: '可選 MFA：允許用戶自行選擇是否為其帳號啟用 MFA',
-  require_mfa_adaptive: '自適應 MFA：僅在登入看似有風險時（例如新裝置/地點）才要求 MFA',
+  require_mfa_adaptive: '自適應 MFA：僅在登入看似有風險時（例如新國家/長期未活動）才要求 MFA',
   require_mfa_mandatory: '強制 MFA：要求所有用戶在每次登入時完成 MFA',
   set_up_prompt: 'MFA 設定提示',
   no_prompt: '不要求用戶設置 MFA',
   prompt_at_sign_in_and_sign_up: '在註冊期間提示用戶設置 MFA（可跳過，一次性提示）',
   prompt_only_at_sign_in: '在註冊後用戶的下一次登錄嘗試時提示設置 MFA（可跳過，一次性提示）',
+  prompt_at_sign_in_and_sign_up_mandatory: '在註冊時要求用戶設置 MFA（不可跳過）',
+  prompt_only_at_sign_in_mandatory: '在註冊後的下一次登錄嘗試時要求用戶設置 MFA（不可跳過）',
   set_up_organization_required_mfa_prompt: '組織啟用 MFA 後的用戶 MFA 設置提示',
-  prompt_at_sign_in_no_skip: '在用戶的下次登錄時要求設置 MFA（不可跳過）',
+  prompt_at_sign_in_non_skippable: '在用戶的下次登錄時要求設置 MFA（不可跳過）',
   email_primary_method_tip: '郵件驗證碼已經是你的主要登錄方式。為了維持安全性，不能重複用作 MFA。',
   phone_primary_method_tip: 'SMS 驗證碼已經是你的主要登錄方式。為了維持安全性，不能重複用作 MFA。',
   no_email_connector_warning:
@@ -48,6 +49,27 @@ const mfa = {
     '沒有電子郵件連接器無法啟用電子郵件驗證碼 MFA。請先設定電子郵件連接器。',
   no_sms_connector_error: '沒有 SMS 連接器無法啟用 SMS 驗證碼 MFA。請先設定 SMS 連接器。',
   setup_link: '設定',
+  trusted_device: {
+    title: '受信任裝置',
+    description: '讓受信任的瀏覽器在目前 MFA 流程要求驗證時自動完成 MFA 驗證。',
+    enable_title: '啟用受信任裝置',
+    enable_description: '允許使用者完成符合條件的 MFA 因素驗證後信任此瀏覽器。',
+    duration_title: '信任期限（天）',
+    duration_error: '請輸入 {{min}} 到 {{max}} 之間的整數。',
+    duration_note: '信任期限的變更只適用於之後加入的受信任裝置。',
+    organization_allow_title: '允許受信任裝置',
+    organization_allow_tip:
+      '組織只能收緊租戶的受信任裝置策略；租戶策略關閉時，組織無法啟用此功能。',
+    organization_allow_description: '允許此組織的成員使用受信任裝置完成驗證。',
+    organization_global_disabled: '請先在租戶 MFA 設定中啟用受信任裝置，再為此組織允許此功能。',
+    management_description:
+      '管理此使用者完成 MFA 後信任的瀏覽器。移除後，該瀏覽器下次登入時需要再次完成 MFA。',
+    management_hint: '最近的位置僅供參考。',
+    management_empty: '此使用者沒有有效的受信任裝置。',
+    management_deletion_confirmation:
+      '確定要移除 {{name}} 嗎？該瀏覽器下次登入時需要再次完成 MFA。',
+    management_removed: '受信任裝置已移除。',
+  },
 };
 
 export default Object.freeze(mfa);

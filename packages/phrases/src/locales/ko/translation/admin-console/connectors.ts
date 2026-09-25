@@ -62,7 +62,7 @@ const connectors = {
     },
     callback_uri: '리디렉션 URI(콜백 URI)',
     callback_uri_description:
-      '리디렉션 URI는 소셜 인증 이후 사용자가 다시 이동하는 위치입니다. 이 URI를 IdP 구성에 추가하세요.',
+      '리디렉션 URI는 소셜 인증 이후 사용자가 다시 이동하는 위치입니다. 표시된 모든 URI를 IdP 구성에 추가하세요.',
     callback_uri_custom_domain_description:
       'Logto에서 여러 <a>사용자 지정 도메인</a>을 사용하는 경우 각 도메인에서 소셜 로그인이 동작하도록 모든 해당 콜백 URI를 IdP에 반드시 추가하세요.\n\n기본 Logto 도메인 (*.logto.app)은 항상 유효하므로 해당 도메인에서의 로그인을 지원하려는 경우에만 포함하세요.',
     acs_url: '단언 소비 서비스 URL',
@@ -80,6 +80,11 @@ const connectors = {
   create_form: {
     third_party_connectors:
       '타사 공급자를 통합하여 빠른 소셜 로그인, 소셜 계정 연결, API 액세스를 제공합니다. <a>자세히 알아보기</a>',
+    email_connector_upsell: {
+      title: 'Logto 기본 이메일 서비스',
+      description:
+        '설정 없이 바로 이메일을 보낼 수 있습니다. 인증 코드와 매직 링크를 즉시 전송하세요.',
+    },
     standard_connectors: '또는 표준 프로토콜로 사용자의 소셜 커넥터를 맞춤화할 수 있습니다.',
   },
 };

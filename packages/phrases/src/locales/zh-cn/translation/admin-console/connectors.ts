@@ -59,7 +59,7 @@ const connectors = {
     },
     callback_uri: '重定向 URI（回调 URI）',
     callback_uri_description:
-      'Redirect URI 是在社交授权后用户被重定向到的地址。请将此 URI 添加到 IdP 的配置中。',
+      '重定向 URI 是社交授权后用户被重定向到的地址。请将显示的所有 URI 添加到 IdP 的配置中。',
     callback_uri_custom_domain_description:
       '如果你在 Logto 中使用多个<a>自定义域名</a>，务必将所有对应的回调 URI 都添加到 IdP 中，以确保社交登录在每个域名上都能正常工作。\n\n默认的 Logto 域名 (*.logto.app) 始终有效，只有在你也希望支持该域名下的登录时才需要包含它。',
     acs_url: '断言消费服务 URL',
@@ -77,6 +77,10 @@ const connectors = {
   create_form: {
     third_party_connectors:
       '集成第三方提供商以实现快速社交登录、社交账户绑定和 API 访问。 <a>了解更多</a>',
+    email_connector_upsell: {
+      title: 'Logto 内置邮件服务',
+      description: '零配置邮件发送，开箱即用即可发送验证码和魔法链接。',
+    },
     standard_connectors: '或者你可以通过标准协议定制你的社交连接器。',
   },
 };

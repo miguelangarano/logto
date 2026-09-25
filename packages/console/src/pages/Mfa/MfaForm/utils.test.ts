@@ -1,4 +1,4 @@
-import { MfaFactor, MfaPolicy } from '@logto/schemas';
+import { MfaFactor, MfaPolicy, OrganizationRequiredMfaPolicy } from '@logto/schemas';
 
 import { type MfaConfigForm } from '../types';
 
@@ -20,15 +20,18 @@ const baseForm: MfaConfigForm = {
   phoneVerificationCodeEnabled: false,
   organizationRequiredMfaPolicy: undefined,
   adaptiveMfaEnabled: false,
+  trustedDeviceEnabled: false,
+  trustedDeviceDurationDays: 30,
 };
 
 test('maps adaptive MFA enablement into form state', () => {
   const formState = convertMfaConfigToForm(
-    { policy: MfaPolicy.NoPrompt, factors: [MfaFactor.TOTP] },
+    { policy: MfaPolicy.PromptAtSignInAndSignUpMandatory, factors: [MfaFactor.TOTP] },
     { enabled: true }
   );
 
   expect(formState.adaptiveMfaEnabled).toBe(true);
+  expect(formState.setUpPrompt).toBe(MfaPolicy.PromptAtSignInAndSignUpMandatory);
 });
 
 test('defaults adaptive MFA to false when missing', () => {
@@ -38,29 +41,87 @@ test('defaults adaptive MFA to false when missing', () => {
   });
 
   expect(formState.adaptiveMfaEnabled).toBe(false);
+  expect(formState.trustedDeviceEnabled).toBe(false);
+  expect(formState.trustedDeviceDurationDays).toBe(30);
 });
 
-test('builds payload with adaptive MFA only when dev features enabled', () => {
-  const payload = buildMfaPatchPayload({ ...baseForm, adaptiveMfaEnabled: true }, true);
+test('maps trusted-device policy into form state', () => {
+  const formState = convertMfaConfigToForm(
+    { policy: MfaPolicy.NoPrompt, factors: [MfaFactor.TOTP] },
+    undefined,
+    { enabled: true, durationDays: 90 }
+  );
+
+  expect(formState.trustedDeviceEnabled).toBe(true);
+  expect(formState.trustedDeviceDurationDays).toBe(90);
+});
+
+test('normalizes setup prompt to adaptive policy when adaptive MFA is enabled', () => {
+  const formState = convertMfaConfigToForm(
+    { policy: MfaPolicy.NoPrompt, factors: [MfaFactor.TOTP] },
+    { enabled: true }
+  );
+
+  expect(formState.setUpPrompt).toBe(MfaPolicy.PromptAtSignInAndSignUpMandatory);
+});
+
+test('builds payload with adaptive MFA and trusted-device policy', () => {
+  const payload = buildMfaPatchPayload({ ...baseForm, adaptiveMfaEnabled: true });
 
   expect(payload).toEqual({
     mfa: {
-      policy: MfaPolicy.NoPrompt,
+      policy: MfaPolicy.PromptAtSignInAndSignUpMandatory,
       factors: [MfaFactor.TOTP],
     },
     adaptiveMfa: { enabled: true },
+    trustedDevice: { enabled: false, durationDays: 30 },
+  });
+});
+
+test('includes configured trusted-device policy', () => {
+  expect(
+    buildMfaPatchPayload({
+      ...baseForm,
+      trustedDeviceEnabled: true,
+      trustedDeviceDurationDays: 365,
+    })
+  ).toMatchObject({
+    trustedDevice: { enabled: true, durationDays: 365 },
+  });
+});
+
+test('filters organization-required MFA policy when adaptive MFA is enabled', () => {
+  const payload = buildMfaPatchPayload({
+    ...baseForm,
+    adaptiveMfaEnabled: true,
+    organizationRequiredMfaPolicy: OrganizationRequiredMfaPolicy.Mandatory,
   });
 
-  const payloadWithoutAdaptiveMfa = buildMfaPatchPayload(
-    { ...baseForm, adaptiveMfaEnabled: true },
-    false
-  );
-
-  expect(payloadWithoutAdaptiveMfa).toEqual({
+  expect(payload).toEqual({
     mfa: {
-      policy: MfaPolicy.NoPrompt,
+      policy: MfaPolicy.PromptAtSignInAndSignUpMandatory,
       factors: [MfaFactor.TOTP],
     },
+    adaptiveMfa: { enabled: true },
+    trustedDevice: { enabled: false, durationDays: 30 },
+  });
+});
+
+test('filters hidden prompt policies when mandatory MFA is selected', () => {
+  const payload = buildMfaPatchPayload({
+    ...baseForm,
+    isMandatory: true,
+    setUpPrompt: MfaPolicy.PromptOnlyAtSignIn,
+    organizationRequiredMfaPolicy: OrganizationRequiredMfaPolicy.Mandatory,
+  });
+
+  expect(payload).toEqual({
+    mfa: {
+      policy: MfaPolicy.Mandatory,
+      factors: [MfaFactor.TOTP],
+    },
+    adaptiveMfa: { enabled: false },
+    trustedDevice: { enabled: false, durationDays: 30 },
   });
 });
 
@@ -118,7 +179,7 @@ test.each([
   {
     title: 'writes adaptive selection to non-mandatory and adaptive enabled payload',
     selectedMode: MfaRequirementMode.Adaptive,
-    expectedPolicy: MfaPolicy.NoPrompt,
+    expectedPolicy: MfaPolicy.PromptAtSignInAndSignUpMandatory,
     expectedAdaptiveMfaEnabled: true,
   },
   {
@@ -129,7 +190,7 @@ test.each([
   },
 ])('$title', ({ selectedMode, expectedPolicy, expectedAdaptiveMfaEnabled }) => {
   const nextState = getMfaRequirementState(selectedMode);
-  const payload = buildMfaPatchPayload({ ...baseForm, ...nextState }, true);
+  const payload = buildMfaPatchPayload({ ...baseForm, ...nextState });
 
   expect(payload).toEqual({
     mfa: {
@@ -139,5 +200,6 @@ test.each([
     adaptiveMfa: {
       enabled: expectedAdaptiveMfaEnabled,
     },
+    trustedDevice: { enabled: false, durationDays: 30 },
   });
 });

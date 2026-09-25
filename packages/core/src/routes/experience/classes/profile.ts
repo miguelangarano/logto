@@ -12,6 +12,7 @@ import { type LogEntry } from '#src/middleware/koa-audit-log.js';
 import type Libraries from '#src/tenants/Libraries.js';
 import type Queries from '#src/tenants/Queries.js';
 import assertThat from '#src/utils/assert-that.js';
+import { assertUsernameAllowed } from '#src/utils/user.js';
 
 import type {
   SanitizedInteractionProfile,
@@ -41,8 +42,16 @@ export class Profile {
     private readonly interactionContext: InteractionContext
   ) {
     this.signInExperienceValidator = new SignInExperienceValidator(libraries, queries);
-    this.profileValidator = new ProfileValidator(queries);
+    this.profileValidator = new ProfileValidator(queries, this.signInExperienceValidator);
     this.#data = data;
+  }
+
+  markProfileSubmitted() {
+    this.#data.submitted = true;
+  }
+
+  get profileSubmitted() {
+    return this.#data.submitted;
   }
 
   get data() {
@@ -79,7 +88,7 @@ export class Profile {
     verificationId: string,
     log?: LogEntry
   ) {
-    const verificationRecord = this.interactionContext.getVerificationRecordById(verificationId);
+    const verificationRecord = this.interactionContext.consumeForBind(verificationId);
 
     // Assert the verification record type matches the identifier type
     switch (type) {
@@ -145,6 +154,15 @@ export class Profile {
 
     if (user) {
       this.profileValidator.guardProfileNotExistInCurrentUserAccount(user, profile);
+    }
+
+    // Runs before the uniqueness check so a format/policy violation is reported ahead of
+    // "username already in use", matching the account and /me routes.
+    if (profile.username) {
+      assertUsernameAllowed(
+        await this.signInExperienceValidator.getUsernamePolicy(),
+        profile.username
+      );
     }
 
     await this.profileValidator.guardProfileUniquenessAcrossUsers(profile);
@@ -256,10 +274,10 @@ export class Profile {
    * - skip profile existence check in the current user account.
    */
   unsafeSet(profile: InteractionProfile) {
-    this.#data = {
+    this.write({
       ...this.#data,
       ...profile,
-    };
+    });
   }
 
   /**
@@ -267,14 +285,18 @@ export class Profile {
    * Avoid overwriting the existing profile data.
    */
   unsafePrepend(profile: InteractionProfile) {
-    this.#data = {
+    this.write({
       ...profile,
       ...this.#data,
-    };
+    });
   }
 
+  /**
+   * Clean up the user related profile data from interaction storage after successfully creating the user,
+   * keeping only the `submitted` flag to indicate whether the user has submitted the profile form.
+   */
   cleanUp() {
-    this.#data = {};
+    this.#data = pick(this.#data, 'submitted');
   }
 
   /**
@@ -293,5 +315,21 @@ export class Profile {
     }
 
     return getIdentifiedUser();
+  }
+
+  /**
+   * Shared write path for `unsafeSet()` and `unsafePrepend()`. Setting a password establishes that
+   * credential without a verification record, so record its authentication proof when
+   * `passwordEncrypted` transitions from unset to set. Profile submission and cleanup mutate
+   * `#data` separately and do not establish a password.
+   */
+  private write(data: InteractionProfile) {
+    const isPasswordEstablished = !this.#data.passwordEncrypted && Boolean(data.passwordEncrypted);
+
+    this.#data = data;
+
+    if (isPasswordEstablished) {
+      this.interactionContext.recordEstablishedPassword();
+    }
   }
 }

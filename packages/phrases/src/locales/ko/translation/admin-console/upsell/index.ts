@@ -5,7 +5,9 @@ import paywall from './paywall.js';
 const upsell = {
   upgrade_plan: '플랜 업그레이드',
   compare_plans: '플랜 비교',
+  try_with_product_name: '지금 {{productName}} 사용해 보기',
   view_plans: '플랜 보기',
+  explore_self_hosted_plans: '셀프 호스팅 플랜 살펴보기',
   create_tenant: {
     title: '테넌트 플랜 선택하기',
     description:

@@ -1,12 +1,49 @@
 const tenants = {
   title: '設定',
   description: 'テナントの設定を効率的に管理し、ドメインをカスタマイズします。',
+  oss_description:
+    'こちらでアカウント設定を変更し、個人情報を管理して、アカウントの安全性を確保してください。',
   tabs: {
     settings: '設定',
     members: 'メンバー',
     domains: 'ドメイン',
+    oidc_configs: 'OIDC 設定',
     subscription: 'プランと請求',
     billing_history: '請求履歴',
+    license: 'ライセンス',
+  },
+  license: {
+    purchase_title: 'セルフホストプラン',
+    purchase_description:
+      'セルフホストプロおよびエンタープライズプランでは、Logto ブランディングの非表示、独自 UI の利用、IdP 起点の SSO、コンソールの共同管理、SAML アプリケーションの無制限利用など、有料機能を自分のインスタンスで利用できます。プランを購入してライセンスキーを取得してください。',
+    purchase_button: 'セルフホストプランを見る',
+    install_title: 'ライセンスのインストール',
+    install_description: 'セルフホストプランの購入後に受け取ったライセンスキーを貼り付けます。',
+    install_button: 'ライセンスをインストール',
+    key_field: 'ライセンスキー',
+    key_field_description:
+      'キーはインスタンス上で検証され、外部に送信されることはありません。お持ちのキーの有効期限が切れている場合は、Logto アカウントから新しいキーを取得してください。',
+    key_placeholder: 'ここにライセンスキーを貼り付けてください',
+    installed_toast: 'ライセンスをインストールしました。',
+    details_title: 'ライセンス',
+    details_description: 'このインスタンスにインストールされているライセンスと、その内容です。',
+    plan_field: 'プラン',
+    environment_field: '環境',
+    environment_production: '本番',
+    environment_non_production: '非本番',
+    expires_at_field: '有効期限',
+    installed_at_field: 'インストール日',
+    replace_button: 'ライセンスを差し替える',
+  },
+  members: {
+    card_title: 'Logto Cloud でテナントをより安全に管理',
+    card_description:
+      '1つの管理者アカウントを共有せずに、テナントに管理者やコラボレーターを追加できます。',
+    card_action: 'Logto Cloud を見る',
+    self_hosted_card_title: 'セルフホストプランでテナントをより安全に管理',
+    self_hosted_card_description:
+      '1つの管理者アカウントを共有せずに、テナントに管理者やコラボレーターを追加できます。',
+    self_hosted_card_action: 'セルフホストプランを見る',
   },
   settings: {
     title: '設定',

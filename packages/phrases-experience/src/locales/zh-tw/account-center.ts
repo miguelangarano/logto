@@ -3,6 +3,19 @@ const account_center = {
     title: '找不到頁面',
     description: '此頁面無法使用。',
   },
+  page: {
+    title: '帳戶',
+    security_title: '安全',
+    security_description: '你可以在這裡變更帳戶設定，以確保帳戶安全。',
+    profile_title: '個人資料',
+    profile_description: '在這裡變更你的個人資訊。',
+    sidebar_personal_info: '個人資料',
+    sidebar_security: '安全',
+    sidebar_sessions: '工作階段',
+    support: '支援',
+    user_menu: '使用者選單',
+    sign_out: '登出',
+  },
   verification: {
     title: '安全驗證',
     description: '為保護帳戶安全，請確認是您本人。請選擇用於驗證身分的方法。',
@@ -11,6 +24,9 @@ const account_center = {
     error_verify_failed: '驗證失敗，請重新輸入驗證碼。',
     verification_required: '驗證已失效，請再次驗證您的身分。',
     try_another_method: '嘗試其他驗證方式',
+    no_available_methods_title: '沒有可用的驗證方式',
+    no_available_methods_description:
+      '您尚未設定任何驗證方式。請先在您的帳戶中新增密碼、電子郵件或電話號碼。',
   },
   password_verification: {
     title: '驗證密碼',
@@ -50,20 +66,92 @@ const account_center = {
   username: {
     title: '設定使用者名稱',
     description: '使用者名稱只能包含字母、數字和底線。',
+    policy_description: '{{requirements}}',
     success: '使用者名稱已成功更新。',
+  },
+  security: {
+    add: '新增',
+    change: '變更',
+    remove: '移除',
+    not_set: '未設定',
+    social_sign_in: '社群登入',
+    social_not_linked: '未連結',
+    email_phone: '電子郵件 / 電話號碼',
+    email: '電子郵件',
+    phone: '電話號碼',
+    password: '密碼',
+    configured: '已設定',
+    not_configured: '未設定',
+    two_step_verification: '兩步驟驗證',
+    authenticator_app: '身份驗證器應用程式',
+    passkeys: '通行密鑰',
+    backup_codes: '備用碼',
+    email_verification_code: '電郵驗證碼',
+    phone_verification_code: '電話驗證碼',
+    passkeys_count_one: '{{count}} 個通行密鑰',
+    passkeys_count_other: '{{count}} 個通行密鑰',
+    backup_codes_count_one: '{{count}} 個備用碼',
+    backup_codes_count_other: '{{count}} 個備用碼',
+    view: '檢視',
+    manage: '管理',
+    turn_on_2_step_verification_description: '增加額外的安全保護。登入時將要求進行第二步驟驗證。',
+    turn_off_2_step_verification: '關閉兩步驟驗證',
+    turn_off_2_step_verification_description:
+      '關閉兩步驟驗證將移除登入時帳戶的額外保護層。確定要繼續嗎？',
+    disable_2_step_verification: '關閉',
+    no_verification_method_warning:
+      '你尚未新增第二種驗證方式。請至少新增一種以在登入時啟用兩步驟驗證。',
+    passkey_sign_in_prompt: '提示設定通行密鑰',
+    passkey_sign_in_prompt_description:
+      '開啟後，系統會提示你設定通行密鑰，以實現更快速、更安全的登入。',
+    account_removal: '帳戶刪除',
+    delete_your_account: '刪除你的帳戶',
+    delete_account: '刪除帳戶',
+    remove_username_confirmation_title: '移除使用者名稱',
+    remove_username_confirmation_description:
+      '移除後，你將無法再使用此使用者名稱登入。確定要繼續嗎？',
+    remove_email_confirmation_title: '移除電子郵件地址',
+    remove_email_confirmation_description:
+      '移除後，你將無法再使用此電子郵件地址登入。確定要繼續嗎？',
+    remove_phone_confirmation_title: '移除手機號碼',
+    remove_phone_confirmation_description: '移除後，你將無法再使用此手機號碼登入。確定要繼續嗎？',
+    email_removed: '電子郵件地址已成功移除。',
+    phone_removed: '手機號碼已成功移除。',
+    username_removed: '使用者名稱已成功移除。',
+    trusted_devices: {
+      title: 'MFA 受信任裝置',
+      current_device: '目前裝置',
+      expires_on: '於 {{date}} 到期',
+      unknown_location: '未知位置',
+      remove: '移除',
+      removed: '受信任裝置已成功移除。',
+      loading: '載入中...',
+      empty: '沒有受信任裝置。',
+      load_failed: '無法載入受信任裝置，請再試一次。',
+      retry: '再試一次',
+      remove_confirmation_title: '移除受信任裝置？',
+      remove_confirmation_description:
+        '下次在此裝置登入時，你需要再次完成 MFA。目前的工作階段將保持有效。',
+    },
+  },
+  social: {
+    linked: '已成功連結 {{connector}}。',
+    not_enabled: '此社群登入方式尚未啟用。請聯絡管理員尋求協助。',
+    removed: '已成功移除 {{connector}}。',
+    remove_confirmation_title: '移除社群帳號',
+    remove_confirmation_description:
+      '如果你移除 {{connector}}，在重新加入之前，你可能無法再透過它登入。',
   },
   password: {
     title: '設定密碼',
     description: '建立新密碼以保障您的帳戶安全。',
     success: '密碼已成功更新。',
   },
-
   code_verification: {
     send: '傳送驗證碼',
     resend: '尚未收到？<a>重新傳送驗證碼</a>',
     resend_countdown: '尚未收到？{{seconds}} 秒後可重新傳送。',
   },
-
   email_verification: {
     title: '驗證您的電子郵件',
     prepare_description: '為保護帳戶安全，請確認是您本人。傳送驗證碼到您的電子郵件。',
@@ -116,7 +204,6 @@ const account_center = {
       title: '使用者名稱已更新！',
       description: '您的帳戶使用者名稱已成功變更。',
     },
-
     password: {
       title: '密碼已更新！',
       description: '您的帳戶密碼已成功變更。',
@@ -124,6 +211,10 @@ const account_center = {
     totp: {
       title: '身份驗證器應用程式已新增！',
       description: '身份驗證器應用程式已成功連結至您的帳戶。',
+    },
+    totp_replaced: {
+      title: '身份驗證器應用程式已替換！',
+      description: '你的身份驗證器應用程式已成功替換。',
     },
     backup_code: {
       title: '備用碼已產生！',
@@ -166,6 +257,29 @@ const account_center = {
     name_passkey_description:
       '您已成功驗證此裝置用於兩步驗證。自訂名稱以便在擁有多個密鑰時進行識別。',
     name_input_label: '名稱',
+  },
+  sessions: {
+    page_title: '工作階段',
+    page_description: '管理你的活躍工作階段和已授權的第三方應用程式。',
+    title: '工作階段',
+    current_session: '目前工作階段',
+    signed_in_at: '登入於 {{date}}',
+    revoke_session: '登出',
+    revoke_session_title: '登出工作階段',
+    revoke_session_description: '這將登出該工作階段並撤銷所有相關的存取權限。確定要繼續嗎？',
+    no_other_sessions: '沒有其他活躍的工作階段。',
+    loading: '載入中...',
+    third_party_apps_title: '第三方應用程式',
+    no_third_party_apps: '沒有已授權的第三方應用程式。',
+    third_party_apps_load_failed: '無法載入第三方應用程式。請再試一次。',
+    granted_at: '授權於 {{date}}',
+    dynamic_app: '動態應用',
+    client_id: '客戶端 ID：{{clientId}}',
+    revoke_grant: '移除',
+    revoke_grant_title: '移除第三方應用程式存取權限',
+    revoke_grant_description:
+      '這將撤銷授予該應用程式的存取權限。先前已簽發的存取權杖可能在過期前仍然有效。確定要繼續嗎？',
+    revoke_grant_failed: '部分授權撤銷失敗，請重試。',
   },
 };
 

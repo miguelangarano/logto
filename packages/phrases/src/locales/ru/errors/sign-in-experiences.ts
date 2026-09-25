@@ -29,6 +29,10 @@ const sign_in_experiences = {
   phone_verification_code_cannot_be_used_for_sign_in:
     'Код подтверждения SMS не может быть использован для входа в систему, когда он включен для MFA.',
   adaptive_mfa_requires_mfa: 'Перед включением адаптивной MFA необходимо включить MFA.',
+  adaptive_mfa_requires_non_skippable_policy:
+    'Адаптивная MFA требует политики, не допускающей пропуска. Используйте PromptOnlyAtSignInMandatory или PromptAtSignInAndSignUpMandatory.',
+  non_adaptive_mfa_requires_skippable_policy:
+    'Когда адаптивная MFA отключена, политика запроса MFA должна допускать пропуск. Не используйте PromptOnlyAtSignInMandatory или PromptAtSignInAndSignUpMandatory.',
   duplicated_sign_up_identifiers: 'Обнаружены дублирующие идентификаторы создания учетной записи.',
   missing_sign_up_identifiers:
     'Основной идентификатор создания учетной записи не может быть пустым.',
@@ -36,6 +40,14 @@ const sign_in_experiences = {
     'Неверный формат пользовательского списка блокировки электронной почты: {{items, list(type:conjunction)}}. Каждый элемент должен быть действительным адресом электронной почты или доменом, например, foo@example.com или @example.com.',
   forgot_password_method_requires_connector:
     'Метод восстановления пароля требует настройки соответствующего коннектора {{method}}.',
+  password_expiration_requires_forgot_password:
+    'Для истечения срока действия пароля требуется как минимум один способ восстановления пароля с действительным коннектором.',
+  password_expiration_not_enabled:
+    'Политика истечения срока действия пароля не включена. Включите ее в настройках входа в систему перед истечением срока действия паролей.',
+  password_expiration_invalid_period_days:
+    'Срок действия в днях должен быть положительным целым числом, когда включено истечение срока действия пароля.',
+  username_policy_case_conflicts_exist:
+    'Невозможно переключиться на нечувствительные к регистру имена пользователей, пока существуют имена пользователей, отличающиеся только регистром. Устраните конфликты и повторите попытку.',
 };
 
 export default Object.freeze(sign_in_experiences);

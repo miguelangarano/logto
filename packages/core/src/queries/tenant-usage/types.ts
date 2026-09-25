@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-import { type SystemLimit, type SubscriptionQuota } from '#src/utils/subscription/types.js';
+import {
+  actionQuotaKey,
+  type SystemLimit,
+  type SubscriptionQuota,
+} from '#src/utils/subscription/types.js';
 import { type ToZodEnum } from '#src/utils/type.js';
 
 /**
@@ -42,6 +46,9 @@ export type QuotaUsageKey = Exclude<
   | 'tokenLimit'
   // Exclude tenantMembersLimit as it is checked in Cloud, not in core.
   | 'tenantMembersLimit'
+  // Exclude the hosted-email caps as they are enforced at the Cloud `/mails` guard, not in core.
+  | 'hostedEmailLimit'
+  | 'hostedEmailDailyLimit'
 >;
 
 /**
@@ -86,9 +93,11 @@ export const isSystemUsageKey = (key: UsageKey): key is SystemUsageKey =>
 const quotaUsageKeyGuard = z.enum([
   ...sharedUsageKeyGuard.options,
   'customJwtEnabled',
+  actionQuotaKey,
   'subjectTokenEnabled',
   'bringYourUiEnabled',
   'collectUserProfileEnabled',
+  'passkeySignInEnabled',
   'mfaEnabled',
   'securityFeaturesEnabled',
   'idpInitiatedSsoEnabled',
@@ -131,9 +140,11 @@ type BooleanQuotaUsageKey = {
 
 const booleanQuotaUsageKeyGuard = z.enum([
   'customJwtEnabled',
+  actionQuotaKey,
   'subjectTokenEnabled',
   'bringYourUiEnabled',
   'collectUserProfileEnabled',
+  'passkeySignInEnabled',
   'mfaEnabled',
   'idpInitiatedSsoEnabled',
   'securityFeaturesEnabled',

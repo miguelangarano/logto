@@ -1,5 +1,5 @@
-import { OrganizationUserRelations, UsersRoles, userProfileResponseGuard } from '@logto/schemas';
-import { type Nullable, tryThat } from '@silverhand/essentials';
+import { OrganizationUserRelations, UsersRoles } from '@logto/schemas';
+import { type Nullable, tryThat, yes } from '@silverhand/essentials';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';
@@ -7,7 +7,10 @@ import koaPagination from '#src/middleware/koa-pagination.js';
 import { type UserConditions } from '#src/queries/user.js';
 import { parseSearchParamsForSearch } from '#src/utils/search.js';
 
-import { transpileUserProfileResponse } from '../../utils/user.js';
+import {
+  adminUserProfileResponseGuard,
+  transpileAdminUserProfileResponse,
+} from '../../utils/user.js';
 import type { ManagementApiRouter, RouterInitArgs } from '../types.js';
 
 const getQueryRelation = (
@@ -35,6 +38,28 @@ const getQueryRelation = (
   return undefined;
 };
 
+const getIdentityCondition = (searchParams: URLSearchParams): UserConditions['identity'] => {
+  const type = searchParams.get('identityType');
+  const provider = searchParams.get('identityProvider');
+  const identityId = searchParams.get('identityId');
+
+  if (type === null && provider === null && identityId === null) {
+    return undefined;
+  }
+
+  if (!type || !provider || !identityId) {
+    throw new TypeError(
+      'Parameters `identityType`, `identityProvider`, and `identityId` must be provided together and must not be empty.'
+    );
+  }
+
+  if (type !== 'social' && type !== 'sso') {
+    throw new TypeError('Parameter `identityType` must be either `social` or `sso`.');
+  }
+
+  return { type, provider, identityId };
+};
+
 export default function adminUserSearchRoutes<T extends ManagementApiRouter>(
   ...[router, { queries }]: RouterInitArgs<T>
 ) {
@@ -46,7 +71,7 @@ export default function adminUserSearchRoutes<T extends ManagementApiRouter>(
     '/users',
     koaPagination(),
     koaGuard({
-      response: userProfileResponseGuard.array(),
+      response: adminUserProfileResponseGuard.array(),
       status: [200, 400],
     }),
     async (ctx, next) => {
@@ -69,6 +94,7 @@ export default function adminUserSearchRoutes<T extends ManagementApiRouter>(
 
           const conditions: UserConditions = {
             search: parseSearchParamsForSearch(searchParams),
+            identity: getIdentityCondition(searchParams),
             relation: getQueryRelation(excludeRoleId, excludeOrganizationId),
           };
 
@@ -77,8 +103,12 @@ export default function adminUserSearchRoutes<T extends ManagementApiRouter>(
             findUsers(limit, offset, conditions),
           ]);
 
+          const includePasswordHash = yes(searchParams.get('includePasswordHash') ?? '');
+
           ctx.pagination.totalCount = count;
-          ctx.body = users.map((user) => transpileUserProfileResponse(user));
+          ctx.body = users.map((user) =>
+            transpileAdminUserProfileResponse(user, { includePasswordHash })
+          );
 
           return next();
         },

@@ -12,12 +12,14 @@ import { z } from 'zod';
 export enum InteractionHookEvent {
   PostRegister = 'PostRegister',
   PostSignIn = 'PostSignIn',
+  PostSignInAdaptiveMfaTriggered = 'PostSignInAdaptiveMfaTriggered',
   PostResetPassword = 'PostResetPassword',
 }
 
 // DataHookEvent
 export enum DataHookSchema {
   User = 'User',
+  TrustedDevice = 'TrustedDevice',
   Role = 'Role',
   Scope = 'Scope',
   Organization = 'Organization',
@@ -38,7 +40,7 @@ type BasicDataHookEvent = `${DataHookSchema}.${DataHookBasicMutationType}`;
 
 // Custom DataHook mutable schemas
 type CustomDataHookMutableSchema =
-  | `${DataHookSchema}.Data`
+  | `${Exclude<DataHookSchema, DataHookSchema.TrustedDevice>}.Data`
   | `${DataHookSchema.User}.SuspensionStatus`
   | `${DataHookSchema.Role}.Scopes`
   | `${DataHookSchema.Organization}.Membership`
@@ -47,7 +49,10 @@ type CustomDataHookMutableSchema =
 type DataHookPropertyUpdateEvent =
   `${CustomDataHookMutableSchema}.${DataHookDetailMutationType.Updated}`;
 
-export type ExceptionHookEvent = 'Identifier.Lockout';
+export type ExceptionHookEvent =
+  | 'Identifier.Lockout'
+  | 'Message.RateLimited'
+  | 'Grant.LimitExceeded';
 
 export type DataHookEvent = BasicDataHookEvent | DataHookPropertyUpdateEvent;
 
@@ -55,11 +60,14 @@ export type DataHookEvent = BasicDataHookEvent | DataHookPropertyUpdateEvent;
 export const hookEvents = Object.freeze([
   InteractionHookEvent.PostRegister,
   InteractionHookEvent.PostSignIn,
+  InteractionHookEvent.PostSignInAdaptiveMfaTriggered,
   InteractionHookEvent.PostResetPassword,
   'User.Created',
   'User.Deleted',
   'User.Data.Updated',
   'User.SuspensionStatus.Updated',
+  'TrustedDevice.Created',
+  'TrustedDevice.Deleted',
   'Role.Created',
   'Role.Deleted',
   'Role.Data.Updated',
@@ -79,6 +87,8 @@ export const hookEvents = Object.freeze([
   'OrganizationScope.Deleted',
   'OrganizationScope.Data.Updated',
   'Identifier.Lockout',
+  'Message.RateLimited',
+  'Grant.LimitExceeded',
 ] as const satisfies Array<InteractionHookEvent | DataHookEvent | ExceptionHookEvent>);
 
 /** The type of hook event values that can be registered. */

@@ -5,8 +5,11 @@ import { storageKeys } from './storage';
 const normalizeEnv = (value: unknown) =>
   value === null || value === undefined ? undefined : String(value);
 
-const isProduction = import.meta.env.PROD;
+export const isProduction = import.meta.env.PROD;
 export const isCloud = yes(normalizeEnv(import.meta.env.IS_CLOUD));
+export const isProtectedAppLocalDevEnabled =
+  !isProduction && yes(normalizeEnv(import.meta.env.PROTECTED_APP_LOCAL_DEV));
+export const isProtectedAppEnabled = isCloud || isProtectedAppLocalDevEnabled;
 export const adminEndpoint = normalizeEnv(import.meta.env.ADMIN_ENDPOINT);
 
 export const isDevFeaturesEnabled =
@@ -33,3 +36,4 @@ export const postHogHost = normalizeEnv(import.meta.env.POSTHOG_PUBLIC_HOST);
  * @see https://posthog.com/docs/libraries/js/config for more details.
  */
 export const postHogUiHost = normalizeEnv(import.meta.env.POSTHOG_PUBLIC_UI_HOST);
+export const ossSurveyEndpoint = normalizeEnv(import.meta.env.LOGTO_OSS_SURVEY_ENDPOINT);

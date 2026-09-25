@@ -11,7 +11,6 @@ const mfa = {
   webauthn: 'Passkeys',
   webauthn_description:
     'Verifica a través de un método compatible con el navegador: biometría, escaneo de teléfono o clave de seguridad, etc.',
-  webauthn_native_tip: 'WebAuthn no es compatible con aplicaciones nativas.',
   webauthn_domain_tip:
     'WebAuthn vincula claves públicas al dominio específico. Modificar el dominio del servicio bloqueará a los usuarios para autenticarse mediante claves de paso existentes.',
   backup_code: 'Códigos de respaldo',
@@ -43,7 +42,7 @@ const mfa = {
   require_mfa_optional:
     'MFA opcional: permite que los usuarios elijan habilitar MFA para la seguridad de su propia cuenta',
   require_mfa_adaptive:
-    'MFA adaptativa: solo solicita MFA cuando un inicio de sesión parezca arriesgado (por ejemplo, nuevo dispositivo o ubicación)',
+    'MFA adaptativa: solo solicita MFA cuando un inicio de sesión parezca arriesgado (por ejemplo, nuevo país o inactividad prolongada)',
   require_mfa_mandatory:
     'MFA obligatoria: requiere que todos los usuarios completen MFA cada vez que inician sesión',
   set_up_prompt: 'Sugerencia de configuración de MFA',
@@ -52,10 +51,14 @@ const mfa = {
     'Preguntar a los usuarios si desean configurar MFA durante el registro (omitible, solicitud única)',
   prompt_only_at_sign_in:
     'Preguntar a los usuarios si desean configurar MFA en su siguiente intento de inicio de sesión después del registro (omitible, solicitud única)',
+  prompt_at_sign_in_and_sign_up_mandatory:
+    'Pedir a los usuarios que configuren MFA durante el registro. (no se puede omitir)',
+  prompt_only_at_sign_in_mandatory:
+    'Pedir a los usuarios que configuren MFA en su siguiente intento de inicio de sesión después del registro. (no se puede omitir)',
   set_up_organization_required_mfa_prompt:
     'Sugerencia de configuración de MFA para usuarios después de que la organización habilita MFA',
-  prompt_at_sign_in_no_skip:
-    'Pedir a los usuarios que configuren MFA en el próximo inicio de sesión (sin omitir)',
+  prompt_at_sign_in_non_skippable:
+    'Pedir a los usuarios que configuren MFA en el próximo inicio de sesión (no se puede omitir)',
   email_primary_method_tip:
     'El código de verificación de email ya es tu método principal de inicio de sesión. Para mantener la seguridad, no se puede reutilizar para MFA.',
   phone_primary_method_tip:
@@ -69,6 +72,31 @@ const mfa = {
   no_sms_connector_error:
     'No se puede habilitar MFA con código de verificación SMS sin un conector SMS. Por favor, configure primero un conector SMS.',
   setup_link: 'Configurar',
+  trusted_device: {
+    title: 'Dispositivos de confianza',
+    description:
+      'Permite que los navegadores de confianza completen automáticamente la verificación MFA cuando el flujo de MFA actual lo requiera.',
+    enable_title: 'Habilitar dispositivos de confianza',
+    enable_description:
+      'Permite confiar en este navegador después de completar un factor MFA elegible.',
+    duration_title: 'Duración de la confianza (días)',
+    duration_error: 'Introduce un número entero entre {{min}} y {{max}}.',
+    duration_note: 'Los cambios de duración solo se aplican a los dispositivos confiados después.',
+    organization_allow_title: 'Permitir dispositivos de confianza',
+    organization_allow_tip:
+      'Una organización solo puede restringir la política del tenant; no puede habilitarla si está desactivada globalmente.',
+    organization_allow_description:
+      'Permite la verificación con dispositivos de confianza a los miembros de esta organización.',
+    organization_global_disabled:
+      'Habilita primero los dispositivos de confianza en la configuración MFA del tenant.',
+    management_description:
+      'Gestiona los navegadores en los que este usuario confió tras completar la MFA. Al eliminar uno, se volverá a solicitar MFA en ese navegador en el siguiente inicio de sesión.',
+    management_hint: 'La ubicación más reciente es solo informativa.',
+    management_empty: 'Este usuario no tiene dispositivos de confianza activos.',
+    management_deletion_confirmation:
+      '¿Eliminar {{name}}? Este navegador volverá a requerir MFA en el siguiente inicio de sesión.',
+    management_removed: 'Dispositivo de confianza eliminado.',
+  },
 };
 
 export default Object.freeze(mfa);

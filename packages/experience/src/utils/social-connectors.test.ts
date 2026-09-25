@@ -1,6 +1,10 @@
 import { GoogleConnector } from '@logto/connector-kit';
 import type { ConnectorMetadata } from '@logto/schemas';
-import { ConnectorPlatform } from '@logto/schemas';
+import {
+  accountCenterSocialStatePrefix,
+  ConnectorPlatform,
+  experienceSocialStatePrefix,
+} from '@logto/schemas';
 import { getCookie } from 'tiny-cookie';
 
 import { SearchParameters } from '@/types';
@@ -10,8 +14,9 @@ import {
   filterSocialConnectors,
   filterPreviewSocialConnectors,
   buildSocialLandingUri,
-  getAuthValidationResult,
-  getSessionValidationResult,
+  generateState,
+  validateState,
+  validateGoogleOneTapCredential,
 } from './social-connectors';
 
 const mockConnectors = [
@@ -164,261 +169,111 @@ describe('buildSocialLandingUri', () => {
   });
 });
 
-describe('getAuthValidationResult', () => {
-  const mockConnectorId = 'test-connector-id';
-  const mockState = 'test-state';
-  const mockParams = { [GoogleConnector.oneTapParams.csrfToken]: 'test-csrf' };
+describe('generateState', () => {
+  it('should prefix the state so that it never collides with the account center namespace', () => {
+    const state = generateState();
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+    expect(state.startsWith(experienceSocialStatePrefix)).toBe(true);
+    expect(state.startsWith(accountCenterSocialStatePrefix)).toBe(false);
+    expect(state.length).toBeGreaterThan(experienceSocialStatePrefix.length);
   });
 
-  describe('Normal social login', () => {
-    it('should return true when state is valid', () => {
-      // Mock the actual sessionStorage that validateState uses
-      const mockGetItem = jest.spyOn(Storage.prototype, 'getItem').mockReturnValue(mockState);
-      const mockRemoveItem = jest.spyOn(Storage.prototype, 'removeItem').mockImplementation();
-
-      const result = getAuthValidationResult({
-        isGoogleOneTap: false,
-        connectorId: mockConnectorId,
-        isExternalCredential: false,
-        params: mockParams,
-        state: mockState,
-      });
-
-      expect(result).toBe(true);
-      expect(mockGetItem).toHaveBeenCalledWith(`social_auth_state:${mockConnectorId}`);
-      expect(mockRemoveItem).toHaveBeenCalledWith(`social_auth_state:${mockConnectorId}`);
-
-      // Restore the mocks
-      mockGetItem.mockRestore();
-      mockRemoveItem.mockRestore();
-    });
-
-    it('should return false when state is invalid', () => {
-      const mockGetItem = jest
-        .spyOn(Storage.prototype, 'getItem')
-        .mockReturnValue('different-state');
-      const mockRemoveItem = jest.spyOn(Storage.prototype, 'removeItem').mockImplementation();
-
-      const result = getAuthValidationResult({
-        isGoogleOneTap: false,
-        connectorId: mockConnectorId,
-        isExternalCredential: false,
-        params: mockParams,
-        state: mockState,
-      });
-
-      expect(result).toBe(false);
-
-      mockGetItem.mockRestore();
-      mockRemoveItem.mockRestore();
-    });
-
-    it('should return false when state is undefined', () => {
-      const result = getAuthValidationResult({
-        isGoogleOneTap: false,
-        connectorId: mockConnectorId,
-        isExternalCredential: false,
-        params: mockParams,
-        state: undefined,
-      });
-
-      expect(result).toBe(false);
-    });
-  });
-
-  describe('Google One Tap - External credentials', () => {
-    it('should return true for external credentials', () => {
-      const result = getAuthValidationResult({
-        isGoogleOneTap: true,
-        connectorId: mockConnectorId,
-        isExternalCredential: true,
-        params: mockParams,
-        state: mockState,
-      });
-
-      expect(result).toBe(true);
-      expect(getCookieMock).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('Google One Tap - Experience app', () => {
-    it('should return true when CSRF token is valid', () => {
-      getCookieMock.mockReturnValue('test-csrf');
-
-      const result = getAuthValidationResult({
-        isGoogleOneTap: true,
-        connectorId: mockConnectorId,
-        isExternalCredential: false,
-        params: mockParams,
-      });
-
-      expect(result).toBe(true);
-      expect(getCookieMock).toHaveBeenCalledWith(GoogleConnector.oneTapParams.csrfToken);
-    });
-
-    it('should return false when CSRF token is invalid', () => {
-      getCookieMock.mockReturnValue('different-csrf');
-
-      const result = getAuthValidationResult({
-        isGoogleOneTap: true,
-        connectorId: mockConnectorId,
-        isExternalCredential: false,
-        params: mockParams,
-      });
-
-      expect(result).toBe(false);
-    });
-
-    it('should return false when CSRF token is missing from params', () => {
-      const result = getAuthValidationResult({
-        isGoogleOneTap: true,
-        connectorId: mockConnectorId,
-        isExternalCredential: false,
-        params: {},
-      });
-
-      expect(result).toBe(false);
-    });
+  it('should generate a different state on each call', () => {
+    expect(generateState()).not.toEqual(generateState());
   });
 });
 
-describe('getSessionValidationResult', () => {
-  const mockVerificationId = 'test-verification-id';
+describe('validateState', () => {
+  const mockConnectorId = 'test-connector-id';
+  const mockState = 'test-state';
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should return match when state matches stored value', () => {
+    const mockGetItem = jest.spyOn(Storage.prototype, 'getItem').mockReturnValue(mockState);
+    const mockRemoveItem = jest.spyOn(Storage.prototype, 'removeItem').mockImplementation();
+
+    expect(validateState(mockState, mockConnectorId)).toBe('match');
+    expect(mockGetItem).toHaveBeenCalledWith(`social_auth_state:${mockConnectorId}`);
+    expect(mockRemoveItem).toHaveBeenCalledWith(`social_auth_state:${mockConnectorId}`);
+
+    mockGetItem.mockRestore();
+    mockRemoveItem.mockRestore();
+  });
+
+  it('should return mismatch when state differs from stored value', () => {
+    const mockGetItem = jest.spyOn(Storage.prototype, 'getItem').mockReturnValue('different-state');
+    const mockRemoveItem = jest.spyOn(Storage.prototype, 'removeItem').mockImplementation();
+
+    expect(validateState(mockState, mockConnectorId)).toBe('mismatch');
+
+    mockGetItem.mockRestore();
+    mockRemoveItem.mockRestore();
+  });
+
+  it('should return missing when no stored value exists', () => {
+    const mockGetItem = jest.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
+    const mockRemoveItem = jest.spyOn(Storage.prototype, 'removeItem').mockImplementation();
+
+    expect(validateState(mockState, mockConnectorId)).toBe('missing');
+
+    mockGetItem.mockRestore();
+    mockRemoveItem.mockRestore();
+  });
+});
+
+describe('validateGoogleOneTapCredential', () => {
   const mockParams = { [GoogleConnector.oneTapParams.csrfToken]: 'test-csrf' };
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('With verificationId present', () => {
-    it('should return true when verificationId is provided', () => {
-      const result = getSessionValidationResult({
-        verificationId: mockVerificationId,
-        isGoogleOneTap: false,
-        isExternalCredential: false,
-        params: mockParams,
-      });
-
-      expect(result).toBe(true);
-      expect(getCookieMock).not.toHaveBeenCalled();
-    });
-
-    it('should return true for Google One Tap with verificationId', () => {
-      const result = getSessionValidationResult({
-        verificationId: mockVerificationId,
-        isGoogleOneTap: true,
-        isExternalCredential: false,
-        params: mockParams,
-      });
-
-      expect(result).toBe(true);
-    });
-  });
-
-  describe('Without verificationId', () => {
-    it('should return false for normal social login', () => {
-      const result = getSessionValidationResult({
-        verificationId: undefined,
-        isGoogleOneTap: false,
-        isExternalCredential: false,
-        params: mockParams,
-      });
-
-      expect(result).toBe(false);
-    });
-
-    it('should return true for external Google One Tap', () => {
-      const result = getSessionValidationResult({
-        verificationId: undefined,
-        isGoogleOneTap: true,
+  describe('External credentials', () => {
+    it('should return valid for external credentials', () => {
+      const result = validateGoogleOneTapCredential({
         isExternalCredential: true,
         params: mockParams,
       });
 
-      expect(result).toBe(true);
+      expect(result).toEqual({ valid: true });
       expect(getCookieMock).not.toHaveBeenCalled();
     });
+  });
 
-    it('should return true when Experience Google One Tap has valid CSRF', () => {
+  describe('Experience app (non-external)', () => {
+    it('should return valid when CSRF token matches', () => {
       getCookieMock.mockReturnValue('test-csrf');
 
-      const result = getSessionValidationResult({
-        verificationId: undefined,
-        isGoogleOneTap: true,
+      const result = validateGoogleOneTapCredential({
         isExternalCredential: false,
         params: mockParams,
       });
 
-      expect(result).toBe(true);
+      expect(result).toEqual({ valid: true });
       expect(getCookieMock).toHaveBeenCalledWith(GoogleConnector.oneTapParams.csrfToken);
     });
 
-    it('should return false when Experience Google One Tap has invalid CSRF', () => {
+    it('should return invalid when CSRF token does not match', () => {
       getCookieMock.mockReturnValue('different-csrf');
 
-      const result = getSessionValidationResult({
-        verificationId: undefined,
-        isGoogleOneTap: true,
+      const result = validateGoogleOneTapCredential({
         isExternalCredential: false,
         params: mockParams,
       });
 
-      expect(result).toBe(false);
+      expect(result).toEqual({ valid: false, error: 'invalid_connector_auth' });
     });
 
-    it('should return false when Experience Google One Tap missing CSRF token', () => {
-      const result = getSessionValidationResult({
-        verificationId: undefined,
-        isGoogleOneTap: true,
+    it('should return invalid when CSRF token is missing from params', () => {
+      const result = validateGoogleOneTapCredential({
         isExternalCredential: false,
         params: {},
       });
 
-      expect(result).toBe(false);
-    });
-  });
-
-  describe('Edge cases', () => {
-    it('should handle empty string verificationId as falsy', () => {
-      const result = getSessionValidationResult({
-        verificationId: '',
-        isGoogleOneTap: false,
-        isExternalCredential: false,
-        params: {},
-      });
-
-      expect(result).toBe(false);
-    });
-
-    it('should prioritize verificationId over other checks', () => {
-      getCookieMock.mockReturnValue('different-csrf');
-
-      const result = getSessionValidationResult({
-        verificationId: mockVerificationId,
-        isGoogleOneTap: true,
-        isExternalCredential: false,
-        params: mockParams,
-      });
-
-      expect(result).toBe(true);
-      expect(getCookieMock).not.toHaveBeenCalled();
-    });
-
-    it('should prioritize external credential over CSRF validation', () => {
-      getCookieMock.mockReturnValue('different-csrf');
-
-      const result = getSessionValidationResult({
-        verificationId: undefined,
-        isGoogleOneTap: true,
-        isExternalCredential: true,
-        params: mockParams,
-      });
-
-      expect(result).toBe(true);
-      expect(getCookieMock).not.toHaveBeenCalled();
+      expect(result).toEqual({ valid: false, error: 'invalid_connector_auth' });
     });
   });
 });

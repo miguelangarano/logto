@@ -10,6 +10,7 @@ import {
   usernameRoute,
   usernameSuccessRoute,
   authenticatorAppRoute,
+  authenticatorAppReplaceRoute,
   authenticatorAppSuccessRoute,
   backupCodesGenerateRoute,
   backupCodesRegenerateRoute,
@@ -18,16 +19,29 @@ import {
   passkeyAddRoute,
   passkeyManageRoute,
   passkeySuccessRoute,
+  profileRoute,
+  securityRoute,
+  sessionsRoute,
+  verifiedActionRoute,
+  socialRoutePrefix,
 } from '@ac/constants/routes';
 
+import { accountCenterBasePath } from './account-center-internal-route';
 import { sessionStorage } from './session-storage';
 
-export const accountCenterBasePath = '/account';
-const routeStorageKey = 'account-center-route-cache';
+export {
+  accountCenterBasePath,
+  getAccountCenterInternalRoute,
+} from './account-center-internal-route';
+
 const redirectUrlParameter = 'redirect';
 const showSuccessParameter = 'show_success';
+const uiLocalesParameter = 'ui_locales';
+const identifierParameter = 'identifier';
 
 const knownRoutePrefixes: readonly string[] = [
+  securityRoute,
+  profileRoute,
   emailRoute,
   emailSuccessRoute,
   phoneRoute,
@@ -45,13 +59,41 @@ const knownRoutePrefixes: readonly string[] = [
   passkeyAddRoute,
   passkeyManageRoute,
   passkeySuccessRoute,
+  verifiedActionRoute,
+  sessionsRoute,
+  socialRoutePrefix,
 ];
+
+const taskFlowRoutes = new Set([
+  emailRoute,
+  phoneRoute,
+  passwordRoute,
+  usernameRoute,
+  authenticatorAppRoute,
+  authenticatorAppReplaceRoute,
+  backupCodesGenerateRoute,
+  backupCodesRegenerateRoute,
+  backupCodesManageRoute,
+  passkeyAddRoute,
+  passkeyManageRoute,
+]);
 
 const isKnownRoute = (pathname?: string): pathname is string =>
   pathname !== undefined &&
   knownRoutePrefixes.some((prefix) =>
     pathname.replace(accountCenterBasePath, '').startsWith(prefix)
   );
+
+const getInternalPathname = (pathname: string) =>
+  pathname.replace(accountCenterBasePath, '') || '/';
+
+const isTaskFlowRoute = (pathname: string): boolean => {
+  const internalPathname = getInternalPathname(pathname);
+
+  return (
+    taskFlowRoutes.has(internalPathname) || internalPathname.startsWith(`${socialRoutePrefix}/`)
+  );
+};
 
 const parseStoredRoute = (storedRoute: string | undefined): string | undefined => {
   if (storedRoute && isKnownRoute(storedRoute)) {
@@ -66,30 +108,61 @@ const shouldSkipHandling = (search: string) => {
 };
 
 export const {
-  getRedirectUrl,
-  setRedirectUrl,
-  clearRedirectUrl,
   getShowSuccess,
   setShowSuccess,
   clearShowSuccess,
+  getUiLocales,
+  setUiLocales,
+  clearUiLocales,
+  getIdentifier,
+  setIdentifier,
+  clearIdentifier,
 } = sessionStorage;
 
 /**
- * Parse and store the redirect URL and show success flag from query parameters.
+ * Parse and store the redirect URL and show success flag from single-task flow query parameters.
  * This needs to be done before OAuth flow starts so it persists through the sign-in.
  */
 const handleRedirectParameter = () => {
+  if (!isTaskFlowRoute(window.location.pathname)) {
+    return;
+  }
+
   const parameters = new URLSearchParams(window.location.search);
   const redirectUrl = parameters.get(redirectUrlParameter);
   const showSuccess = parameters.get(showSuccessParameter);
 
   if (redirectUrl) {
-    setRedirectUrl(redirectUrl);
+    try {
+      const parsed = new URL(redirectUrl);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        sessionStorage.setPendingReturn(redirectUrl);
+      }
+    } catch {
+      // Invalid URL — silently ignore
+    }
   }
 
   if (yes(showSuccess)) {
     setShowSuccess(true);
   }
+
+  const identifier = parameters.get(identifierParameter);
+  if (identifier) {
+    setIdentifier(identifier);
+  }
+};
+
+const handleUiLocalesParameter = () => {
+  const parameters = new URLSearchParams(window.location.search);
+  const uiLocales = parameters.get(uiLocalesParameter);
+
+  if (uiLocales) {
+    setUiLocales(uiLocales);
+    return;
+  }
+
+  clearUiLocales();
 };
 
 /**
@@ -103,13 +176,13 @@ export const handleAccountCenterRoute = () => {
     return;
   }
 
+  handleUiLocalesParameter();
+
   // Restore the stored route if the current path is the base path.
   if (window.location.pathname === accountCenterBasePath) {
-    const storedRoute = parseStoredRoute(
-      window.sessionStorage.getItem(routeStorageKey) ?? undefined
-    );
+    const storedRoute = parseStoredRoute(sessionStorage.getRouteRestore());
     // Always clear the stored route to ensure one-time restoration
-    window.sessionStorage.removeItem(routeStorageKey);
+    sessionStorage.clearRouteRestore();
 
     if (!storedRoute) {
       return;
@@ -117,7 +190,12 @@ export const handleAccountCenterRoute = () => {
 
     const { search, hash } = window.location;
     window.history.replaceState({}, '', `${storedRoute}${search}${hash}`);
-  } else if (isKnownRoute(window.location.pathname)) {
-    window.sessionStorage.setItem(routeStorageKey, window.location.pathname);
+  }
+};
+
+export const { getPendingReturn, setPendingReturn, clearPendingReturn } = sessionStorage;
+export const setRouteRestore = (pathname: string) => {
+  if (isKnownRoute(pathname)) {
+    sessionStorage.setRouteRestore(pathname);
   }
 };

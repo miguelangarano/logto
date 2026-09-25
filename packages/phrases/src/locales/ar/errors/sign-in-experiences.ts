@@ -26,12 +26,24 @@ const sign_in_experiences = {
   phone_verification_code_cannot_be_used_for_sign_in:
     'لا يمكن استخدام رمز التحقق عبر الرسائل القصيرة لتسجيل الدخول عندما يتم تمكينه للمصادقة متعددة العوامل.',
   adaptive_mfa_requires_mfa: 'يجب تمكين MFA قبل تمكين Adaptive MFA.',
+  adaptive_mfa_requires_non_skippable_policy:
+    'يجب أن تتطلب Adaptive MFA سياسة مطالبة غير قابلة للتخطي لـ MFA. استخدم PromptOnlyAtSignInMandatory أو PromptAtSignInAndSignUpMandatory.',
+  non_adaptive_mfa_requires_skippable_policy:
+    'عندما يتم تعطيل Adaptive MFA، يجب أن تكون سياسة مطالبة MFA قابلة للتخطي. لا تستخدم PromptOnlyAtSignInMandatory أو PromptAtSignInAndSignUpMandatory.',
   duplicated_sign_up_identifiers: 'تم اكتشاف معرفات تسجيل مكررة.',
   missing_sign_up_identifiers: 'لا يمكن أن يكون معرف التسجيل الأساسي فارغًا.',
   invalid_custom_email_blocklist_format:
     'عناصر قائمة البريد الإلكتروني المحظورة المخصصة غير صالحة: {{items, list(type:conjunction)}}. يجب أن يكون كل عنصر عنوان بريد إلكتروني أو نطاق بريد إلكتروني صالحًا، مثلاً، foo@example.com أو @example.com.',
   forgot_password_method_requires_connector:
     'طريقة استرداد كلمة المرور تتطلب تكوين موصل {{method}} ملائم.',
+  password_expiration_requires_forgot_password:
+    'يتطلب انتهاء صلاحية كلمة المرور تفعيل طريقة واحدة على الأقل لاسترجاع كلمة المرور مع موصل صالح.',
+  password_expiration_not_enabled:
+    'سياسة انتهاء صلاحية كلمة المرور غير مفعلة. قم بتفعيلها في إعدادات تجربة تسجيل الدخول قبل إنهاء صلاحية كلمات المرور.',
+  password_expiration_invalid_period_days:
+    'يجب أن تكون أيام الفترة الصالحة عددًا صحيحًا موجبًا عند تفعيل انتهاء صلاحية كلمة المرور.',
+  username_policy_case_conflicts_exist:
+    'لا يمكن التبديل إلى أسماء المستخدمين غير حساسة لحالة الأحرف بينما توجد أسماء مستخدمين تختلف فقط في حالة الأحرف. قم بحل النزاعات وحاول مرة أخرى.',
 };
 
 export default Object.freeze(sign_in_experiences);

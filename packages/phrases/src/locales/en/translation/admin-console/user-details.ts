@@ -19,6 +19,14 @@ const user_details = {
     new_password: 'New password:',
     password: 'Password:',
   },
+  expire_password: {
+    button: 'Expire',
+    title: 'Are you sure you want to expire this password?',
+    content:
+      'The user will be required to reset their password on the next sign-in. This action cannot be undone.',
+    success: "The user's password has been marked as expired.",
+    not_enabled_tooltip: 'Password expiration policy is not enabled.',
+  },
   tab_settings: 'Settings',
   tab_roles: 'Roles',
   tab_logs: 'User logs',
@@ -70,6 +78,12 @@ const user_details = {
     field_description_empty: 'This user has not enabled 2-step verification factors.',
     deletion_confirmation:
       'You are removing the existing <name/> for the 2-step verification. Are you sure you want to continue?',
+  },
+  passkey: {
+    field_name: 'Passkeys',
+    field_description_empty: 'This user has not enabled passkey sign-in.',
+    deletion_confirmation:
+      'You are removing the existing <name/> for passkey sign-in. Are you sure you want to continue?',
   },
   suspended: 'Suspended',
   suspend_user: 'Suspend user',
@@ -132,6 +146,42 @@ const user_details = {
       title: 'Edit personal access token',
       edited: 'The token {{name}} has been successfully edited.',
     },
+  },
+  sessions: {
+    title: 'Sessions',
+    description:
+      'Manage sessions maintained by the Logto Authorization Server. Revoking a Logto session here prevents automatic consent on future authorization requests.',
+    field_name: 'Sessions',
+    multiple_signed_in: 'This user has signed into multiple devices or browsers.',
+    not_found: 'No active Logto sessions found. The user is not currently signed in on any device.',
+    name_column: 'Name',
+    session_id_column: 'Session ID',
+    location_column: 'Location',
+    browser_on_os: '{{browser}} on {{os}}',
+    user: 'User',
+    applications: 'Applications',
+    signed_in_at: 'Last signed in',
+    ip: 'IP',
+    browser_name: 'Browser name',
+    os_name: 'OS name',
+    device_model: 'Device model',
+    revoke_session: 'Revoke session',
+    revoke_session_confirmation:
+      'If you remove this session, users will be forced to re-authentication.',
+  },
+  third_party_apps: {
+    title: 'Third-party apps',
+    description:
+      'Use Logto as your identity provider to authorize third-party apps. View and manage the apps this user has granted access to.',
+    field_name: 'Authorized third-party apps',
+    multiple_authorized: 'This user has authorized multiple third-party apps and services.',
+    not_authorized: 'This user has not authorized any third-party apps or services yet.',
+    name_column: 'Name',
+    app_id_column: 'App ID',
+    access_created_at_column: 'Access created at',
+    revoke_access_title: 'Revoke access?',
+    revoke_access_description:
+      "This will revoke the app's access to this user's account across devices. The user must reauthorize to restore access. Previously issued access tokens may remain valid until they expire.",
   },
   connections: {
     title: 'Connection',

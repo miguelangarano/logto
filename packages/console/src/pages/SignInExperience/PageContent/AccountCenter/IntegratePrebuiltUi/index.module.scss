@@ -13,12 +13,18 @@
 }
 
 .notice {
-  margin-bottom: _.unit(3);
+  margin-bottom: 0;
+}
+
+.firstFormField:not(:first-child),
+.secondFormField:not(:first-child) {
+  // Override FormField's default :not(:first-child) margin-top
+  margin-top: 0;
 }
 
 .urlGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: _.unit(3);
 }
 
@@ -32,6 +38,7 @@
   padding: 0 _.unit(3);
   height: 36px;
   gap: _.unit(2);
+  min-width: 0;
 }
 
 .urlPath {

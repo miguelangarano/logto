@@ -1,3 +1,5 @@
+import concurrent_device_limit from './concurrent-device-limit.js';
+
 const application_details = {
   page_title: 'Detalhes da aplicação',
   back_to_applications: 'Voltar para aplicações',
@@ -85,6 +87,10 @@ const application_details = {
     'Permita que esta aplicação inicie pedidos de troca de tokens. Isto é necessário para <impersonationLink>impersonação de utilizador</impersonationLink> e <patLink>tokens de acesso pessoal</patLink>.',
   allow_token_exchange_public_client_warning:
     'Não é recomendado ativar a troca de tokens para clientes públicos (aplicação de página única / aplicação nativa). Clientes públicos não conseguem armazenar credenciais de forma segura, o que pode expor a sua aplicação a riscos de impersonação de tokens.',
+  device_flow_tag: 'Fluxo de dispositivo',
+  device_flow_notification:
+    'Esta aplicação ativa o fluxo de autorização de dispositivo OAuth 2.0 (Device Authorization Flow) para dispositivos com entrada limitada ou aplicações headless (ex.: TVs, CLI). Os utilizadores completam o início de sessão num dispositivo separado, introduzindo um código de dispositivo ou digitalizando um código QR. <a>Saber mais</a>',
+  device_flow_try_demo: 'Experimentar a demo',
   delete_description:
     'Esta ação não pode ser revertida. Esta ação irá eliminar permanentemente a aplicação. Insira o nome da aplicação <span>{{name}}</span> para confirmar.',
   enter_your_application_name: 'Insira o nome da aplicação',
@@ -115,6 +121,45 @@ const application_details = {
   field_custom_data_tip:
     'Informações personalizadas adicionais da aplicação não listadas nas propriedades predefinidas da aplicação, como configurações e configurações específicas de negócios.',
   custom_data_invalid: 'Os dados personalizados devem ser um objeto JSON válido',
+  access_control: {
+    name: 'Regras',
+    title: 'Controlo de acesso',
+    description: 'Personalize as suas regras para o controlo de acesso ao nível da aplicação.',
+    enable: 'Ativar controlo de acesso ao nível da aplicação',
+    enable_description:
+      'Ative o controlo de acesso granular para restringir que utilizadores podem aceder a esta aplicação. Se estiver desativado, todos os utilizadores registados no sistema podem aceder-lhe.',
+    enable_without_rules_notice:
+      'Adicione pelo menos uma regra de acesso antes de ativar o controlo de acesso.',
+    load_error: 'Falha ao carregar as regras de controlo de acesso.',
+    custom_allow_rules: 'Regras de permissão personalizadas',
+    custom_allow_rules_description:
+      'Crie regras para que utilizadores com determinados atributos possam aceder automaticamente. É necessária pelo menos uma regra quando ativado.',
+    rules: 'Regras de acesso',
+    add_rules: 'Adicionar regras',
+    rules_description:
+      'Os utilizadores podem aceder a esta aplicação quando corresponderem a qualquer uma das regras configuradas.',
+    empty_rules_description: 'Ainda não foram configuradas regras.',
+    delete_rule_confirmation: 'Tem a certeza de que pretende remover esta regra?',
+    rule_table_rules: 'Regras',
+    rule_table_description: 'Descrição',
+    rule_table_users: 'Utilizadores',
+    rule_table_members: 'Membros',
+    rule_table_user_id: 'ID do utilizador',
+    rule_count: '{{count}} regra',
+    rule_count_other: '{{count}} regras',
+    rule_users: 'Utilizadores',
+    rule_users_description: 'Utilizadores específicos podem aceder a esta aplicação.',
+    rule_roles: 'Funções',
+    rule_user_roles: 'Funções de utilizador',
+    rule_user_roles_description:
+      'Utilizadores atribuídos às funções de utilizador selecionadas podem aceder a esta aplicação.',
+    rule_organizations: 'Organizações',
+    rule_organizations_description:
+      'Todos os membros atuais e futuros das organizações selecionadas podem aceder a esta aplicação.',
+    rule_organization_roles: 'Funções da organização',
+    rule_organization_roles_description:
+      'Membros com as funções da organização selecionadas nas organizações selecionadas podem aceder a esta aplicação.',
+  },
   branding: {
     name: 'Marca',
     description: 'Personalize o nome e o logótipo da sua aplicação no ecrã de consentimento.',
@@ -257,6 +302,13 @@ const application_details = {
     email_address: 'Endereço de email',
     email_address_description: 'Usar o endereço de email como ID de Nome',
   },
+  saml_idp_authentication: {
+    always_force_authn: 'Sempre forçar autenticação',
+    always_force_authn_description:
+      'Exigir que os utilizadores façam login novamente sempre que acessem esta aplicação, mesmo que já possuam uma sessão Logto.',
+    always_force_authn_tip:
+      'Quando ativado, o Logto sempre pede aos utilizadores que façam login novamente para esta aplicação. Quando desativado, uma sessão Logto existente é reutilizada a menos que o fornecedor de serviços solicite uma autenticação fresca com ForceAuthn.',
+  },
   saml_encryption_config: {
     encrypt_assertion: 'Criptografar asserção SAML',
     encrypt_assertion_description: 'Ao ativar esta opção, a asserção SAML será criptografada.',
@@ -281,6 +333,7 @@ const application_details = {
     col_sp_claims: 'Nome do valor da sua aplicação',
     add_button: 'Adicionar outro',
   },
+  concurrent_device_limit,
 };
 
 export default Object.freeze(application_details);

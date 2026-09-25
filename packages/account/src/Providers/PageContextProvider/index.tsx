@@ -1,12 +1,13 @@
 import { useLogto } from '@logto/react';
 import { Theme } from '@logto/schemas';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { isMobile } from 'react-device-detect';
 
 import { getAccountCenterSettings } from '@ac/apis/account-center';
 import { getSignInExperienceSettings } from '@ac/apis/sign-in-experience';
 import { getUserInfo } from '@ac/apis/user';
 import useApi from '@ac/hooks/use-api';
+import { changeLanguage, getPreferredLanguage } from '@ac/i18n/utils';
+import { getUiLocales } from '@ac/utils/account-center-route';
 import { getThemeBySystemPreference, subscribeToSystemTheme } from '@ac/utils/theme';
 
 import type { PageContextType } from './PageContext';
@@ -21,10 +22,21 @@ type Props = {
   readonly children: React.ReactNode;
 };
 
+const getInitialTheme = () => {
+  if (document.documentElement.dataset.theme === Theme.Dark) {
+    return Theme.Dark;
+  }
+
+  return Theme.Light;
+};
+
+const getInitialPlatform = (): PageContextType['platform'] =>
+  document.body.classList.contains('mobile') ? 'mobile' : 'web';
+
 const PageContextProvider = ({ children }: Props) => {
   const { isAuthenticated } = useLogto();
   const getUserInfoRequest = useApi(getUserInfo, { silent: true });
-  const [theme, setTheme] = useState(Theme.Light);
+  const [theme, setTheme] = useState(getInitialTheme);
   const [toast, setToast] = useState('');
   const [experienceSettings, setExperienceSettings] =
     useState<PageContextType['experienceSettings']>(undefined);
@@ -36,6 +48,54 @@ const PageContextProvider = ({ children }: Props) => {
   const [verificationId, setVerificationId] = useState<string>();
   const [isLoadingExperience, setIsLoadingExperience] = useState(true);
   const [experienceError, setExperienceError] = useState<Error>();
+
+  const loadUserInfo = useCallback(
+    async ({
+      clearOnError = false,
+      showLoading = false,
+      syncError = false,
+    }: {
+      clearOnError?: boolean;
+      showLoading?: boolean;
+      syncError?: boolean;
+    } = {}) => {
+      if (showLoading) {
+        setIsLoadingUserInfo(true);
+      }
+
+      const [error, data] = await getUserInfoRequest();
+
+      if (error || !data) {
+        if (syncError) {
+          setUserInfoError(
+            error instanceof Error ? error : new Error('Failed to load user information.')
+          );
+        }
+
+        if (clearOnError) {
+          setUserInfo(undefined);
+        }
+
+        if (showLoading) {
+          setIsLoadingUserInfo(false);
+        }
+
+        return;
+      }
+
+      setUserInfo(data);
+      setUserInfoError(undefined);
+
+      if (showLoading) {
+        setIsLoadingUserInfo(false);
+      }
+    },
+    [getUserInfoRequest]
+  );
+
+  const refreshUserInfo = useCallback(async () => {
+    await loadUserInfo();
+  }, [loadUserInfo]);
 
   useEffect(() => {
     const storedVerificationId = getStoredVerificationId();
@@ -67,26 +127,12 @@ const PageContextProvider = ({ children }: Props) => {
       return;
     }
 
-    const fetchUserInfo = async () => {
-      setIsLoadingUserInfo(true);
-      const [error, data] = await getUserInfoRequest();
-
-      if (error || !data) {
-        setUserInfoError(
-          error instanceof Error ? error : new Error('Failed to load user information.')
-        );
-        setUserInfo(undefined);
-        setIsLoadingUserInfo(false);
-        return;
-      }
-
-      setUserInfo(data);
-      setUserInfoError(undefined);
-      setIsLoadingUserInfo(false);
-    };
-
-    void fetchUserInfo();
-  }, [getUserInfoRequest, isAuthenticated]);
+    void loadUserInfo({
+      clearOnError: true,
+      showLoading: true,
+      syncError: true,
+    });
+  }, [isAuthenticated, loadUserInfo]);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -97,6 +143,12 @@ const PageContextProvider = ({ children }: Props) => {
           getSignInExperienceSettings(),
           getAccountCenterSettings(),
         ]);
+        await changeLanguage(
+          getPreferredLanguage({
+            languageSettings: settings.languageInfo,
+            uiLocales: getUiLocales(),
+          })
+        );
         setExperienceSettings(settings);
         setAccountCenterSettings(accountCenter);
         setExperienceError(undefined);
@@ -115,7 +167,11 @@ const PageContextProvider = ({ children }: Props) => {
   }, []);
 
   useEffect(() => {
-    if (!experienceSettings?.color.isDarkModeEnabled) {
+    if (!experienceSettings) {
+      return;
+    }
+
+    if (!experienceSettings.color.isDarkModeEnabled) {
       setTheme(Theme.Light);
       return;
     }
@@ -132,7 +188,7 @@ const PageContextProvider = ({ children }: Props) => {
     };
   }, [experienceSettings]);
 
-  const platform = isMobile ? 'mobile' : 'web';
+  const platform = getInitialPlatform();
 
   const value = useMemo<PageContextType>(
     () => ({
@@ -146,7 +202,7 @@ const PageContextProvider = ({ children }: Props) => {
       accountCenterSettings,
       setAccountCenterSettings,
       userInfo,
-      setUserInfo,
+      refreshUserInfo,
       userInfoError,
       isLoadingUserInfo,
       verificationId,
@@ -160,6 +216,7 @@ const PageContextProvider = ({ children }: Props) => {
       experienceSettings,
       isLoadingExperience,
       platform,
+      refreshUserInfo,
       theme,
       toast,
       userInfo,

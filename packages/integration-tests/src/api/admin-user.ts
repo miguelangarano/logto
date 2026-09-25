@@ -2,6 +2,9 @@ import type {
   CreatePersonalAccessToken,
   DesensitizedEnterpriseSsoTokenSetSecret,
   DesensitizedSocialTokenSetSecret,
+  GetUserApplicationGrantsResponse,
+  GetUserSessionResponse,
+  GetUserSessionsResponse,
   Identities,
   Identity,
   MfaFactor,
@@ -9,15 +12,19 @@ import type {
   OrganizationWithRoles,
   PersonalAccessToken,
   Role,
+  SessionGrantRevokeTarget,
+  TrustedDeviceResponse,
   User,
+  UserProfileResponse,
   UserSsoIdentity,
   UsersPasswordEncryptionMethod,
 } from '@logto/schemas';
-import { conditional } from '@silverhand/essentials';
+import { conditional, type Nullable } from '@silverhand/essentials';
 
 import { authedAdminApi } from './api.js';
 
 export type CreateUserPayload = Partial<{
+  id: string;
   primaryEmail: string;
   primaryPhone: string;
   username: string;
@@ -34,17 +41,32 @@ export const createUser = async (payload: CreateUserPayload = {}) =>
     })
     .json<User>();
 
-export const getUser = async (userId: string, withSsoIdentities = false) =>
-  authedAdminApi
-    .get(
-      `users/${userId}`,
-      conditional(
-        withSsoIdentities && { searchParams: new URLSearchParams({ includeSsoIdentities: 'true' }) }
-      )
-    )
-    .json<User & { ssoIdentities?: UserSsoIdentity[] }>();
+export type GetUserOptions = {
+  withSsoIdentities?: boolean;
+  includePasswordHash?: boolean;
+};
 
-export const getUsers = async () => authedAdminApi.get('users').json<User[]>();
+export type UserProfileResponseWithPasswordHash = UserProfileResponse & {
+  passwordDigest?: Nullable<string>;
+  passwordAlgorithm?: Nullable<UsersPasswordEncryptionMethod>;
+};
+
+export async function getUser(userId: string, options: GetUserOptions = {}) {
+  const { withSsoIdentities, includePasswordHash } = options;
+  const searchParams = new URLSearchParams({
+    ...(withSsoIdentities && { includeSsoIdentities: 'true' }),
+    ...(includePasswordHash && { includePasswordHash: 'true' }),
+  });
+
+  return authedAdminApi
+    .get(`users/${userId}`, searchParams.size > 0 ? { searchParams } : undefined)
+    .json<UserProfileResponseWithPasswordHash>();
+}
+
+export const getUsers = async (searchParams?: URLSearchParams) =>
+  authedAdminApi
+    .get('users', searchParams ? { searchParams } : undefined)
+    .json<UserProfileResponseWithPasswordHash[]>();
 
 export const updateUser = async (userId: string, payload: Partial<User>) =>
   authedAdminApi
@@ -72,7 +94,16 @@ export const updateUserPassword = async (userId: string, password: string) =>
         password,
       },
     })
-    .json<User>();
+    .json<UserProfileResponse>();
+
+export const expireUserPassword = async (userId: string) =>
+  authedAdminApi
+    .patch(`users/${userId}/password/expiration`, {
+      json: {
+        isExpired: true,
+      },
+    })
+    .json<UserProfileResponse>();
 
 export const deleteUserIdentity = async (userId: string, connectorTarget: string) =>
   authedAdminApi.delete(`users/${userId}/identities/${connectorTarget}`);
@@ -135,8 +166,8 @@ export const createUserMfaVerification = async (userId: string, type: MfaFactor)
     >();
 
 type UserLogtoConfig = {
-  mfa: { skipped: boolean; skipMfaOnSignIn: boolean };
-  passkeySignIn: { skipped: boolean };
+  mfa: { enabled?: boolean; skipped?: boolean; skipMfaOnSignIn?: boolean };
+  passkeySignIn: { skipped?: boolean };
 };
 
 export const getUserLogtoConfig = async (userId: string) =>
@@ -189,6 +220,12 @@ export const updatePersonalAccessTokenLegacy = async (
     })
     .json<PersonalAccessToken>();
 
+export const getUserTrustedDevices = async (userId: string) =>
+  authedAdminApi.get(`users/${userId}/trusted-devices`).json<TrustedDeviceResponse[]>();
+
+export const deleteUserTrustedDevice = async (userId: string, trustedDeviceId: string) =>
+  authedAdminApi.delete(`users/${userId}/trusted-devices/${trustedDeviceId}`);
+
 export const getUserIdentity = async (
   userId: string,
   target: string,
@@ -224,3 +261,35 @@ export const getUserSsoIdentity = async (
       tokenSecret?: DesensitizedEnterpriseSsoTokenSetSecret;
     }>();
 };
+
+export const getUserSessions = async (userId: string) =>
+  authedAdminApi.get(`users/${userId}/sessions`).json<GetUserSessionsResponse>();
+
+export const getUserApplicationGrants = async (
+  userId: string,
+  appType?: 'firstParty' | 'thirdParty'
+) =>
+  authedAdminApi
+    .get(`users/${userId}/grants`, {
+      searchParams: new URLSearchParams({
+        ...conditional(appType && { appType }),
+      }),
+    })
+    .json<GetUserApplicationGrantsResponse>();
+
+export const getUserSession = async (userId: string, sessionId: string) =>
+  authedAdminApi.get(`users/${userId}/sessions/${sessionId}`).json<GetUserSessionResponse>();
+
+export const revokeUserGrant = async (userId: string, grantId: string) =>
+  authedAdminApi.delete(`users/${userId}/grants/${grantId}`);
+
+export const revokeUserSession = async (
+  userId: string,
+  sessionId: string,
+  revokeGrantsTarget?: SessionGrantRevokeTarget
+) =>
+  authedAdminApi.delete(`users/${userId}/sessions/${sessionId}`, {
+    searchParams: new URLSearchParams({
+      ...conditional(revokeGrantsTarget && { revokeGrantsTarget }),
+    }),
+  });

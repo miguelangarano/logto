@@ -11,7 +11,6 @@ const mfa = {
   webauthn: 'Passkeys',
   webauthn_description:
     'Tarayıcı tarafından desteklenen yöntemle doğrulama yapın: biyometri, telefon tarama veya güvenlik anahtarı vb.',
-  webauthn_native_tip: 'WebAuthn, Native uygulamalar için desteklenmiyor.',
   webauthn_domain_tip:
     'WebAuthn, genel anahtarları belirli bir alanla ilişkilendirir. Hizmet alanınızı değiştirmek, kullanıcıların mevcut geçiş anahtarları aracılığıyla kimlik doğrulamasını engeller.',
   backup_code: 'Yedek kodlar',
@@ -43,7 +42,7 @@ const mfa = {
   require_mfa_optional:
     "İsteğe bağlı MFA: Kullanıcıların kendi hesap güvenlikleri için MFA'yı etkinleştirmeyi seçmelerine izin verin",
   require_mfa_adaptive:
-    'Uyarlanabilir MFA: Yalnızca oturum açma riskli göründüğünde (ör. yeni cihaz / konum) MFA isteyin',
+    'Uyarlanabilir MFA: Yalnızca oturum açma riskli göründüğünde (ör. yeni ülke / uzun süreli hareketsizlik) MFA isteyin',
   require_mfa_mandatory:
     "Zorunlu MFA: Tüm kullanıcıların her oturum açışlarında MFA'yı tamamlamasını gerektirir",
   set_up_prompt: 'MFA kurulum istemi',
@@ -52,9 +51,13 @@ const mfa = {
     'Kaydolurken kullanıcılardan MFA kurmalarını isteyin (atlanabilir, tek seferlik istek)',
   prompt_only_at_sign_in:
     'Kayıttan sonraki ilk giriş denemelerinde kullanıcılardan MFA kurmalarını isteyin (atlanabilir, tek seferlik istek)',
+  prompt_at_sign_in_and_sign_up_mandatory:
+    'Kayıt sırasında kullanıcılardan MFA kurmalarını isteyin. (atlanamaz)',
+  prompt_only_at_sign_in_mandatory:
+    'Kayıttan sonraki bir sonraki giriş denemesinde kullanıcılardan MFA kurmalarını isteyin. (atlanamaz)',
   set_up_organization_required_mfa_prompt:
     "Organizasyon MFA'yı etkinleştirdikten sonra kullanıcılardan MFA kurmalarını isteyin",
-  prompt_at_sign_in_no_skip:
+  prompt_at_sign_in_non_skippable:
     'Bir sonraki girişte kullanıcılardan MFA kurmalarını isteyin (atlanamaz)',
   email_primary_method_tip:
     'E-posta doğrulama kodu zaten birincil oturum açma yönteminizdir. Güvenliği sağlamak için MFA için tekrar kullanılamaz.',
@@ -69,6 +72,30 @@ const mfa = {
   no_sms_connector_error:
     'SMS bağlantısı olmadan SMS doğrulama kodu MFA etkinleştirilemez. Lütfen önce bir SMS bağlantısı yapılandırın.',
   setup_link: 'Kur',
+  trusted_device: {
+    title: 'Güvenilen cihazlar',
+    description:
+      'Güvenilen tarayıcıların, mevcut MFA akışı gerektirdiğinde MFA doğrulamasını otomatik olarak tamamlamasına izin verin.',
+    enable_title: 'Güvenilen cihazları etkinleştir',
+    enable_description:
+      'Uygun bir MFA faktörü tamamlandıktan sonra bu tarayıcıya güvenilmesine izin verin.',
+    duration_title: 'Güven süresi (gün)',
+    duration_error: '{{min}} ile {{max}} arasında bir tam sayı girin.',
+    duration_note: 'Güven süresi değişiklikleri yalnızca daha sonra güvenilen cihazlara uygulanır.',
+    organization_allow_title: 'Güvenilen cihazlara izin ver',
+    organization_allow_tip:
+      'Bir kuruluş yalnızca tenant ilkesini daraltabilir; özellik tenant düzeyinde kapalıyken etkinleştiremez.',
+    organization_allow_description:
+      'Bu kuruluşun üyeleri için güvenilen cihaz doğrulamasına izin verin.',
+    organization_global_disabled: 'Önce tenant MFA ayarlarında güvenilen cihazları etkinleştirin.',
+    management_description:
+      'Bu kullanıcının MFA işlemini tamamladıktan sonra güvendiği tarayıcıları yönetin. Kaldırılan tarayıcı bir sonraki oturum açmada yeniden MFA isteyecektir.',
+    management_hint: 'Son konum yalnızca bilgi amaçlıdır.',
+    management_empty: 'Bu kullanıcının etkin güvenilen cihazı yok.',
+    management_deletion_confirmation:
+      '{{name}} kaldırılsın mı? Bu tarayıcı bir sonraki oturum açmada yeniden MFA isteyecektir.',
+    management_removed: 'Güvenilen cihaz kaldırıldı.',
+  },
 };
 
 export default Object.freeze(mfa);

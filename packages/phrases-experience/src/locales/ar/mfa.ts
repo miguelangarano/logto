@@ -18,6 +18,10 @@ const mfa = {
   verify_phone_verification_code_description: 'أدخل الرمز المرسل إلى هاتفك',
   send_to_email: 'إرسال إلى {{identifier}}',
   send_to_phone: 'إرسال إلى {{identifier}}',
+  onboarding: 'تشغيل التحقق بخطوتين',
+  onboarding_description:
+    'احمِ حسابك بالتحقق بخطوتين. اختر طريقة أو أكثر: مفتاح المرور، تطبيق المصادقة (OTP)، رمز التحقق عبر الرسائل القصيرة، أو رموز النسخ الاحتياطي.',
+  enable_mfa: 'تفعيل التحقق بخطوتين',
   add_mfa_factors: 'إضافة التحقق من خطوتين',
   add_mfa_description: 'تم تمكين التحقق من خطوتين. حدد طريقة التحقق الثانية لتسجيل الدخول الآمن.',
   add_another_mfa_factor: 'إضافة تحقق آخر من خطوتين',
@@ -26,6 +30,7 @@ const mfa = {
   verify_mfa_description:
     'تم تمكين التحقق من خطوتين لهذا الحساب. يرجى تحديد الطريقة الثانية للتحقق من هويتك.',
   add_authenticator_app: 'إضافة تطبيق المصادقة',
+  replace_authenticator_app: 'استبدال تطبيق المصادقة',
   step: 'الخطوة {{step, number}}: {{content}}',
   scan_qr_code: 'مسح رمز الاستجابة السريعة هذا',
   scan_qr_code_description:
@@ -63,6 +68,14 @@ const mfa = {
   verify_via_passkey: 'التحقق عبر مفتاح المرور',
   verify_via_passkey_description:
     'استخدم مفتاح المرور للتحقق من خلال كلمة المرور الخاصة بجهازك أو البيومتريات ، أو مسح رمز الاستجابة السريعة ، أو استخدام مفتاح الأمان USB مثل YubiKey.',
+  trust_this_device_title: 'الوثوق بهذا الجهاز',
+  trust_this_device_description:
+    'يمكنك تخطي التحقق متعدد العوامل على هذا الجهاز عند تسجيل الدخول لاحقًا.',
+  trust_this_device_one: 'الوثوق بهذا الجهاز لمدة يوم واحد',
+  trust_this_device_two: 'الوثوق بهذا الجهاز لمدة يومين',
+  trust_this_device_few: 'الوثوق بهذا الجهاز لمدة {{count}} أيام',
+  trust_this_device_many: 'الوثوق بهذا الجهاز لمدة {{count}} يومًا',
+  trust_this_device_other: 'الوثوق بهذا الجهاز لمدة {{count}} يوم',
   secret_key_copied: 'تم نسخ المفتاح السري.',
   backup_code_copied: 'تم نسخ رمز النسخ الاحتياطي.',
   webauthn_not_ready: 'WebAuthn غير جاهز حاليًا. يرجى المحاولة مرة أخرى لاحقًا.',

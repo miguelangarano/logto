@@ -26,12 +26,24 @@ const sign_in_experiences = {
   phone_verification_code_cannot_be_used_for_sign_in:
     'SMS verification code cannot be used for sign-in when it is enabled for MFA.',
   adaptive_mfa_requires_mfa: 'MFA must be enabled before enabling adaptive MFA.',
+  adaptive_mfa_requires_non_skippable_policy:
+    'Adaptive MFA requires a non-skippable MFA prompt policy. Use PromptOnlyAtSignInMandatory or PromptAtSignInAndSignUpMandatory.',
+  non_adaptive_mfa_requires_skippable_policy:
+    'When adaptive MFA is disabled, MFA prompt policy must be skippable. Do not use PromptOnlyAtSignInMandatory or PromptAtSignInAndSignUpMandatory.',
   duplicated_sign_up_identifiers: 'Duplicate sign-up identifiers detected.',
   missing_sign_up_identifiers: 'Primary sign-up identifier cannot be empty.',
   invalid_custom_email_blocklist_format:
     'Invalid custom email blocklist items: {{items, list(type:conjunction)}}. Each item must be a valid email address or email domain, e.g., foo@example.com or @example.com.',
   forgot_password_method_requires_connector:
     'Forgot password method requires a corresponding {{method}} connector to be configured.',
+  password_expiration_requires_forgot_password:
+    'Password expiration requires at least one forgot password method with a valid connector.',
+  password_expiration_not_enabled:
+    'Password expiration policy is not enabled. Enable it in the sign-in experience settings before expiring passwords.',
+  password_expiration_invalid_period_days:
+    'Valid period days must be a positive integer when password expiration is enabled.',
+  username_policy_case_conflicts_exist:
+    'Cannot switch to case-insensitive usernames while usernames that differ only by case exist. Resolve the conflicts and try again.',
 };
 
 export default Object.freeze(sign_in_experiences);

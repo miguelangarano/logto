@@ -27,12 +27,9 @@ create index oidc_model_instances__model_name_payload_uid
     (payload->>'uid')
   );
 
-create index oidc_model_instances__model_name_payload_grant_id
-  on oidc_model_instances (
-    tenant_id,
-    model_name,
-    (payload->>'grantId')
-  );
+create index oidc_model_instances__model_name_payload_grant_id_partial
+  on oidc_model_instances (tenant_id, model_name, (payload->>'grantId'))
+  where payload ? 'grantId';
 
 create index oidc_model_instances__expires_at
   on oidc_model_instances (tenant_id, expires_at);
@@ -40,3 +37,19 @@ create index oidc_model_instances__expires_at
 create index oidc_model_instances__session_payload_account_id_expires_at
   on oidc_model_instances (tenant_id, (payload->>'accountId'), expires_at)
   WHERE model_name = 'Session';
+
+create index oidc_model_instances__grant_payload_account_id_expires_at
+  on oidc_model_instances (tenant_id, (payload->>'accountId'), expires_at)
+  WHERE model_name = 'Grant';
+
+/* Partial on payload key existence so rows without accountId (e.g. client credentials tokens) stay out of the index. The parameter-free predicate stays provable under generic query plans, but matching queries must include the payload ? 'accountId' clause. */
+create index oidc_model_instances__model_name_payload_account_id_partial
+  on oidc_model_instances (tenant_id, model_name, (payload->>'accountId'))
+  where payload ? 'accountId';
+
+alter table oidc_model_instances set (
+  autovacuum_vacuum_scale_factor = 0.05,
+  autovacuum_analyze_scale_factor = 0.02,
+  autovacuum_vacuum_threshold = 5000,
+  autovacuum_analyze_threshold = 2000
+);

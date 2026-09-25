@@ -7,9 +7,9 @@ import {
   type WebAuthnRegistrationOptions,
   type WebAuthnVerificationPayload,
   type WebAuthnVerificationRecordData,
-  type SignInWebAuthnVerificationRecordData,
+  type SignInPasskeyVerificationRecordData,
   type SanitizedWebAuthnVerificationRecordData,
-  type SanitizedSignInWebAuthnVerificationRecordData,
+  type SanitizedSignInPasskeyVerificationRecordData,
 } from '@logto/schemas';
 import { generateStandardId } from '@logto/shared';
 import { conditional } from '@silverhand/essentials';
@@ -17,13 +17,13 @@ import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import { type PublicKeyCredentialRequestOptionsJSON } from 'node_modules/@simplewebauthn/server/esm/deps.js';
 
 import RequestError from '#src/errors/RequestError/index.js';
-import { type WithLogContext } from '#src/middleware/koa-audit-log.js';
 import {
   generateWebAuthnAuthenticationOptions,
   generateWebAuthnRegistrationOptions,
   verifyWebAuthnAuthentication,
   verifyWebAuthnRegistration,
-} from '#src/routes/interaction/utils/webauthn.js';
+} from '#src/libraries/verification-helpers/webauthn.js';
+import { type WithLogContext } from '#src/middleware/koa-audit-log.js';
 import type Libraries from '#src/tenants/Libraries.js';
 import type Queries from '#src/tenants/Queries.js';
 import assertThat from '#src/utils/assert-that.js';
@@ -35,11 +35,11 @@ import {
 
 export {
   type WebAuthnVerificationRecordData,
-  type SignInWebAuthnVerificationRecordData,
+  type SignInPasskeyVerificationRecordData,
   type SanitizedWebAuthnVerificationRecordData,
-  type SanitizedSignInWebAuthnVerificationRecordData,
+  type SanitizedSignInPasskeyVerificationRecordData,
   sanitizedWebAuthnVerificationRecordDataGuard,
-  sanitizedSignInWebAuthnVerificationRecordDataGuard,
+  sanitizedSignInPasskeyVerificationRecordDataGuard,
 } from '@logto/schemas';
 
 abstract class BaseWebAuthnVerification {
@@ -54,7 +54,7 @@ abstract class BaseWebAuthnVerification {
   constructor(
     readonly libraries: Libraries,
     readonly queries: Queries,
-    data: WebAuthnVerificationRecordData | SignInWebAuthnVerificationRecordData
+    data: WebAuthnVerificationRecordData | SignInPasskeyVerificationRecordData
   ) {
     this.id = data.id;
     this.userId = data.userId;
@@ -78,9 +78,8 @@ abstract class BaseWebAuthnVerification {
    * This method is used to generate the WebAuthn registration options for the user.
    * The WebAuthn registration options is used to register a new WebAuthn credential for the user.
    *
-   * Refers to the {@link generateWebAuthnRegistrationOptions} function in  `interaction/utils/webauthn.ts` file.
+   * Refers to the {@link generateWebAuthnRegistrationOptions} function in `libraries/verification-helpers/webauthn.ts` file.
    * Keep it as the single source of truth for generating the WebAuthn registration options.
-   * TODO: Consider relocating the function under a shared folder
    */
   async generateWebAuthnRegistrationOptions(rpId: string): Promise<WebAuthnRegistrationOptions> {
     const user = await this.findUser();
@@ -142,7 +141,7 @@ abstract class BaseWebAuthnVerification {
       publicKey: isoBase64URL.fromBuffer(credentialPublicKey),
       counter,
       agent: userAgent,
-      transports: [],
+      transports: payload.response.transports ?? [],
     };
   }
 
@@ -182,9 +181,8 @@ export class WebAuthnVerification
    * This method is used to generate the WebAuthn authentication options for MFA verification.
    * The user must be already identified in the MFA flow.
    *
-   * Refers to the {@link generateWebAuthnAuthenticationOptions} function in  `interaction/utils/webauthn.ts` file.
+   * Refers to the {@link generateWebAuthnAuthenticationOptions} function in `libraries/verification-helpers/webauthn.ts` file.
    * Keep it as the single source of truth for generating the WebAuthn authentication options.
-   * TODO: Consider relocating the function under a shared folder
    *
    * @throws {RequestError} with status 400, if no WebAuthn credentials are found for the user.
    */
@@ -280,25 +278,25 @@ export class WebAuthnVerification
   }
 }
 
-export class SignInWebAuthnVerification
+export class SignInPasskeyVerification
   extends BaseWebAuthnVerification
-  implements IdentifierVerificationRecord<VerificationType.SignInWebAuthn>
+  implements IdentifierVerificationRecord<VerificationType.SignInPasskey>
 {
   /**
    * Factory method to create a new WebAuthnVerification instance
    */
   static create(libraries: Libraries, queries: Queries) {
-    return new SignInWebAuthnVerification(libraries, queries, {
+    return new SignInPasskeyVerification(libraries, queries, {
       id: generateStandardId(),
-      type: VerificationType.SignInWebAuthn,
+      type: VerificationType.SignInPasskey,
       verified: false,
     });
   }
 
-  readonly type = VerificationType.SignInWebAuthn;
+  readonly type = VerificationType.SignInPasskey;
   private readonly authenticationRpId?: string;
 
-  constructor(libraries: Libraries, queries: Queries, data: SignInWebAuthnVerificationRecordData) {
+  constructor(libraries: Libraries, queries: Queries, data: SignInPasskeyVerificationRecordData) {
     super(libraries, queries, data);
     this.authenticationRpId = data.authenticationRpId;
   }
@@ -323,9 +321,20 @@ export class SignInWebAuthnVerification
 
     // Find user by credential ID and rpId
     const user = await findUserByWebAuthnCredential(payload.id, this.authenticationRpId);
-    assertThat(user, 'session.mfa.webauthn_verification_failed');
+    assertThat(user, 'session.identifier_not_found');
 
     const { id: userId, mfaVerifications } = user;
+
+    if (this.userId) {
+      // In identifier first passkey sign-in flow, the user is provided in the verification record before verification.
+      // We need to make sure in the verification process, the user found by credential ID is the same as the user in
+      // the verification record, otherwise it's a verification failure.
+      assertThat(
+        this.userId === userId,
+        new RequestError({ code: 'session.identity_conflict', status: 409 })
+      );
+    }
+
     const { result, newCounter } = await verifyWebAuthnAuthentication({
       payload,
       challenge: this.authenticationChallenge,
@@ -368,7 +377,7 @@ export class SignInWebAuthnVerification
     return user;
   }
 
-  toJson(): SignInWebAuthnVerificationRecordData {
+  toJson(): SignInPasskeyVerificationRecordData {
     return {
       id: this.id,
       type: this.type,
@@ -382,7 +391,7 @@ export class SignInWebAuthnVerification
     };
   }
 
-  toSanitizedJson(): SanitizedSignInWebAuthnVerificationRecordData {
+  toSanitizedJson(): SanitizedSignInPasskeyVerificationRecordData {
     const { id, type, userId, verified } = this;
     return { id, type, userId, verified };
   }

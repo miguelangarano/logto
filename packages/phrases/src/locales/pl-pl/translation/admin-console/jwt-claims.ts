@@ -36,6 +36,7 @@ const jwt_claims = {
   restore: 'Przywróć domyślne',
   restored: 'Przywrócono',
   data_source_tab: 'Źródło danych',
+  error_handling_tab: 'Obsługa błędów',
   test_tab: 'Kontekst testowy',
   jwt_claims_description:
     'Domyślne roszczenia są automatycznie dołączane do JWT i nie mogą być nadpisane.',
@@ -52,12 +53,17 @@ const jwt_claims = {
   interaction_data: {
     title: 'Kontekst interakcji użytkownika',
     subtitle:
-      'Użyj parametru `context.interaction`, aby uzyskać dostęp do szczegółów interakcji użytkownika dla bieżącej sesji uwierzytelniania, w tym `interactionEvent`, `userId`, i `verificationRecords`.',
+      'Użyj parametru `context.interaction`, aby uzyskać dostęp do szczegółów interakcji użytkownika dla bieżącej sesji uwierzytelniania.',
   },
   application_data: {
     title: 'Kontekst aplikacji',
     subtitle:
       'Użyj parametru wejściowego `context.application`, aby dostarczć informacje o aplikacji powiązanej z tokenem.',
+  },
+  organization_data: {
+    title: 'Kontekst organizacji',
+    subtitle:
+      'Użyj parametru wejściowego `context.organization`, aby dostarczyć informacje o docelowej organizacji, dostępne tylko dla tokenów organizacji.',
   },
   token_data: {
     title: 'Dane tokenu',
@@ -66,6 +72,18 @@ const jwt_claims = {
   api_context: {
     title: 'Kontekst API: kontrola dostępu',
     subtitle: 'Użyj metody `api.denyAccess`, aby odrzucić żądanie tokenu.',
+  },
+  error_handling: {
+    title: 'Obsługa błędów',
+    subtitle: 'Określa, czy wydanie tokena ma zostać zablokowane, gdy skrypt zakończy się błędem.',
+    input_field_title: 'Zachowanie wydawania tokena przy błędzie skryptu',
+    block_issuance_switch: 'Blokuj wydanie tokena, gdy skrypt zgłasza błędy',
+    default_hint_create:
+      'Nowe skrypty niestandardowych claims domyślnie blokują wydanie tokenu, gdy skrypt zakończy się błędem. Jeśli API zwraca już wartość, zostanie użyta zapisana wartość.',
+    default_hint_edit:
+      'Istniejące skrypty niestandardowych claims bez tego ustawienia zachowują dotychczasowe domyślne wyłączenie tej opcji, dopóki nie zapiszesz jej jawnie.',
+    warning:
+      'Po włączeniu błędy wykonania skryptu odrzucają żądanie tokena z `invalid_request` (400) i zlokalizowanym `error_description`. Wywołania `api.denyAccess` nadal zwracają `access_denied`.',
   },
   fetch_external_data: {
     title: 'Pobierz zewnętrzne dane',
@@ -86,6 +104,11 @@ const jwt_claims = {
     subtitle: 'Dostosuj fałszywy token i dane użytkownika do testowania.',
     run_button: 'Uruchom test',
     result_title: 'Wynik testu',
+  },
+  sandbox_warning: {
+    title: 'Skrypty działają z uprawnieniami serwera',
+    description:
+      'W samodzielnie hostowanym Logto ten skrypt działa w tym samym środowisku co samo Logto: może odczytywać zmienne środowiskowe serwera i osiągać usługi w Twojej sieci wewnętrznej. Nie jest w piaskownicy. Udostępniaj tę stronę tylko osobom, którym zaufałbyś dostęp do serwera.',
   },
   form_error: {
     invalid_json: 'Nieprawidłowy format JSON',

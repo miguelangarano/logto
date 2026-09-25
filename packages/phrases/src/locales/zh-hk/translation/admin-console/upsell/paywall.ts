@@ -41,6 +41,8 @@ const paywall = {
   scopes_per_role_other:
     '已達到 <planName/> 的{{count, number}}個角色每個權限限制。升級計劃以添加額外的角色和權限。如需任何協助，歡迎<a>聯繫我們</a>。',
   saml_applications_oss: '額外的 SAML 應用程式可在 Logto 企業版計劃中使用。如需協助，請聯絡我們。',
+  saml_applications_oss_limit_notice:
+    '你的開源實例最多支援 {{limit}} 個 SAML 應用程式。你可以使用 Logto Cloud，或聯絡我們了解更多可選方案。',
   logto_pricing_button_text: 'Logto Cloud 定價',
   saml_applications: '額外的 SAML 應用程式可在 Logto 企業版計劃中使用。如需要協助，請聯絡我們。',
   saml_applications_add_on:
@@ -69,6 +71,8 @@ const paywall = {
     '透過升級至 Pro 計劃解鎖高級安全功能。如有任何問題，請不要猶豫，<a>聯絡我們</a>。',
   collect_user_profile:
     '升級到付費計劃以解鎖在新用戶註冊期間收集更多用戶資料資訊的功能。如有任何問題，請不要猶豫 <a>聯絡我們</a>。',
+  passkey_sign_in:
+    '升級至付費計劃，以使用通行密鑰登入功能和高級權益。如有任何問題，請隨時 <a>聯絡我們</a>。',
 };
 
 export default Object.freeze(paywall);

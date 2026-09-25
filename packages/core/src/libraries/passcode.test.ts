@@ -3,7 +3,12 @@ import { ConnectorType, TemplateType } from '@logto/connector-kit';
 import { type Passcode } from '@logto/schemas';
 import { any } from 'zod';
 
-import { mockConnector, mockMetadata, mockUser } from '#src/__mocks__/index.js';
+import {
+  mockConnector,
+  mockMetadata,
+  mockSignInExperience,
+  mockUser,
+} from '#src/__mocks__/index.js';
 import RequestError from '#src/errors/RequestError/index.js';
 import { MockQueries } from '#src/test-utils/tenant.js';
 
@@ -40,11 +45,17 @@ const {
 } = passcodeQueries;
 
 const getMessageConnector = jest.fn();
+const getI18nEmailTemplate = jest.fn();
 
 const { createPasscode, sendPasscode, verifyPasscode } = createPasscodeLibrary(
-  new MockQueries({ passcodes: passcodeQueries }),
+  new MockQueries({
+    passcodes: passcodeQueries,
+    signInExperiences: {
+      findDefaultSignInExperience: jest.fn().mockResolvedValue(mockSignInExperience),
+    },
+  }),
   // @ts-expect-error
-  { getMessageConnector }
+  { getI18nEmailTemplate, getMessageConnector }
 );
 
 beforeAll(() => {
@@ -174,6 +185,9 @@ describe('sendPasscode', () => {
       dbEntry: {
         ...mockConnector,
         id: 'id0',
+        config: {
+          templates: [{ usageType: TemplateType.SignIn, content: 'code {{code}}' }],
+        },
       },
       metadata: {
         ...mockMetadata,
@@ -213,6 +227,9 @@ describe('sendPasscode', () => {
       dbEntry: {
         ...mockConnector,
         id: 'id0',
+        config: {
+          templates: [{ usageType: TemplateType.SignIn, content: 'code {{code}}' }],
+        },
       },
       metadata: {
         ...mockMetadata,
@@ -348,6 +365,9 @@ describe('buildVerificationCodeContext', () => {
   const { buildVerificationCodeContext } = createPasscodeLibrary(
     new MockQueries({
       passcodes: passcodeQueries,
+      signInExperiences: {
+        findDefaultSignInExperience: jest.fn().mockResolvedValue(mockSignInExperience),
+      },
       users: {
         findUserById: mockFindUserById,
       },

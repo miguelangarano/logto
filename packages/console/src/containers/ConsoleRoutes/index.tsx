@@ -5,10 +5,12 @@ import { safeLazy } from 'react-safe-lazy';
 import { SWRConfig } from 'swr';
 
 import AppLoading from '@/components/AppLoading';
-import { isCloud, isDevFeaturesEnabled } from '@/consts/env';
+import RedirectToAccountCenter from '@/components/RedirectToAccountCenter';
+import { isCloud, isDevFeaturesEnabled, isProduction } from '@/consts/env';
 import AppBoundary from '@/containers/AppBoundary';
 import AppContent, { RedirectToFirstItem } from '@/containers/AppContent';
 import ConsoleContent from '@/containers/ConsoleContent';
+import OssOnboardingGuard from '@/containers/OssOnboardingGuard';
 import ProtectedRoutes from '@/containers/ProtectedRoutes';
 import TenantAccess from '@/containers/TenantAccess';
 import { GlobalRoute } from '@/contexts/TenantsProvider';
@@ -20,7 +22,7 @@ import { dropLeadingSlash } from '@/utils/url';
 import { __Internal__ImportError } from './internal';
 
 const Welcome = safeLazy(async () => import('@/pages/Welcome'));
-const Profile = safeLazy(async () => import('@/pages/Profile'));
+const OssOnboarding = safeLazy(async () => import('@/pages/OssOnboarding'));
 
 function Layout() {
   const swrOptions = useSwrOptions();
@@ -51,17 +53,25 @@ export function ConsoleRoutes() {
             <Route path="__internal__/import-error" element={<__Internal__ImportError />} />
           )}
           <Route element={<ProtectedRoutes />}>
-            <Route path={dropLeadingSlash(GlobalRoute.Profile) + '/*'} element={<Profile />} />
+            <Route
+              path={dropLeadingSlash(GlobalRoute.Profile) + '/*'}
+              element={<RedirectToAccountCenter />}
+            />
             <Route element={<TenantAccess />}>
+              {!isCloud && isProduction && isDevFeaturesEnabled && (
+                <Route path="onboarding" element={<OssOnboarding />} />
+              )}
               {isCloud && (
                 <Route
                   path={dropLeadingSlash(GlobalRoute.CheckoutSuccessCallback)}
                   element={<CheckoutSuccessCallback />}
                 />
               )}
-              <Route element={<AppContent />}>
-                <Route index element={<RedirectToFirstItem />} />
-                <Route path="*" element={<ConsoleContent />} />
+              <Route element={<OssOnboardingGuard />}>
+                <Route element={<AppContent />}>
+                  <Route index element={<RedirectToFirstItem />} />
+                  <Route path="*" element={<ConsoleContent />} />
+                </Route>
               </Route>
             </Route>
           </Route>

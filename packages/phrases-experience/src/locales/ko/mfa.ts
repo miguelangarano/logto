@@ -18,6 +18,10 @@ const mfa = {
   verify_phone_verification_code_description: '휴대폰으로 전송된 코드 입력',
   send_to_email: '{{identifier}}로 전송',
   send_to_phone: '{{identifier}}로 전송',
+  onboarding: '2단계 인증 켜기',
+  onboarding_description:
+    '2단계 인증으로 계정을 보호하세요. 하나 이상의 방법을 선택하세요: 패스키, 인증 앱(OTP), SMS 인증 코드 또는 백업 코드.',
+  enable_mfa: '2단계 인증 활성화',
   add_mfa_factors: '2단계 인증 추가',
   add_mfa_description:
     '2단계 인증이 활성화되었습니다. 안전한 로그인을 위해 두 번째 인증 방법을 선택하세요.',
@@ -27,6 +31,7 @@ const mfa = {
   verify_mfa_description:
     '이 계정에 대해 2단계 인증이 활성화되었습니다. 신원을 확인하는 두 번째 방법을 선택하세요.',
   add_authenticator_app: '인증 앱 추가',
+  replace_authenticator_app: '인증 앱 교체',
   step: '단계 {{step, number}}: {{content}}',
   scan_qr_code: '이 QR 코드 스캔',
   scan_qr_code_description:
@@ -62,6 +67,13 @@ const mfa = {
   verify_via_passkey: '패스키로 확인',
   verify_via_passkey_description:
     '디바이스 비밀번호 또는 바이오메트릭스, QR 코드 스캔 또는 YubiKey와 같은 USB 보안 키 사용하여 패스키로 확인하세요.',
+  trust_this_device_title: '이 기기 신뢰하기',
+  trust_this_device_description: '앞으로 이 기기에서 로그인할 때 MFA 인증을 건너뛸 수 있습니다.',
+  trust_this_device_one: '이 기기를 {{count}}일 동안 신뢰하기',
+  trust_this_device_two: '이 기기를 {{count}}일 동안 신뢰하기',
+  trust_this_device_few: '이 기기를 {{count}}일 동안 신뢰하기',
+  trust_this_device_many: '이 기기를 {{count}}일 동안 신뢰하기',
+  trust_this_device_other: '이 기기를 {{count}}일 동안 신뢰하기',
   secret_key_copied: '비밀 키가 복사되었습니다.',
   backup_code_copied: '백업 코드가 복사되었습니다.',
   webauthn_not_ready: 'WebAuthn이 아직 준비되지 않았습니다. 나중에 다시 시도하세요.',

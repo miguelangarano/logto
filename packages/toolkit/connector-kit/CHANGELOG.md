@@ -1,5 +1,51 @@
 # Change Log
 
+## 5.1.1
+
+### Patch Changes
+
+- Updated dependencies [7464c6a97a]
+  - @logto/language-kit@1.4.0
+
+## 5.1.0
+
+### Minor Changes
+
+- e7b6e9de1: add SMTP2GO email connector for transactional auth emails via the SMTP2GO send API
+
+  Export shared SMTP mailbox parsing and formatting utilities from `@logto/connector-kit`, and adopt them in the MailJunky connector
+
+### Patch Changes
+
+- b7386a5113: fix a runtime crash on iOS 15 and older Safari when loading the experience or demo apps
+
+  `urlRegEx` used a lookbehind assertion (`(?<![\w.])`), which Safari < 16.4 cannot parse. Because the regex is a top-level literal bundled into the experience app, loading the app threw `SyntaxError: Invalid regular expression: invalid group specifier name` before any code ran. The boundary now uses a `(?:^|[^\w.])` group, which is behaviorally equivalent for `.test()` and parses on all supported browsers.
+
+## 5.0.1
+
+### Patch Changes
+
+- 41a56f79e3: fix email branding URL detection for dotted abbreviations
+
+## 5.0.0
+
+### Major Changes
+
+- 4e25126228: remove long-deprecated `mockSmsVerificationCodeFileName` export
+- 4e25126228: update mock connector file paths
+
+  Update the file paths used by mock connectors to store sent messages.
+
+  - `/tmp/logto_mock_email_record.txt` -> `/tmp/logto/mock_email_record.txt`
+  - `/tmp/logto_mock_sms_record.txt` -> `/tmp/logto/mock_sms_record.txt`
+
+  This can help create a more consistent and organized structure for the mock connector files, making it easier to manage and mount in the docker environment.
+
+### Patch Changes
+
+- Updated dependencies [5ab931e7ac]
+  - @logto/language-kit@1.3.0
+
 ## 4.7.0
 
 ### Minor Changes

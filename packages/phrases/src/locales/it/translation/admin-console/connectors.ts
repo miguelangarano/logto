@@ -66,7 +66,7 @@ const connectors = {
     },
     callback_uri: 'URI di reindirizzamento (URI di callback)',
     callback_uri_description:
-      "L'URI di reindirizzamento è dove gli utenti vengono reindirizzati dopo l'autorizzazione social. Aggiungi questa URI alla configurazione del tuo IdP.",
+      "Le URI di reindirizzamento sono le destinazioni a cui gli utenti vengono reindirizzati dopo l'autorizzazione social. Aggiungi tutte le URI visualizzate alla configurazione del tuo IdP.",
     callback_uri_custom_domain_description:
       "Se utilizzi più <a>domini personalizzati</a> in Logto, assicurati di aggiungere tutte le rispettive URI di callback al tuo IdP per far funzionare il social login su ogni dominio.\n\nIl dominio predefinito di Logto (*.logto.app) è sempre valido: includilo solo se desideri supportare l'accesso anche sotto quel dominio.",
     acs_url: 'URL del servizio consumer di assunzione',
@@ -84,6 +84,11 @@ const connectors = {
   create_form: {
     third_party_connectors:
       'Integra fornitori di terze parti per un rapido accesso sociale, collegamento di account social e accesso API. <a>Scopri di più</a>',
+    email_connector_upsell: {
+      title: 'Servizio email integrato di Logto',
+      description:
+        'Consegna email senza configurazione. Invia codici di verifica e magic link immediatamente, senza configurazioni aggiuntive.',
+    },
     standard_connectors:
       'Oppure puoi personalizzare il tuo connettore sociale tramite un protocollo standard.',
   },

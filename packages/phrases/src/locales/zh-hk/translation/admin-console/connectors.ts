@@ -59,7 +59,7 @@ const connectors = {
     },
     callback_uri: '重新導向 URI（回調 URI）',
     callback_uri_description:
-      'Redirect URI 是在社交授權後用戶被重新導向的位置。請將此 URI 加入 IdP 的設定中。',
+      '重新導向 URI 是在社交授權後用戶被重新導向的位置。請將顯示的所有 URI 加入 IdP 的設定中。',
     callback_uri_custom_domain_description:
       '如果你在 Logto 使用多個<a>自訂網域</a>，請務必把所有對應的回調 URI 加入 IdP，確保社交登入在每個網域都能運作。\n\n預設的 Logto 網域 (*.logto.app) 一直有效；只有在你也想支援該網域下的登入時才需要包含它。',
     acs_url: 'Assertion consumer service URL',
@@ -77,6 +77,10 @@ const connectors = {
   create_form: {
     third_party_connectors:
       '集成第三方提供商以快速社交登錄、社交帳戶鏈接和 API 訪問。<a>了解更多</a>',
+    email_connector_upsell: {
+      title: 'Logto 內置電郵服務',
+      description: '零配置電郵傳送，開箱即用即可發送驗證碼和魔法連結。',
+    },
     standard_connectors: '或者，你可以通過標準協議自定義你的社交連接器。',
   },
 };

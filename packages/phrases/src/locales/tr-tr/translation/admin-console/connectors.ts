@@ -66,7 +66,7 @@ const connectors = {
     },
     callback_uri: "Yeniden yönlendirme URI'si (Geri dönüş URI'si)",
     callback_uri_description:
-      "Yeniden yönlendirme URI'si, sosyal yetkilendirmeden sonra kullanıcıların yönlendirildiği yerdir. Bu URI'yi IdP yapılandırmanıza ekleyin.",
+      "Yeniden yönlendirme URI'leri, sosyal yetkilendirmeden sonra kullanıcıların yönlendirildiği yerlerdir. Görüntülenen tüm URI'leri IdP yapılandırmanıza ekleyin.",
     callback_uri_custom_domain_description:
       "Logto'da birden fazla <a>özel alan adı</a> kullanıyorsanız, sosyal oturum açmanın her alan adında çalışması için ilgili tüm geri dönüş URI'lerini IdP'nize eklediğinizden emin olun.\n\nVarsayılan Logto alan adı (*.logto.app) her zaman geçerlidir; yalnızca o alan adı altında oturumları desteklemek istiyorsanız ekleyin.",
     acs_url: 'Assertion consumer service URL',
@@ -84,6 +84,11 @@ const connectors = {
   create_form: {
     third_party_connectors:
       'Hızlı sosyal oturum açma, sosyal hesap bağlama ve API erişimi için üçüncü taraf sağlayıcıları entegre edin. <a>Daha fazla bilgi edinin</a>',
+    email_connector_upsell: {
+      title: "Logto'nun yerleşik e-posta hizmeti",
+      description:
+        'Yapılandırma gerektirmeden e-posta gönderimi. Doğrulama kodlarını ve sihirli bağlantıları hemen gönderin.',
+    },
     standard_connectors: 'Veya standart bir protokolle sosyal bağlayıcınızı özelleştirebilirsiniz.',
   },
 };

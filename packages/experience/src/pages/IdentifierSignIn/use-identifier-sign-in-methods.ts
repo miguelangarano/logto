@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useContext, useMemo } from 'react';
 
+import UserInteractionContext from '@/Providers/UserInteractionContextProvider/UserInteractionContext';
 import useIdentifierParams from '@/hooks/use-identifier-params';
 import { useSieMethods } from '@/hooks/use-sie';
 
@@ -12,10 +13,11 @@ import { useSieMethods } from '@/hooks/use-sie';
  * 3. If identifiers are provided in the URL and supported by the sign-in experience config, return the intersection of the two.
  */
 const useIdentifierSignInMethods = () => {
-  const { signInMethods } = useSieMethods();
+  const { signInMethods, passkeySignIn } = useSieMethods();
+  const { hasBoundPasskey } = useContext(UserInteractionContext);
   const { identifiers } = useIdentifierParams();
 
-  return useMemo(() => {
+  const methods = useMemo(() => {
     // Fallback to all sign-in methods if no identifiers are provided
     if (identifiers.length === 0) {
       return signInMethods;
@@ -30,6 +32,29 @@ const useIdentifierSignInMethods = () => {
 
     return methods;
   }, [identifiers, signInMethods]);
+
+  // Hide password input field only if passkey sign-in is enabled and the "Continue with passkey." is hidden.
+  // The user enters their identifier on the first screen, then selects a verification method (password or passkey) on the next step.
+  const isIdentifierFirstPasskeySignInConfig =
+    passkeySignIn?.enabled && !passkeySignIn.showPasskeyButton;
+
+  const isPasswordOnly = useMemo(
+    () =>
+      signInMethods.length > 0 &&
+      signInMethods.every(({ password, verificationCode }) => password && !verificationCode) &&
+      !isIdentifierFirstPasskeySignInConfig,
+    [signInMethods, isIdentifierFirstPasskeySignInConfig]
+  );
+
+  return useMemo(
+    () => ({
+      signInMethods: methods,
+      isPasswordOnly,
+      isPasskeySignInEnabled: Boolean(passkeySignIn?.enabled),
+      identifierHasBoundPasskey: hasBoundPasskey,
+    }),
+    [methods, isPasswordOnly, passkeySignIn?.enabled, hasBoundPasskey]
+  );
 };
 
 export default useIdentifierSignInMethods;

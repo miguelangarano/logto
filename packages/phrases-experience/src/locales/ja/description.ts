@@ -37,6 +37,8 @@ const description = {
   reset_password: 'パスワードを再設定する',
   reset_password_description:
     'アカウントに関連する{{types, list(type: disjunction;)}}を入力すると、パスワードの再設定に必要な確認コードが送信されます。',
+  reset_password_magic_link_description:
+    'パスワードのリセットを続行するには、アカウントに関連付けられたメールアドレスを入力してください。',
   new_password: '新しいパスワード',
   set_password: 'パスワードを設定する',
   password_changed: 'パスワードが変更されました',
@@ -47,6 +49,7 @@ const description = {
   enter_username: 'ユーザー名を入力する',
   enter_username_description:
     'ユーザー名はサインインの代替手段です。ユーザー名には、文字、数字、アンダースコアのみを含める必要があります。',
+  enter_username_policy_description: 'ユーザー名はサインインの代替手段です。{{requirements}}',
   link_email: 'メールアドレスをリンクする',
   link_phone: '電話番号をリンクする',
   link_email_or_phone: 'メールアドレスまたは電話番号をリンクする',
@@ -59,6 +62,12 @@ const description = {
     '以下にアカウントの詳細を入力して、セキュリティを高めてください。',
   create_your_account: 'アカウントを作成する',
   sign_in_to_your_account: 'アカウントにサインインする',
+  device_activation: 'デバイスの有効化',
+  device_activation_description:
+    'デバイスに表示されているコードを入力してください。コードが一致していることを確認し、このデバイスへのサインインを続けてください。',
+  device_activation_error_description: 'デバイスに表示されているコードを入力してください。',
+  device_activation_success: 'デバイスが接続されました！',
+  device_activation_success_description: 'デバイスに戻って続行してください。',
   no_region_code_found: '地域コードが見つかりません',
   verify_email: 'Eメールを確認する',
   verify_phone: '電話番号を確認する',
@@ -75,12 +84,25 @@ const description = {
     character_types_many: '大文字、小文字、数字、記号のうち {{count}} 種類を含む必要があります',
     character_types_other: '大文字、小文字、数字、記号のうち {{count}} 種類を含む必要があります',
   },
+  username_requirements: 'ユーザー名は{{items, list}}。',
+  username_requirement: {
+    length: '{{min}}〜{{max}}文字である必要があります',
+    characters: '{{characters, list}}のみを使用できます',
+  },
+  username_character: {
+    uppercase: '大文字',
+    lowercase: '小文字',
+    number: '数字',
+    underscore: 'アンダースコア',
+  },
   use: '使用する',
   single_sign_on_email_form: '企業のメールアドレスを入力してください',
   single_sign_on_connectors_list:
     'あなたの企業は、メールアカウント{{email}}に対してシングルサインオンを有効にしました。以下のSSOプロバイダーを使用してサインインを続けることができます。',
   single_sign_on_enabled: 'このアカウントではシングル サインオンが有効になっています',
   authorize_title: '{{name}} を承認する',
+  unregistered_client_notice:
+    'このアプリは名前とロゴを含めて <hostname>{{host}}</hostname> による自己申告です。続行する前にホスト名をご確認ください。',
   request_permission: '{{name}} が以下へのアクセスを要求しています：',
   grant_organization_access: '組織へのアクセスを許可する：',
   authorize_personal_data_usage: '個人データの使用を承認する：',
@@ -98,6 +120,8 @@ const description = {
   identifier_register_description:
     '{{types, list(type: disjunction;)}}を入力して新しいアカウントを作成します。',
   all_account_creation_options: 'すべてのアカウント作成オプション',
+  password_expired: 'パスワードの期限が切れました。サインインする前にリセットする必要があります。',
+  password_expiration_reset: 'パスワードをリセット',
   back_to_sign_in: 'サインインに戻る',
   support_email: 'サポートメール: <link></link>',
   support_website: 'サポートウェブサイト: <link></link>',
@@ -105,6 +129,17 @@ const description = {
   switch_account_description:
     '続行するには、現在のアカウントからサインアウトし、新しいアカウントに自動的に切り替わります。',
   about_yourself: 'あなたについて教えてください',
+  verify_identity: '本人確認を行う',
+  choose_verification_method: 'サインイン方法を選択してください',
+  verification_method: {
+    passkey: 'パスキー',
+    passkey_description: 'デバイスまたはUSBハードウェアで確認',
+    password: 'パスワード',
+    password_description: 'パスワードを入力',
+    email_verification_code: 'メール認証コード',
+    phone_verification_code: '電話認証コード',
+    verification_code_description: '{{target}}に送信',
+  },
 };
 
 export default Object.freeze(description);

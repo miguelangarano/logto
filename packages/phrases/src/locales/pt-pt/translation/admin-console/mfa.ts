@@ -11,7 +11,6 @@ const mfa = {
   webauthn: 'Passkeys',
   webauthn_description:
     'Verifique por meio de um método suportado pelo navegador: biometria, digitalização de telefone ou chave de segurança, etc.',
-  webauthn_native_tip: 'O WebAuthn não é suportado para aplicativos nativos.',
   webauthn_domain_tip:
     'O WebAuthn vincula chaves públicas ao domínio específico. Modificar o domínio do seu serviço bloqueará usuários de autenticar via senhas existentes.',
   backup_code: 'Códigos de backup',
@@ -42,7 +41,7 @@ const mfa = {
   require_mfa_optional:
     'MFA opcional: permita que os utilizadores escolham ativar o MFA para a segurança da própria conta',
   require_mfa_adaptive:
-    'MFA adaptativo: peça o MFA apenas quando o início de sessão parecer arriscado (por exemplo, novo dispositivo/localização)',
+    'MFA adaptativo: peça o MFA apenas quando o início de sessão parecer arriscado (por exemplo, novo país / longo período de inatividade)',
   require_mfa_mandatory:
     'MFA obrigatório: exige que todos os utilizadores concluam o MFA sempre que iniciarem sessão',
   set_up_prompt: 'Prompt de configuração do MFA',
@@ -51,9 +50,13 @@ const mfa = {
     'Pedir aos usuários para configurar o MFA durante o registo (pode ser ignorado, prompt único)',
   prompt_only_at_sign_in:
     'Pedir aos usuários para configurar o MFA na próxima tentativa de início de sessão após o registo (pode ser ignorado, prompt único)',
+  prompt_at_sign_in_and_sign_up_mandatory:
+    'Peça aos utilizadores para configurar o MFA durante o registo. (não pode ser ignorado)',
+  prompt_only_at_sign_in_mandatory:
+    'Peça aos utilizadores para configurar o MFA na próxima tentativa de início de sessão após o registo. (não pode ser ignorado)',
   set_up_organization_required_mfa_prompt:
     'Prompt de configuração do MFA para utilizadores após a ativação do MFA pela organização',
-  prompt_at_sign_in_no_skip:
+  prompt_at_sign_in_non_skippable:
     'Pedir aos utilizadores para configurar MFA no próximo início de sessão (não pode ser ignorado)',
   email_primary_method_tip:
     'O código de verificação por email já é o seu método principal de início de sessão. Para manter a segurança, ele não pode ser reutilizado para MFA.',
@@ -68,6 +71,30 @@ const mfa = {
   no_sms_connector_error:
     'Não é possível ativar MFA com código de verificação SMS sem um conector SMS. Por favor, configure primeiro um conector SMS.',
   setup_link: 'Configurar',
+  trusted_device: {
+    title: 'Dispositivos fidedignos',
+    description:
+      'Permita que os navegadores fidedignos concluam automaticamente a verificação MFA quando o fluxo MFA atual o exigir.',
+    enable_title: 'Ativar dispositivos fidedignos',
+    enable_description: 'Permita confiar neste navegador após concluir um fator MFA elegível.',
+    duration_title: 'Duração da confiança (dias)',
+    duration_error: 'Introduza um número inteiro entre {{min}} e {{max}}.',
+    duration_note: 'As alterações de duração aplicam-se apenas a dispositivos confiados depois.',
+    organization_allow_title: 'Permitir dispositivos fidedignos',
+    organization_allow_tip:
+      'Uma organização só pode restringir a política do tenant e não pode ativá-la quando estiver desativada globalmente.',
+    organization_allow_description:
+      'Permita a verificação por dispositivo fidedigno aos membros desta organização.',
+    organization_global_disabled:
+      'Ative primeiro os dispositivos fidedignos nas definições MFA do tenant.',
+    management_description:
+      'Faça a gestão dos navegadores em que este utilizador confiou após concluir a MFA. Ao remover um, esse navegador voltará a exigir MFA no próximo início de sessão.',
+    management_hint: 'A localização mais recente é apenas informativa.',
+    management_empty: 'Este utilizador não tem dispositivos fidedignos ativos.',
+    management_deletion_confirmation:
+      'Remover {{name}}? Este navegador voltará a exigir MFA no próximo início de sessão.',
+    management_removed: 'Dispositivo fidedigno removido.',
+  },
 };
 
 export default Object.freeze(mfa);

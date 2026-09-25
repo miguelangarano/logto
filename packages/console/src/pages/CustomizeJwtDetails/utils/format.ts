@@ -1,6 +1,8 @@
 import { LogtoJwtTokenKeyType, type AccessTokenJwtCustomizer, type Json } from '@logto/schemas';
 
-import type { JwtCustomizer, JwtCustomizerForm } from '../type';
+import { Action, type Action as JwtAction } from '@/pages/CustomizeJwt/utils/type';
+
+import { type JwtCustomizer, type JwtCustomizerForm } from '../type';
 
 import {
   defaultAccessTokenJwtCustomizerCode,
@@ -28,7 +30,9 @@ const formatEnvVariablesFormDataToRequest = (
     return;
   }
 
-  const entries = envVariables.filter(({ key, value }) => key && value);
+  const entries = envVariables
+    .map(({ key, value }) => ({ key: key.trim(), value }))
+    .filter(({ key, value }) => key && value);
 
   if (entries.length === 0) {
     return;
@@ -71,11 +75,13 @@ const defaultValues = Object.freeze({
 
 export const formatResponseDataToFormData = <T extends LogtoJwtTokenKeyType>(
   tokenType: T,
+  action: JwtAction,
   data?: JwtCustomizer<T>
 ): JwtCustomizerForm => {
   return {
     tokenType,
     script: data?.script ?? defaultValues[tokenType].script,
+    blockIssuanceOnError: data?.blockIssuanceOnError ?? action === Action.Create,
     environmentVariables: formatEnvVariablesResponseToFormData(data?.environmentVariables) ?? [
       { key: '', value: '' },
     ],
@@ -93,6 +99,7 @@ export const formatResponseDataToFormData = <T extends LogtoJwtTokenKeyType>(
 export const formatFormDataToRequestData = (data: JwtCustomizerForm) => {
   return {
     script: data.script,
+    blockIssuanceOnError: data.blockIssuanceOnError,
     environmentVariables: formatEnvVariablesFormDataToRequest(data.environmentVariables),
     tokenSample: formatSampleCodeStringToJson(data.testSample.tokenSample),
     contextSample: formatSampleCodeStringToJson(data.testSample.contextSample),

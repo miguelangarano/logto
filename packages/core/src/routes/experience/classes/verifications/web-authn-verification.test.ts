@@ -36,7 +36,7 @@ await mockEsmWithActual('@simplewebauthn/server/helpers', () => ({
   isoBase64URL: { fromBuffer: jest.fn((value) => value), toBuffer: jest.fn((value) => value) },
 }));
 
-const { WebAuthnVerification, SignInWebAuthnVerification } = await import(
+const { WebAuthnVerification, SignInPasskeyVerification } = await import(
   './web-authn-verification.js'
 );
 
@@ -111,7 +111,11 @@ describe('WebAuthnVerification', () => {
       await verification.verifyWebAuthnRegistration(ctx, {
         id: 'id',
         rawId: 'id',
-        response: { clientDataJSON: 'a', attestationObject: 'b' },
+        response: {
+          clientDataJSON: 'a',
+          attestationObject: 'b',
+          transports: ['internal', 'hybrid'],
+        },
         clientExtensionResults: {},
       });
 
@@ -122,6 +126,7 @@ describe('WebAuthnVerification', () => {
         credentialId: 'credentialId',
         counter: 0,
         agent: 'agent-x',
+        transports: ['internal', 'hybrid'],
       });
     });
   });
@@ -165,7 +170,7 @@ describe('WebAuthnVerification', () => {
   });
 });
 
-describe('SignInWebAuthnVerification', () => {
+describe('SignInPasskeyVerification', () => {
   const rpId = 'example.com';
 
   const findUserById = jest.fn().mockResolvedValue(mockUser);
@@ -203,9 +208,9 @@ describe('SignInWebAuthnVerification', () => {
 
   describe('verifyWebAuthnAuthentication', () => {
     it('should succeed for passkey sign-in verification', async () => {
-      const verification = new SignInWebAuthnVerification(tenant.libraries, tenant.queries, {
+      const verification = new SignInPasskeyVerification(tenant.libraries, tenant.queries, {
         id: 'v-id',
-        type: VerificationType.SignInWebAuthn,
+        type: VerificationType.SignInPasskey,
         verified: false,
         authenticationChallenge: 'auth-challenge',
         authenticationRpId: rpId,
@@ -218,6 +223,24 @@ describe('SignInWebAuthnVerification', () => {
 
       expect(verification.isVerified).toBe(true);
       expect(updateUserById).toHaveBeenCalled();
+    });
+
+    it('should throw 409 identity conflict when user id does not match verification record', async () => {
+      const verification = new SignInPasskeyVerification(tenant.libraries, tenant.queries, {
+        id: 'v-id',
+        type: VerificationType.SignInPasskey,
+        userId: 'different-user-id',
+        verified: false,
+        authenticationChallenge: 'auth-challenge',
+        authenticationRpId: rpId,
+      });
+
+      await expect(
+        verification.verifyWebAuthnAuthentication(baseCtx, {
+          ...mockWebAuthnVerificationPayload,
+          id: mockUserWebAuthnMfaVerification.credentialId,
+        })
+      ).rejects.toMatchError(new RequestError({ code: 'session.identity_conflict', status: 409 }));
     });
   });
 });

@@ -83,6 +83,7 @@ export const storageProviderGuard: Readonly<{
 // Email service provider
 export enum EmailServiceProvider {
   SendGrid = 'SendGrid',
+  Cloudflare = 'Cloudflare',
 }
 
 export const sendgridEmailServiceConfigGuard = z.object({
@@ -95,8 +96,19 @@ export const sendgridEmailServiceConfigGuard = z.object({
 
 export type SendgridEmailServiceConfig = z.infer<typeof sendgridEmailServiceConfigGuard>;
 
+export const cloudflareEmailServiceConfigGuard = z.object({
+  provider: z.literal(EmailServiceProvider.Cloudflare),
+  apiKey: z.string(),
+  accountId: z.string(),
+  fromName: z.string(),
+  fromEmail: z.string(),
+});
+
+export type CloudflareEmailServiceConfig = z.infer<typeof cloudflareEmailServiceConfigGuard>;
+
 export const emailServiceConfigGuard = z.discriminatedUnion('provider', [
   sendgridEmailServiceConfigGuard,
+  cloudflareEmailServiceConfigGuard,
 ]);
 
 export type EmailServiceConfig = z.infer<typeof emailServiceConfigGuard>;
@@ -212,26 +224,58 @@ export const cloudflareGuard: Readonly<{
   [CloudflareKey.CustomJwtWorkerConfig]: customJwtWorkerConfigGuard,
 });
 
+// Self-hosted license
+/**
+ * The license key installed on a self-hosted instance, stored verbatim so it can be re-verified on
+ * every read and re-signed on refresh. The `systems` table is global, so one deployment installs
+ * one license no matter how many instances share the database.
+ */
+export const installedLicenseGuard = z.object({
+  /** The raw Ed25519-signed license key JWT, exactly as it was installed. */
+  jwt: z.string(),
+  /** When the key was installed, as an ISO 8601 timestamp. */
+  installedAt: z.string(),
+});
+
+export type InstalledLicense = z.infer<typeof installedLicenseGuard>;
+
+export enum LicenseKey {
+  License = 'license',
+}
+
+export type LicenseType = {
+  [LicenseKey.License]: InstalledLicense;
+};
+
+export const licenseGuard: Readonly<{
+  [key in LicenseKey]: ZodType<LicenseType[key]>;
+}> = Object.freeze({
+  [LicenseKey.License]: installedLicenseGuard,
+});
+
 // Summary
 export type SystemKey =
   | AlterationStateKey
   | StorageProviderKey
   | DemoSocialKey
   | CloudflareKey
-  | EmailServiceProviderKey;
+  | EmailServiceProviderKey
+  | LicenseKey;
 
 export type SystemType =
   | AlterationStateType
   | StorageProviderType
   | DemoSocialType
   | CloudflareType
-  | EmailServiceProviderType;
+  | EmailServiceProviderType
+  | LicenseType;
 
 export type SystemGuard = typeof alterationStateGuard &
   typeof storageProviderGuard &
   typeof demoSocialGuard &
   typeof cloudflareGuard &
-  typeof emailServiceProviderGuard;
+  typeof emailServiceProviderGuard &
+  typeof licenseGuard;
 
 export const systemKeys: readonly SystemKey[] = Object.freeze([
   ...Object.values(AlterationStateKey),
@@ -239,6 +283,7 @@ export const systemKeys: readonly SystemKey[] = Object.freeze([
   ...Object.values(DemoSocialKey),
   ...Object.values(CloudflareKey),
   ...Object.values(EmailServiceProviderKey),
+  ...Object.values(LicenseKey),
 ]);
 
 export const systemGuards: SystemGuard = Object.freeze({
@@ -247,4 +292,5 @@ export const systemGuards: SystemGuard = Object.freeze({
   ...demoSocialGuard,
   ...cloudflareGuard,
   ...emailServiceProviderGuard,
+  ...licenseGuard,
 });

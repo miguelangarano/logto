@@ -15,29 +15,107 @@ import {
   getConstantClientMetadata,
   validateCustomClientMetadata,
   buildLoginPromptUrl,
+  parseSharedExperienceParams,
 } from './utils.js';
 
 describe('getConstantClientMetadata()', () => {
-  expect(getConstantClientMetadata(mockEnvSet, ApplicationType.SPA)).toEqual({
-    application_type: 'web',
-    grant_types: [GrantType.AuthorizationCode, GrantType.RefreshToken, GrantType.TokenExchange],
-    token_endpoint_auth_method: 'none',
+  it('requires auth_time only for SAML clients', () => {
+    expect(getConstantClientMetadata(mockEnvSet, ApplicationType.SAML).require_auth_time).toBe(
+      true
+    );
+    expect(
+      getConstantClientMetadata(mockEnvSet, ApplicationType.Traditional).require_auth_time
+    ).toBeUndefined();
   });
-  expect(getConstantClientMetadata(mockEnvSet, ApplicationType.Native)).toEqual({
-    application_type: 'native',
-    grant_types: [GrantType.AuthorizationCode, GrantType.RefreshToken, GrantType.TokenExchange],
-    token_endpoint_auth_method: 'none',
+
+  it('should return correct metadata for SPA', () => {
+    expect(getConstantClientMetadata(mockEnvSet, ApplicationType.SPA)).toMatchObject({
+      application_type: 'web',
+      grant_types: [GrantType.AuthorizationCode, GrantType.RefreshToken],
+      token_endpoint_auth_method: 'none',
+    });
   });
-  expect(getConstantClientMetadata(mockEnvSet, ApplicationType.Traditional)).toEqual({
-    application_type: 'web',
-    grant_types: [GrantType.AuthorizationCode, GrantType.RefreshToken, GrantType.TokenExchange],
-    token_endpoint_auth_method: 'client_secret_basic',
+
+  it('should return correct metadata for Native', () => {
+    expect(getConstantClientMetadata(mockEnvSet, ApplicationType.Native)).toMatchObject({
+      application_type: 'native',
+      grant_types: [GrantType.AuthorizationCode, GrantType.RefreshToken],
+      token_endpoint_auth_method: 'none',
+    });
   });
-  expect(getConstantClientMetadata(mockEnvSet, ApplicationType.MachineToMachine)).toEqual({
-    application_type: 'web',
-    grant_types: [GrantType.ClientCredentials, GrantType.TokenExchange],
-    token_endpoint_auth_method: 'client_secret_basic',
-    response_types: [],
+
+  it('should return correct metadata for Traditional', () => {
+    expect(getConstantClientMetadata(mockEnvSet, ApplicationType.Traditional)).toMatchObject({
+      application_type: 'web',
+      grant_types: [GrantType.AuthorizationCode, GrantType.RefreshToken],
+      token_endpoint_auth_method: 'client_secret_basic',
+    });
+  });
+
+  it('should return correct metadata for M2M', () => {
+    expect(getConstantClientMetadata(mockEnvSet, ApplicationType.MachineToMachine)).toMatchObject({
+      application_type: 'web',
+      grant_types: [GrantType.ClientCredentials],
+      token_endpoint_auth_method: 'client_secret_basic',
+      response_types: [],
+    });
+  });
+
+  it('should include TokenExchange grant type when allowTokenExchange is true', () => {
+    expect(
+      getConstantClientMetadata(mockEnvSet, ApplicationType.SPA, { allowTokenExchange: true })
+    ).toMatchObject({
+      grant_types: [GrantType.AuthorizationCode, GrantType.RefreshToken, GrantType.TokenExchange],
+    });
+
+    expect(
+      getConstantClientMetadata(mockEnvSet, ApplicationType.MachineToMachine, {
+        allowTokenExchange: true,
+      })
+    ).toMatchObject({
+      grant_types: [GrantType.ClientCredentials, GrantType.TokenExchange],
+    });
+  });
+
+  it('should not include TokenExchange grant type when allowTokenExchange is false', () => {
+    expect(
+      getConstantClientMetadata(mockEnvSet, ApplicationType.SPA, { allowTokenExchange: false })
+    ).toMatchObject({
+      grant_types: [GrantType.AuthorizationCode, GrantType.RefreshToken],
+    });
+  });
+
+  it('should use device code grant metadata for native device flow applications', () => {
+    expect(
+      getConstantClientMetadata(mockEnvSet, ApplicationType.Native, { isDeviceFlow: true })
+    ).toMatchObject({
+      application_type: 'native',
+      grant_types: [GrantType.DeviceCode, GrantType.RefreshToken],
+      token_endpoint_auth_method: 'none',
+      response_types: [],
+    });
+  });
+
+  it('should include token exchange on top of device flow grant types when enabled', () => {
+    expect(
+      getConstantClientMetadata(mockEnvSet, ApplicationType.Native, {
+        allowTokenExchange: true,
+        isDeviceFlow: true,
+      })
+    ).toMatchObject({
+      grant_types: [GrantType.DeviceCode, GrantType.RefreshToken, GrantType.TokenExchange],
+      response_types: [],
+    });
+  });
+
+  it('should ignore device flow flag for non-native applications', () => {
+    expect(
+      getConstantClientMetadata(mockEnvSet, ApplicationType.SPA, { isDeviceFlow: true })
+    ).toMatchObject({
+      application_type: 'web',
+      grant_types: [GrantType.AuthorizationCode, GrantType.RefreshToken],
+      token_endpoint_auth_method: 'none',
+    });
   });
 });
 
@@ -85,6 +163,26 @@ describe('validateMetadata', () => {
     test(`${ttlKey} should throw when it is not a number`, () => {
       expect(() => {
         validateCustomClientMetadata(ttlKey, 'string_value');
+      }).toThrow();
+    });
+  });
+
+  describe('maxAllowedGrants', () => {
+    it('should not throw when it is a positive integer', () => {
+      expect(() => {
+        validateCustomClientMetadata('maxAllowedGrants', 3);
+      }).not.toThrow();
+    });
+
+    it('should throw when it is not an integer', () => {
+      expect(() => {
+        validateCustomClientMetadata('maxAllowedGrants', 3.2);
+      }).toThrow();
+    });
+
+    it('should throw when it is not a positive integer', () => {
+      expect(() => {
+        validateCustomClientMetadata('maxAllowedGrants', 0);
       }).toThrow();
     });
   });
@@ -234,20 +332,20 @@ describe('isOriginAllowed', () => {
 describe('buildLoginPromptUrl', () => {
   it('should return the correct url for empty parameters', () => {
     expect(buildLoginPromptUrl({})).toBe('sign-in');
-    expect(buildLoginPromptUrl({}, 'foo')).toBe('sign-in?app_id=foo');
-    expect(buildLoginPromptUrl({}, demoAppApplicationId)).toBe(
+    expect(buildLoginPromptUrl({}, { appId: 'foo' })).toBe('sign-in?app_id=foo');
+    expect(buildLoginPromptUrl({}, { appId: demoAppApplicationId })).toBe(
       'sign-in?app_id=' + demoAppApplicationId
     );
   });
 
   it('should return the correct url for firstScreen', () => {
     expect(buildLoginPromptUrl({ first_screen: FirstScreen.Register })).toBe('register');
-    expect(buildLoginPromptUrl({ first_screen: FirstScreen.Register }, 'foo')).toBe(
+    expect(buildLoginPromptUrl({ first_screen: FirstScreen.Register }, { appId: 'foo' })).toBe(
       'register?app_id=foo'
     );
-    expect(buildLoginPromptUrl({ first_screen: FirstScreen.SignIn }, demoAppApplicationId)).toBe(
-      'sign-in?app_id=demo-app'
-    );
+    expect(
+      buildLoginPromptUrl({ first_screen: FirstScreen.SignIn }, { appId: demoAppApplicationId })
+    ).toBe('sign-in?app_id=demo-app');
     expect(
       buildLoginPromptUrl({ first_screen: FirstScreen.SignIn, login_hint: 'user@mail.com' })
     ).toBe('sign-in?login_hint=user%40mail.com');
@@ -274,12 +372,12 @@ describe('buildLoginPromptUrl', () => {
     expect(buildLoginPromptUrl({ direct_sign_in: 'method:target' })).toBe(
       'direct/method/target?fallback=sign-in'
     );
-    expect(buildLoginPromptUrl({ direct_sign_in: 'method:target' }, 'foo')).toBe(
+    expect(buildLoginPromptUrl({ direct_sign_in: 'method:target' }, { appId: 'foo' })).toBe(
       'direct/method/target?app_id=foo&fallback=sign-in'
     );
-    expect(buildLoginPromptUrl({ direct_sign_in: 'method:target' }, demoAppApplicationId)).toBe(
-      'direct/method/target?app_id=demo-app&fallback=sign-in'
-    );
+    expect(
+      buildLoginPromptUrl({ direct_sign_in: 'method:target' }, { appId: demoAppApplicationId })
+    ).toBe('direct/method/target?app_id=demo-app&fallback=sign-in');
     expect(buildLoginPromptUrl({ direct_sign_in: 'method' })).toBe(
       'direct/method?fallback=sign-in'
     );
@@ -296,7 +394,7 @@ describe('buildLoginPromptUrl', () => {
     expect(
       buildLoginPromptUrl(
         { first_screen: FirstScreen.Register, direct_sign_in: 'method:target' },
-        demoAppApplicationId
+        { appId: demoAppApplicationId }
       )
     ).toBe('direct/method/target?app_id=demo-app&fallback=register');
   });
@@ -305,5 +403,43 @@ describe('buildLoginPromptUrl', () => {
     expect(
       buildLoginPromptUrl({ one_time_token: 'token_value', login_hint: 'user@mail.com' })
     ).toBe('sign-in?one_time_token=token_value&login_hint=user%40mail.com');
+
+    expect(
+      buildLoginPromptUrl({
+        first_screen: FirstScreen.ResetPassword,
+        one_time_token: 'token_value',
+      })
+    ).toBe('reset-password?one_time_token=token_value');
+
+    expect(
+      buildLoginPromptUrl({
+        first_screen: FirstScreen.ResetPassword,
+        one_time_token: 'token_value',
+        login_hint: 'user@mail.com',
+      })
+    ).toBe('reset-password?one_time_token=token_value&login_hint=user%40mail.com');
+  });
+
+  it('should append shared experience params to the url', () => {
+    expect(
+      buildLoginPromptUrl(
+        { first_screen: FirstScreen.SignIn },
+        { appId: 'app_123', organizationId: 'org_123', uiLocales: 'fr-CA fr' }
+      )
+    ).toBe('sign-in?app_id=app_123&organization_id=org_123&ui_locales=fr-CA+fr');
+  });
+});
+
+describe('parseSharedExperienceParams', () => {
+  it('should ignore repeated query values instead of throwing', () => {
+    expect(
+      parseSharedExperienceParams({
+        app_id: ['app_1', 'app_2'],
+        organization_id: 'org_123',
+        ui_locales: ['zh-CN', 'en'],
+      })
+    ).toEqual({
+      organizationId: 'org_123',
+    });
   });
 });

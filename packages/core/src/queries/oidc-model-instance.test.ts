@@ -1,7 +1,8 @@
 import type { CreateOidcModelInstance } from '@logto/schemas';
-import { OidcModelInstances } from '@logto/schemas';
+import { Applications, OidcModelInstances } from '@logto/schemas';
 import { createMockPool, createMockQueryResult, sql } from '@silverhand/slonik';
 
+import { createMockOidcGrantInstance } from '#src/__mocks__/oidc-grant.js';
 import { convertToIdentifiers } from '#src/utils/sql.js';
 import type { QueryType } from '#src/utils/test-utils.js';
 import { expectSqlAssert } from '#src/utils/test-utils.js';
@@ -21,13 +22,18 @@ const {
   upsertInstance,
   findPayloadById,
   findPayloadByPayloadField,
+  findPayloadByUid,
+  findPayloadByUserCode,
   consumeInstanceById,
   destroyInstanceById,
   revokeInstanceByGrantId,
+  revokeInstanceByUserId,
+  findUserActiveApplicationGrants,
 } = createOidcModelInstanceQueries(pool);
 
 describe('oidc-model-instance query', () => {
   const { table, fields } = convertToIdentifiers(OidcModelInstances);
+  const { table: applicationTable } = convertToIdentifiers(Applications);
   const expiresAt = Date.now();
   const instance: CreateOidcModelInstance = {
     modelName: 'access_token',
@@ -42,6 +48,12 @@ describe('oidc-model-instance query', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    // `clearAllMocks` keeps persistent implementations; reset so a failed test cannot leak one.
+    mockQuery.mockReset();
+    jest.restoreAllMocks();
   });
 
   it('upsertInstance', async () => {
@@ -71,7 +83,7 @@ describe('oidc-model-instance query', () => {
     const expectSql = sql`
       select ${fields.payload}, ${fields.consumedAt}
       from ${table}
-      where "model_name"=$1 
+      where "model_name"=$1
       and "id"=$2
     `;
 
@@ -92,7 +104,7 @@ describe('oidc-model-instance query', () => {
     const uid_value = 'foo';
 
     // Mock a single result
-    mockQuery.mockImplementationOnce(async (sql, values) => {
+    mockQuery.mockImplementationOnce(async () => {
       // Simulate pool.any
       return createMockQueryResult([{ consumedAt: 10 }]);
     });
@@ -142,6 +154,114 @@ describe('oidc-model-instance query', () => {
     ).resolves.toBeUndefined();
   });
 
+  it('findPayloadByUid should use uid literal jsonb key', async () => {
+    const uid = 'foo';
+    const expectSql = sql`
+      select ${fields.payload}, ${fields.consumedAt}
+      from ${table}
+      where ${fields.modelName}=$1
+      and ${fields.payload}->>'uid'=$2
+      limit 2
+    `;
+
+    mockQuery.mockImplementationOnce(async (sql, values) => {
+      expectSqlAssert(sql, expectSql.sql);
+      expect(values).toEqual([instance.modelName, uid]);
+
+      return createMockQueryResult([{ consumedAt: 10 }]);
+    });
+
+    await expect(findPayloadByUid(instance.modelName, uid)).resolves.toEqual({
+      consumed: true,
+    });
+  });
+
+  it('findPayloadByUid - multiple results should delete with uid literal jsonb key', async () => {
+    const uid = 'foo';
+    const selectSql = sql`
+      select ${fields.payload}, ${fields.consumedAt}
+      from ${table}
+      where ${fields.modelName}=$1
+      and ${fields.payload}->>'uid'=$2
+      limit 2
+    `;
+    const deleteSql = sql`
+      delete from ${table}
+      where ${fields.modelName}=$1
+      and ${fields.payload}->>'uid'=$2
+    `;
+
+    mockQuery
+      .mockImplementationOnce(async (sql, values) => {
+        expectSqlAssert(sql, selectSql.sql);
+        expect(values).toEqual([instance.modelName, uid]);
+        return createMockQueryResult([{ consumedAt: 10 }, { consumedAt: 20 }]);
+      })
+      // @ts-expect-error - mock delete query
+      .mockImplementationOnce(async (sql, values) => {
+        expectSqlAssert(sql, deleteSql.sql);
+        expect(values).toEqual([instance.modelName, uid]);
+        return { rowCount: 2 };
+      });
+
+    await expect(findPayloadByUid(instance.modelName, uid)).resolves.toBeUndefined();
+    expect(mockQuery).toHaveBeenCalledTimes(2);
+  });
+
+  it('findPayloadByUserCode should use userCode literal jsonb key', async () => {
+    const userCode = 'code';
+    const expectSql = sql`
+      select ${fields.payload}, ${fields.consumedAt}
+      from ${table}
+      where ${fields.modelName}=$1
+      and ${fields.payload}->>'userCode'=$2
+      limit 2
+    `;
+
+    mockQuery.mockImplementationOnce(async (sql, values) => {
+      expectSqlAssert(sql, expectSql.sql);
+      expect(values).toEqual([instance.modelName, userCode]);
+
+      return createMockQueryResult([{ consumedAt: 10 }]);
+    });
+
+    await expect(findPayloadByUserCode(instance.modelName, userCode)).resolves.toEqual({
+      consumed: true,
+    });
+  });
+
+  it('findPayloadByUserCode - multiple results should delete with userCode literal jsonb key', async () => {
+    const userCode = 'code';
+    const selectSql = sql`
+      select ${fields.payload}, ${fields.consumedAt}
+      from ${table}
+      where ${fields.modelName}=$1
+      and ${fields.payload}->>'userCode'=$2
+      limit 2
+    `;
+    const deleteSql = sql`
+      delete from ${table}
+      where ${fields.modelName}=$1
+      and ${fields.payload}->>'userCode'=$2
+    `;
+
+    mockQuery
+      .mockImplementationOnce(async (sql, values) => {
+        expectSqlAssert(sql, selectSql.sql);
+        expect(values).toEqual([instance.modelName, userCode]);
+        return createMockQueryResult([{ consumedAt: 10 }, { consumedAt: 20 }]);
+      })
+      // @ts-expect-error - mock delete query
+      .mockImplementationOnce(async (sql, values) => {
+        expectSqlAssert(sql, deleteSql.sql);
+        expect(values).toEqual([instance.modelName, userCode]);
+        return { rowCount: 2 };
+      });
+
+    await expect(findPayloadByUserCode(instance.modelName, userCode)).resolves.toBeUndefined();
+    expect(mockQuery).toHaveBeenCalledTimes(2);
+  });
+
   it('consumeInstanceById', async () => {
     jest.useFakeTimers().setSystemTime(100_000);
 
@@ -181,22 +301,168 @@ describe('oidc-model-instance query', () => {
     await destroyInstanceById(instance.modelName, instance.id);
   });
 
-  it('revokeInstanceByGrantId', async () => {
-    const grantId = 'grant';
+  const revokeBatchSize = 500;
+  const revokeCases = {
+    revokeInstanceByGrantId: {
+      revoke: async (target: string) => revokeInstanceByGrantId(instance.modelName, target),
+      expectSql: sql`
+        delete from ${table}
+        where ${fields.id} in (
+          select ${fields.id}
+          from ${table}
+          where ${fields.modelName}=$1
+          and ${fields.payload} ? 'grantId'
+          and ${fields.payload}->>'grantId'=$2
+          limit $3
+        )
+      `,
+    },
+    revokeInstanceByUserId: {
+      revoke: async (target: string) => revokeInstanceByUserId(instance.modelName, target),
+      expectSql: sql`
+        delete from ${table}
+        where ${fields.id} in (
+          select ${fields.id}
+          from ${table}
+          where ${fields.modelName}=$1
+          and ${fields.payload} ? 'accountId'
+          and ${fields.payload}->>'accountId'=$2
+          limit $3
+        )
+      `,
+    },
+  } as const;
 
+  it.each([
+    ['revokeInstanceByGrantId', [500, 0]],
+    // A partial batch must not end the loop — see the early-exit bug closed in #9151.
+    ['revokeInstanceByGrantId', [300, 200, 0]],
+    ['revokeInstanceByUserId', [500, 0]],
+    ['revokeInstanceByUserId', [300, 200, 0]],
+    ['revokeInstanceByUserId', [500, undefined]],
+  ] as const)('%s deletes in batches until drained %j', async (method, rowCounts) => {
+    const target = 'target-id';
+    const { revoke, expectSql } = revokeCases[method];
+
+    const mockBatch = (rowCount?: number) => {
+      // @ts-expect-error - mock delete query
+      mockQuery.mockImplementationOnce(async (sql, values) => {
+        expectSqlAssert(sql, expectSql.sql);
+        expect(values).toEqual([instance.modelName, target, revokeBatchSize]);
+
+        return { rowCount };
+      });
+    };
+
+    for (const rowCount of rowCounts) {
+      mockBatch(rowCount);
+    }
+
+    await revoke(target);
+    expect(mockQuery).toHaveBeenCalledTimes(rowCounts.length);
+  });
+
+  it('revocation logs an error and stops at the max batch count', async () => {
+    const error = jest.spyOn(console, 'error').mockImplementation();
+    // @ts-expect-error - mock delete query
+    mockQuery.mockImplementation(async () => ({ rowCount: 1 }));
+
+    await revokeInstanceByUserId(instance.modelName, 'target-id');
+
+    expect(mockQuery).toHaveBeenCalledTimes(1000);
+    expect(error).toHaveBeenCalledTimes(1);
+  });
+
+  it('findUserActiveApplicationGrants with thirdparty', async () => {
+    const userId = 'user-id';
     const expectSql = sql`
-      delete from ${table}
-      where ${fields.modelName}=$1
-      and ${fields.payload}->>'grantId'=$2
+      select "oidc_model_instance"."id", "oidc_model_instance"."payload", "oidc_model_instance"."expires_at",
+        json_build_object(
+          'id', "application"."id",
+          'name', "application"."name"
+        ) as application
+      from ${table} as "oidc_model_instance"
+      inner join ${applicationTable} as "application"
+        on "oidc_model_instance"."payload"->>'clientId'="application"."id"
+      where "oidc_model_instance"."model_name"='Grant'
+        and "oidc_model_instance"."payload"->>'accountId'=${userId}
+        and "application"."is_third_party"=${true}
+        and "oidc_model_instance"."expires_at" > to_timestamp($3)
+    `;
+
+    const grant = createMockOidcGrantInstance({
+      payload: { kind: 'Grant', clientId: 'demo-app', accountId: userId },
+    });
+    const grantWithApplication = {
+      ...grant,
+      application: {
+        id: 'demo-app',
+        name: 'Demo App',
+      },
+    };
+
+    mockQuery.mockImplementationOnce(async (sql, values) => {
+      expectSqlAssert(sql, expectSql.sql);
+      expect(values).toEqual([userId, true, expect.any(Number)]);
+
+      return createMockQueryResult([grantWithApplication as never]);
+    });
+
+    await expect(findUserActiveApplicationGrants(userId, 'thirdParty')).resolves.toEqual([
+      grantWithApplication,
+    ]);
+  });
+
+  it('findUserActiveApplicationGrants with firstparty', async () => {
+    const userId = 'user-id';
+    const expectSql = sql`
+      select "oidc_model_instance"."id", "oidc_model_instance"."payload", "oidc_model_instance"."expires_at",
+        json_build_object(
+          'id', "application"."id",
+          'name', "application"."name"
+        ) as application
+      from ${table} as "oidc_model_instance"
+      inner join ${applicationTable} as "application"
+        on "oidc_model_instance"."payload"->>'clientId'="application"."id"
+      where "oidc_model_instance"."model_name"='Grant'
+        and "oidc_model_instance"."payload"->>'accountId'=${userId}
+        and "application"."is_third_party"=${false}
+        and "oidc_model_instance"."expires_at" > to_timestamp($3)
     `;
 
     mockQuery.mockImplementationOnce(async (sql, values) => {
       expectSqlAssert(sql, expectSql.sql);
-      expect(values).toEqual([instance.modelName, grantId]);
+      expect(values).toEqual([userId, false, expect.any(Number)]);
 
       return createMockQueryResult([]);
     });
 
-    await revokeInstanceByGrantId(instance.modelName, grantId);
+    await expect(findUserActiveApplicationGrants(userId, 'firstParty')).resolves.toEqual([]);
+  });
+
+  it('findUserActiveApplicationGrants with all', async () => {
+    const userId = 'user-id';
+    const expectSql = sql`
+      select "oidc_model_instance"."id", "oidc_model_instance"."payload", "oidc_model_instance"."expires_at",
+        json_build_object(
+          'id', "application"."id",
+          'name', "application"."name"
+        ) as application
+      from ${table} as "oidc_model_instance"
+      inner join ${applicationTable} as "application"
+        on "oidc_model_instance"."payload"->>'clientId'="application"."id"
+      where "oidc_model_instance"."model_name"='Grant'
+        and "oidc_model_instance"."payload"->>'accountId'=${userId}
+        and "oidc_model_instance"."expires_at" > to_timestamp($2)
+    `;
+
+    mockQuery.mockImplementationOnce(async (sql, values) => {
+      expectSqlAssert(sql, expectSql.sql);
+      expect(values).toEqual([userId, expect.any(Number)]);
+
+      return createMockQueryResult([]);
+    });
+
+    await expect(findUserActiveApplicationGrants(userId)).resolves.toEqual([]);
   });
 });

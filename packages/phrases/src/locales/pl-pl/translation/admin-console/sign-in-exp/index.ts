@@ -45,6 +45,7 @@ const sign_in_exp = {
     hide_logto_branding: 'Ukryj branding Logto',
     hide_logto_branding_description:
       'Usuń napis "Powered by Logto". Zaprezentuj wyłącznie swoją markę w czystym i profesjonalnym procesie logowania.',
+    hide_logto_branding_oss_note: 'Ta funkcja jest natywnie dostępna w <a>Logto Cloud</a>.',
   },
   branding_uploads: {
     app_logo: {
@@ -80,24 +81,42 @@ const sign_in_exp = {
   },
   custom_ui: {
     title: 'Niestandardowy interfejs użytkownika',
+    cloud_tag: 'Cloud',
     css_code_editor_title: 'Niestandardowy CSS',
+    css_code_editor_field_title: 'Nadpisanie CSS',
     css_code_editor_description1: 'Zobacz przykład niestandardowego CSS.',
     css_code_editor_description2: '<a>{{link}}</a>',
     css_code_editor_description_link_content: 'Dowiedz się więcej',
     css_code_editor_content_placeholder:
-      'Wpisz swój niestandardowy CSS, aby dostosować style wszystkiego do swoich specyfikacji. Wyraź swoją kreatywność i spraw, by Twój interfejs użytkownika był wyjątkowy.',
+      'Wpisz tutaj swoje nadpisania CSS, aby dostosować style dowolnych elementów dokładnie do swoich wymagań. Wyraź swoją kreatywność i wyróżnij swój UI.',
     bring_your_ui_title: 'Przynieś swój interfejs użytkownika',
+    bring_your_ui_upload_title: 'Prześlij niestandardowe zasoby UI',
     bring_your_ui_description:
       'Prześlij skompresowany pakiet (.zip), aby zastąpić predefiniowany interfejs użytkownika Logto swoim własnym kodem. <a>Dowiedz się więcej</a>',
+    bring_your_ui_oss_description: 'Dostosuj interfejs logowania za pomocą własnego kodu.',
+    bring_your_ui_oss_card_description:
+      'Prześlij własny interfejs logowania bezpośrednio do <a>Logto Cloud</a>. Nie musisz robić forka ani ponownie wdrażać.',
+    bring_your_ui_oss_try_cloud: 'Wypróbuj Cloud',
     preview_with_bring_your_ui_description:
       'Twoje niestandardowe zasoby interfejsu użytkownika zostały pomyślnie przesłane i są teraz dostępne. W rezultacie wbudowane okno podglądu zostało wyłączone.\nAby przetestować swoje spersonalizowane UI logowania, kliknij przycisk "Podgląd na żywo", aby otworzyć go w nowej karcie przeglądarki.',
+    csp_description:
+      'Zezwól na dodatkowe wyrażenia źródeł dla własnego interfejsu logowania. Te wartości są stosowane tylko wtedy, gdy serwowane są niestandardowe zasoby UI.',
+    csp_script_src: 'Dozwolone script-src',
+    csp_script_src_tip:
+      'Zezwól na wyrażenia źródeł HTTPS dla skryptów ładowanych przez własny interfejs UI, takie jak https://scripts.example.com lub https://*.example.com.',
+    csp_connect_src: 'Dozwolone connect-src',
+    csp_connect_src_tip:
+      'Zezwól na wyrażenia źródeł HTTPS lub WSS dla żądań sieciowych wykonywanych przez własny interfejs UI, takie jak https://api.example.com lub wss://events.example.com.',
+    csp_source_invalid_error:
+      'Wprowadź prawidłowe wyrażenie źródła. Użyj adresów URL https://; connect-src obsługuje także wss://. Słowa kluczowe CSP i średniki nie są obsługiwane.',
+    csp_source_duplicate_error: 'To wyrażenie źródła jest już na liście.',
   },
   account_center: {
     title: 'CENTRUM KONTA',
     description: 'Dostosuj przepływy centrum konta z wykorzystaniem interfejsów API Logto.',
-    enable_account_api: 'Włącz Account API',
+    enable_account_api: 'Włącz centrum konta i Account API',
     enable_account_api_description:
-      'Włącz Account API, aby zbudować własne centrum konta i zapewnić użytkownikom końcowym bezpośredni dostęp do API bez użycia Logto Management API.',
+      'Włącza zarówno Account API dla użytkowników końcowych, jak i gotowe centrum konta Logto. Po wyłączeniu obie funkcje są niedostępne.',
     field_options: {
       off: 'Wyłączone',
       edit: 'Edytuj',
@@ -121,6 +140,9 @@ const sign_in_exp = {
           },
           authentication_factors: {
             title: 'Czynniki uwierzytelniające',
+          },
+          session_management: {
+            title: 'Zarządzanie sesją',
           },
         },
       },
@@ -155,6 +177,7 @@ const sign_in_exp = {
       password: 'Hasło',
       mfa: 'Uwierzytelnianie wieloskładnikowe',
       mfa_description: 'Pozwól użytkownikom zarządzać metodami MFA w centrum konta.',
+      passkey: 'Passkey',
       username: 'Nazwa użytkownika',
       name: 'Imię i nazwisko',
       avatar: 'Awatar',
@@ -163,34 +186,75 @@ const sign_in_exp = {
       custom_data: 'Dane niestandardowe',
       custom_data_description:
         'Kontroluj dostęp do niestandardowych danych JSON przechowywanych przy użytkowniku.',
+      sessions: 'Sesje',
+      trusted_devices: 'Zaufane urządzenia',
+    },
+    profile_fields: {
+      title: 'Pola profilu dla gotowego centrum konta',
+      add_profile_fields: 'Dodaj pola profilu',
+      hint: {
+        not_in_list: 'Nie ma na liście?',
+        set_up: 'Skonfiguruj',
+        go_to: 'inne pola profilu teraz.',
+      },
+      disabled_hint: {
+        name: 'Aby dodać to pole, najpierw ustaw uprawnienie „Imię i nazwisko” na „Edytuj/Tylko do odczytu” w sekcji Profil użytkownika poniżej.',
+        avatar:
+          'Aby dodać to pole, najpierw ustaw uprawnienie „Awatar” na „Edytuj/Tylko do odczytu” w sekcji Profil użytkownika poniżej.',
+        profile:
+          'Aby dodać to pole, najpierw ustaw uprawnienie „Profil” na „Edytuj/Tylko do odczytu” w sekcji Profil użytkownika poniżej.',
+        custom_data:
+          'Aby dodać to pole, najpierw ustaw uprawnienie „Dane niestandardowe” na „Edytuj/Tylko do odczytu” w sekcji Profil użytkownika poniżej.',
+      },
     },
     webauthn_related_origins: 'Powiązane źródła WebAuthn',
     webauthn_related_origins_description:
       'Dodaj domeny swoich aplikacji front-end, którym pozwalasz rejestrować klucze dostępu przez Account API.',
     webauthn_related_origins_error: 'Źródło musi zaczynać się od https:// lub http://',
+    delete_account_url: 'Usuń konto',
+    delete_account_url_description:
+      'Podaj własny adres URL punktu końcowego, aby obsłużyć usuwanie konta za pomocą niestandardowej logiki.',
     prebuilt_ui: {
       title: 'INTEGRUJ WSTĘPNIE ZBUDOWANY INTERFEJS',
       description:
-        'Szybko zintegruj gotowe przepływy weryfikacji i ustawień bezpieczeństwa z interfejsem wstępnie zbudowanym.',
+        'Szybko zintegruj gotowe centrum konta, weryfikację bezpieczeństwa lub pojedynczy przepływ aktualizacji profilu z interfejsem wstępnie zbudowanym. Po prostu połącz swoją domenę ze ścieżką, aby utworzyć URL centrum konta (np. https://auth.foo.com/account/email).',
       permission_notice:
         'Aby zintegrować te gotowe przepływy, ustaw powiązane uprawnienia Account API na <strong>Edytuj</strong> w ustawieniach poniżej.',
+      account_center_title: 'Zintegruj gotowe centrum konta',
+      account_center_description:
+        'Kieruj użytkowników do centrum konta, aby zarządzać ustawieniami bezpieczeństwa, takimi jak e-mail, telefon, nazwa użytkownika, hasło, MFA i połączone konta.',
       flows_title: 'Integruj gotowe przepływy ustawień bezpieczeństwa',
+      single_task_flows_title: 'Zintegruj gotowy przepływ pojedynczego zadania',
       flows_description:
-        'Połącz swoją domenę ze ścieżką, aby utworzyć URL ustawień konta (np. https://auth.foo.com/account/email). Opcjonalnie dodaj parametr URL `redirect=`, aby użytkownicy mogli wrócić do Twojej aplikacji po pomyślnym zaktualizowaniu.',
+        'Połącz swoją domenę ze ścieżką, aby utworzyć URL ustawień konta (np. https://auth.foo.com/account/email). Opcjonalnie dodaj `redirect=`, aby użytkownicy mogli wrócić do Twojej aplikacji po pomyślnej aktualizacji, `show_success=true`, aby strona sukcesu była widoczna, `ui_locales=`, aby nadpisać domyślny język, lub `identifier=`, aby wstępnie wypełnić pole identyfikatora.',
+      single_task_flows_description:
+        'Kieruj użytkowników bezpośrednio do określonego przepływu (np. łączenie emaila). Opcjonalnie dodaj `redirect=`, aby użytkownicy mogli wrócić do Twojej aplikacji po pomyślnej aktualizacji, `show_success=true`, aby strona sukcesu była widoczna, `ui_locales=`, aby nadpisać domyślny język, lub `identifier=`, aby wstępnie wypełnić pole identyfikatora.',
       tooltips: {
         email: 'Zaktualizuj swój główny adres e-mail',
         phone: 'Zaktualizuj swój główny numer telefonu',
         username: 'Zaktualizuj swoją nazwę użytkownika',
         password: 'Ustaw nowe hasło',
+        social: 'Połącz konto społecznościowe do logowania',
+        social_change: 'Przełącz na inne połączone konto społecznościowe',
+        social_remove: 'Usuń połączone konto społecznościowe',
         authenticator_app:
           'Skonfiguruj nową aplikację uwierzytelniającą dla uwierzytelniania wieloskładnikowego',
+        authenticator_app_replace: 'Replace your existing authenticator app with a new one',
         passkey_add: 'Zarejestruj nowy klucz dostępu',
         passkey_manage: 'Zarządzaj istniejącymi kluczami dostępu lub dodaj nowe',
         backup_codes_generate: 'Wygeneruj nowy zestaw 10 kodów zapasowych',
         backup_codes_manage: 'Zobacz dostępne kody zapasowe lub wygeneruj nowe',
+        account_center:
+          'Uzyskaj dostęp do centrum konta, aby zarządzać ustawieniami bezpieczeństwa, takimi jak e-mail, telefon, nazwa użytkownika, hasło, MFA i połączone konta',
+        profile: 'Centralne miejsce do zarządzania danymi osobowymi (np. imię, awatar)',
+        sessions: 'Przeglądaj i zarządzaj aktywnymi sesjami na wszystkich urządzeniach',
       },
       customize_note: 'Nie chcesz korzystać z gotowego rozwiązania? Możesz całkowicie',
       customize_link: 'dostosować swoje przepływy za pomocą Account API.',
+    },
+    custom_css: {
+      title: 'Niestandardowy CSS',
+      description: 'Dostosuj wygląd centrum konta za pomocą niestandardowego CSS.',
     },
   },
   sign_up_and_sign_in,

@@ -9,14 +9,17 @@ import { HTTPError } from 'ky';
 
 import { fullnameData } from '#src/__mocks__/profile-fields-mock.js';
 import api, { adminTenantApi, authedAdminApi } from '#src/api/api.js';
+import { createOrUpdateCustomPhrase, deleteCustomPhrase } from '#src/api/custom-phrase.js';
 import {
   createCustomProfileField,
   deleteCustomProfileFieldByName,
+  getSignInExperience,
   updateSignInExperience,
 } from '#src/api/index.js';
 import { createSsoConnector, deleteSsoConnectorById } from '#src/api/sso-connector.js';
 import { newOidcSsoConnectorPayload } from '#src/constants.js';
-import { devFeatureTest, generateSsoConnectorName } from '#src/utils.js';
+import { setLanguage } from '#src/helpers/sign-in-experience.js';
+import { generateSsoConnectorName } from '#src/utils.js';
 
 describe('.well-known api', () => {
   it('should return tenant endpoint URL for any given tenant id', async () => {
@@ -58,6 +61,28 @@ describe('.well-known api', () => {
     expect(response).toHaveProperty('adaptiveMfa');
   });
 
+  it('should not expose email access policies in public sign-in experience', async () => {
+    const { emailBlocklistPolicy } = await getSignInExperience();
+
+    try {
+      await updateSignInExperience({
+        emailBlocklistPolicy: {
+          blockSubaddressing: true,
+          customAllowlist: ['@allowed.com'],
+          customBlocklist: ['@blocked.com'],
+        },
+      });
+
+      const response = await api.get('.well-known/sign-in-exp').json<Record<string, unknown>>();
+
+      expect(response).not.toHaveProperty('emailBlocklistPolicy');
+    } finally {
+      await updateSignInExperience({
+        emailBlocklistPolicy,
+      });
+    }
+  });
+
   // Also test for Redis cache invalidation
   it('should be able to return updated phrases', async () => {
     const and = '&';
@@ -72,6 +97,49 @@ describe('.well-known api', () => {
       .get('.well-known/phrases?lng=en')
       .json<{ translation: Translation }>();
     expect(updated.translation.list).toHaveProperty('and', and);
+  });
+
+  describe('manual language phrases', () => {
+    const manualLanguageTag = 'vi-VN';
+    const customConfirmLabel = 'integration-test-vi-VN-confirm';
+
+    it('should resolve manual language from lng query and fallback language settings', async () => {
+      const { languageInfo: originalLanguageInfo } = await getSignInExperience();
+
+      try {
+        await createOrUpdateCustomPhrase(manualLanguageTag, {
+          action: { confirm: customConfirmLabel },
+        });
+        await setLanguage(manualLanguageTag, false);
+
+        const explicitLanguageResponse = await api.get(
+          `.well-known/phrases?lng=${manualLanguageTag}`
+        );
+        expect(explicitLanguageResponse.headers.get('content-language')).toBe(manualLanguageTag);
+
+        const explicitLanguagePhrases = await explicitLanguageResponse.json<{
+          translation: Translation;
+        }>();
+        expect(explicitLanguagePhrases.translation).toMatchObject({
+          action: { confirm: customConfirmLabel },
+        });
+
+        const fallbackLanguageResponse = await api.get('.well-known/phrases');
+        expect(fallbackLanguageResponse.headers.get('content-language')).toBe(manualLanguageTag);
+
+        const fallbackLanguagePhrases = await fallbackLanguageResponse.json<{
+          translation: Translation;
+        }>();
+        expect(fallbackLanguagePhrases.translation).toMatchObject({
+          action: { confirm: customConfirmLabel },
+        });
+      } finally {
+        await deleteCustomPhrase(manualLanguageTag).catch(() => {
+          // Ignore cleanup errors when the phrase was never created.
+        });
+        await updateSignInExperience({ languageInfo: originalLanguageInfo });
+      }
+    });
   });
 
   describe('sso connectors in sign-in experience', () => {
@@ -164,8 +232,8 @@ describe('.well-known api', () => {
     });
   });
 
-  devFeatureTest.describe('custom profile fields', () => {
-    devFeatureTest.it('should get the custom profile fields in sign-in experience', async () => {
+  describe('custom profile fields', () => {
+    it('should get the custom profile fields in sign-in experience', async () => {
       const fullnameField = await createCustomProfileField(fullnameData);
       const signInExperience = await api
         .get('.well-known/sign-in-exp')
@@ -174,12 +242,12 @@ describe('.well-known api', () => {
       expect(signInExperience.customProfileFields.length).toBeGreaterThan(0);
       expect(signInExperience.customProfileFields).toContainEqual(fullnameField);
 
-      void deleteCustomProfileFieldByName(fullnameData.name);
+      await deleteCustomProfileFieldByName(fullnameData.name);
     });
   });
 
-  devFeatureTest.describe('account center', () => {
-    devFeatureTest.it('get /.well-known/account-center', async () => {
+  describe('account center', () => {
+    it('get /.well-known/account-center', async () => {
       const response = await api.get('.well-known/account-center').json<AccountCenter>();
       expect(response.enabled).toEqual(expect.any(Boolean));
       expect(response.fields).toEqual(expect.any(Object));

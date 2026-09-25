@@ -1,12 +1,50 @@
 const tenants = {
   title: 'Einstellungen',
   description: 'Effizientes Verwalten von Mandanteneinstellungen und Anpassen Ihrer Domain.',
+  oss_description:
+    'Ändern Sie hier Ihre Kontoeinstellungen und verwalten Sie Ihre persönlichen Informationen, um die Sicherheit Ihres Kontos zu gewährleisten.',
   tabs: {
     settings: 'Einstellungen',
     members: 'Mitglieder',
     domains: 'Domänen',
+    oidc_configs: 'OIDC-Konfigurationen',
     subscription: 'Plan und Abrechnung',
     billing_history: 'Abrechnungshistorie',
+    license: 'Lizenz',
+  },
+  license: {
+    purchase_title: 'SELF-HOSTED-PLÄNE',
+    purchase_description:
+      'Self-Hosted Pro und Enterprise schalten kostenpflichtige Funktionen auf deiner eigenen Instanz frei, etwa das Ausblenden des Logto-Brandings, eine eigene UI, IdP-initiiertes SSO, Zusammenarbeit in der Konsole und unbegrenzte SAML-Anwendungen. Kaufe einen Plan, um deinen Lizenzschlüssel zu erhalten.',
+    purchase_button: 'Self-Hosted-Pläne ansehen',
+    install_title: 'LIZENZ INSTALLIEREN',
+    install_description:
+      'Füge den Lizenzschlüssel ein, den du nach dem Kauf eines Self-Hosted-Plans erhalten hast.',
+    install_button: 'Lizenz installieren',
+    key_field: 'Lizenzschlüssel',
+    key_field_description:
+      'Der Schlüssel wird auf deiner Instanz geprüft und verlässt sie nie. Hole dir einen neuen Schlüssel aus deinem Logto-Konto, wenn der vorhandene abgelaufen ist.',
+    key_placeholder: 'Füge hier deinen Lizenzschlüssel ein',
+    installed_toast: 'Lizenz erfolgreich installiert.',
+    details_title: 'LIZENZ',
+    details_description: 'Die auf dieser Instanz installierte Lizenz und was sie freischaltet.',
+    plan_field: 'Plan',
+    environment_field: 'Umgebung',
+    environment_production: 'Produktion',
+    environment_non_production: 'Nicht-Produktion',
+    expires_at_field: 'Läuft ab am',
+    installed_at_field: 'Installiert am',
+    replace_button: 'Lizenz ersetzen',
+  },
+  members: {
+    card_title: 'Verwalten Sie Mandanten sicherer mit Logto Cloud',
+    card_description:
+      'Fügen Sie Ihrem Mandanten Admins oder Mitwirkende hinzu, ohne ein einzelnes Admin-Konto gemeinsam zu nutzen.',
+    card_action: 'Logto Cloud entdecken',
+    self_hosted_card_title: 'Verwalten Sie Mandanten sicherer mit Self-Hosted-Plänen',
+    self_hosted_card_description:
+      'Fügen Sie Ihrem Mandanten Admins oder Mitwirkende hinzu, ohne ein einzelnes Admin-Konto gemeinsam zu nutzen.',
+    self_hosted_card_action: 'Self-Hosted-Pläne entdecken',
   },
   settings: {
     title: 'EINSTELLUNGEN',

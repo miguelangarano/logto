@@ -4,10 +4,10 @@
   justify-content: normal;
   padding: 0 _.unit(4);
 
-  svg {
+  .icon {
     width: 24px;
     height: 24px;
-    color: var(--color-text-primary);
+    color: var(--color-type-primary);
   }
 
   .loadingIcon {

@@ -11,7 +11,6 @@ const mfa = {
   webauthn: 'Passkeys',
   webauthn_description:
     'Verify via browser-supported method: biometrics, phone scanning, or security key, etc.',
-  webauthn_native_tip: 'WebAuthn is not supported for Native applications.',
   webauthn_domain_tip:
     'WebAuthn binds public keys to the specific domain. Modifying your service domain will block users from authenticating via existing passkeys.',
   backup_code: 'Backup codes',
@@ -40,7 +39,7 @@ const mfa = {
   require_mfa_optional:
     'Optional MFA: Let users choose to enable MFA for their own account security',
   require_mfa_adaptive:
-    'Adaptive MFA: Only ask for MFA when a sign-in seems risky (e.g., new device / location)',
+    'Adaptive MFA: Only ask for MFA when a sign-in seems risky (e.g., new country / long inactivity)',
   require_mfa_mandatory:
     'Mandatory MFA: Requires all users to complete MFA every time they sign in',
   set_up_prompt: 'MFA set-up prompt',
@@ -49,9 +48,13 @@ const mfa = {
     'Ask users to set up MFA during registration (skippable, one-time prompt)',
   prompt_only_at_sign_in:
     'Ask users to set up MFA on their next sign-in attempt after registration (skippable, one-time prompt)',
+  prompt_at_sign_in_and_sign_up_mandatory:
+    'Ask users to set up MFA during registration (non-skippable)',
+  prompt_only_at_sign_in_mandatory:
+    'Ask users to set up MFA on their next sign-in attempt after registration (non-skippable)',
   set_up_organization_required_mfa_prompt:
     'MFA setup prompt for users after organization enables MFA',
-  prompt_at_sign_in_no_skip: 'Ask users to set up MFA on next sign-in (no skipping)',
+  prompt_at_sign_in_non_skippable: 'Ask users to set up MFA on next sign-in (non-skippable)',
   email_primary_method_tip:
     "Email verification code is already your primary sign-in method. To maintain security, it can't be reused for MFA.",
   phone_primary_method_tip:
@@ -65,6 +68,31 @@ const mfa = {
   no_sms_connector_error:
     'Cannot enable SMS verification code MFA without an SMS connector. Please configure an SMS connector first.',
   setup_link: 'Set up',
+  trusted_device: {
+    title: 'Trusted devices',
+    description:
+      'Let trusted browsers automatically complete MFA verification when the current MFA flow requires it.',
+    enable_title: 'Enable trusted devices',
+    enable_description:
+      'Allow users to trust this browser after completing an eligible MFA factor.',
+    duration_title: 'Trust duration (days)',
+    duration_error: 'Enter a whole number between {{min}} and {{max}}.',
+    duration_note: 'Changes to the trust duration apply only to devices trusted afterward.',
+    organization_allow_title: 'Allow trusted devices',
+    organization_allow_tip:
+      'An organization can only restrict the tenant trusted-device policy; it cannot enable the feature when the tenant policy is off.',
+    organization_allow_description:
+      'Allow trusted-device verification for members of this organization.',
+    organization_global_disabled:
+      'Enable trusted devices in the tenant MFA settings before allowing them for this organization.',
+    management_description:
+      'Manage browsers this user trusted after completing MFA. Removing one requires MFA again on that browser at the next sign-in.',
+    management_hint: 'Latest location is informational only.',
+    management_empty: 'This user has no active trusted devices.',
+    management_deletion_confirmation:
+      'Remove {{name}}? This browser will require MFA again at the next sign-in.',
+    management_removed: 'Trusted device removed.',
+  },
 };
 
 export default Object.freeze(mfa);

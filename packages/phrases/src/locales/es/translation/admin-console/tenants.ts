@@ -1,12 +1,50 @@
 const tenants = {
   title: 'Configuraciones',
   description: 'Administre eficientemente la configuración del inquilino y personalice su dominio.',
+  oss_description:
+    'Cambie la configuración de su cuenta y administre su información personal aquí para garantizar la seguridad de su cuenta.',
   tabs: {
     settings: 'Configuraciones',
     members: 'Miembros',
     domains: 'Dominios',
+    oidc_configs: 'Configuraciones de OIDC',
     subscription: 'Plan y facturación',
     billing_history: 'Historial de facturación',
+    license: 'Licencia',
+  },
+  license: {
+    purchase_title: 'PLANES AUTOALOJADOS',
+    purchase_description:
+      'Los planes Pro y Empresa autoalojados desbloquean funciones de pago en tu propia instancia, como ocultar la marca de Logto, usar tu propia interfaz, SSO iniciado por el IdP, colaboración en la consola y aplicaciones SAML ilimitadas. Compra un plan para obtener tu clave de licencia.',
+    purchase_button: 'Ver planes autoalojados',
+    install_title: 'INSTALAR LICENCIA',
+    install_description: 'Pega la clave de licencia que recibiste al comprar un plan autoalojado.',
+    install_button: 'Instalar licencia',
+    key_field: 'Clave de licencia',
+    key_field_description:
+      'La clave se verifica en tu instancia y nunca sale de ella. Obtén una clave nueva desde tu cuenta de Logto si la que tienes ha caducado.',
+    key_placeholder: 'Pega aquí tu clave de licencia',
+    installed_toast: 'Licencia instalada correctamente.',
+    details_title: 'LICENCIA',
+    details_description: 'La licencia instalada en esta instancia y lo que concede.',
+    plan_field: 'Plan',
+    environment_field: 'Entorno',
+    environment_production: 'Producción',
+    environment_non_production: 'No producción',
+    expires_at_field: 'Caduca el',
+    installed_at_field: 'Instalada el',
+    replace_button: 'Reemplazar licencia',
+  },
+  members: {
+    card_title: 'Administra los inquilinos de forma más segura con Logto Cloud',
+    card_description:
+      'Agrega administradores o colaboradores a tu inquilino sin compartir una sola cuenta de administrador.',
+    card_action: 'Explorar Logto Cloud',
+    self_hosted_card_title:
+      'Administra los inquilinos de forma más segura con los planes autoalojados',
+    self_hosted_card_description:
+      'Agrega administradores o colaboradores a tu inquilino sin compartir una sola cuenta de administrador.',
+    self_hosted_card_action: 'Explorar los planes autoalojados',
   },
   settings: {
     title: 'CONFIGURACIONES',

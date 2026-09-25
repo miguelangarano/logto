@@ -18,6 +18,10 @@ const mfa = {
   verify_phone_verification_code_description: 'Geben Sie den an Ihr Telefon gesendeten Code ein',
   send_to_email: 'Senden an {{identifier}}',
   send_to_phone: 'Senden an {{identifier}}',
+  onboarding: '2-Schritte-Verifizierung aktivieren',
+  onboarding_description:
+    'Schützen Sie Ihr Konto mit der 2-Schritte-Verifizierung. Wählen Sie eine oder mehrere Methoden: Passkey, Authentifizierungs-App (OTP), SMS-Bestätigungscode oder Backup-Codes.',
+  enable_mfa: '2-Schritte-Verifizierung aktivieren',
   add_mfa_factors: '2-Schritte-Verifizierung hinzufügen',
   add_mfa_description:
     'Die Zwei-Faktor-Verifizierung ist aktiviert. Wählen Sie Ihre zweite Verifizierungsmethode für sicheres Anmelden aus.',
@@ -28,6 +32,7 @@ const mfa = {
   verify_mfa_description:
     'Die 2-Schritte-Verifizierung ist für dieses Konto aktiviert. Bitte wählen Sie die zweite Methode zur Verifizierung Ihrer Identität aus.',
   add_authenticator_app: 'Authenticator-App hinzufügen',
+  replace_authenticator_app: 'Authenticator-App ersetzen',
   step: 'Schritt {{step, number}}: {{content}}',
   scan_qr_code: 'Scannen Sie diesen QR-Code',
   scan_qr_code_description:
@@ -66,6 +71,14 @@ const mfa = {
   verify_via_passkey: 'Über Passkey verifizieren',
   verify_via_passkey_description:
     'Verwenden Sie den Passkey zur Verifizierung durch Ihr Gerätepasswort oder Biometrie, zum Scannen des QR-Codes oder zum Verwenden eines USB-Sicherheitsschlüssels wie YubiKey.',
+  trust_this_device_title: 'Diesem Gerät vertrauen',
+  trust_this_device_description:
+    'Bei zukünftigen Anmeldungen auf diesem Gerät können Sie die MFA-Verifizierung überspringen.',
+  trust_this_device_one: 'Diesem Gerät {{count}} Tag lang vertrauen',
+  trust_this_device_two: 'Diesem Gerät {{count}} Tage lang vertrauen',
+  trust_this_device_few: 'Diesem Gerät {{count}} Tage lang vertrauen',
+  trust_this_device_many: 'Diesem Gerät {{count}} Tage lang vertrauen',
+  trust_this_device_other: 'Diesem Gerät {{count}} Tage lang vertrauen',
   secret_key_copied: 'Geheimer Schlüssel kopiert.',
   backup_code_copied: 'Backup-Code kopiert.',
   webauthn_not_ready: 'WebAuthn ist noch nicht bereit. Bitte versuchen Sie es später erneut.',

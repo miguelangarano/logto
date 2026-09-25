@@ -64,7 +64,7 @@ const connectors = {
     },
     callback_uri: 'リダイレクト URI（コールバック URI）',
     callback_uri_description:
-      'Redirect URI は、ソーシャル認可の後にユーザーがリダイレクトされる場所です。この URI を IdP の設定に追加してください。',
+      'リダイレクト URI は、ソーシャル認可の後にユーザーがリダイレクトされる場所です。表示されているすべての URI を IdP の設定に追加してください。',
     callback_uri_custom_domain_description:
       'Logto で複数の<a>カスタムドメイン</a>を使用する場合は、すべての対応するコールバック URI を IdP に追加し、各ドメインでソーシャルログインが機能するようにしてください。\n\nLogto の既定ドメイン (*.logto.app) は常に有効です。そのドメインでのログインもサポートしたい場合にのみ含めてください。',
     acs_url: 'アサーションコンシューマーサービス URL',
@@ -83,6 +83,11 @@ const connectors = {
   create_form: {
     third_party_connectors:
       'サードパーティ プロバイダーを統合して、迅速なソーシャル サインイン、ソーシャル アカウントのリンク、および API アクセスを提供します。<a>詳細はこちら</a>',
+    email_connector_upsell: {
+      title: 'Logto 組み込みメールサービス',
+      description:
+        '設定不要ですぐにメールを配信できます。認証コードやマジックリンクをそのまま送信できます。',
+    },
     standard_connectors: 'または標準プロトコルでソーシャルコネクタをカスタマイズできます。',
   },
 };

@@ -11,6 +11,9 @@ const application = {
   user_consent_scopes_not_found: 'Escopos de consentimento do usuário inválidos.',
   consent_management_api_scopes_not_allowed:
     'Os escopos da API de gerenciamento não são permitidos.',
+  device_flow_native_only: 'O fluxo de dispositivo está disponível apenas para aplicações nativas.',
+  device_flow_not_changeable:
+    'O fluxo de dispositivo não pode ser alterado após a criação da aplicação.',
   protected_app_metadata_is_required: 'Protegido metadados do app é necessário.',
   protected_app_not_configured:
     'Provedor de app protegido não está configurado. Este recurso não está disponível na versão de código aberto.',
@@ -23,6 +26,7 @@ const application = {
   should_delete_custom_domains_first: 'Deve excluir os domínios personalizados primeiro.',
   no_legacy_secret_found: 'O aplicativo não tem um segredo legado.',
   secret_name_exists: 'Nome do segredo já existe.',
+  sync_application_secret_failed: 'Falha ao sincronizar o segredo do aplicativo.',
   saml: {
     use_saml_app_api:
       'Use a API `[METHOD] /saml-applications(/.*)?` para operar o aplicativo SAML.',
@@ -31,6 +35,8 @@ const application = {
       'Você NÃO PODE criar mais aplicativos SAML, pois o limite de {{limit}} foi atingido.',
     acs_url_binding_not_supported:
       'Apenas a vinculação HTTP-POST é suportada para receber assertivas SAML.',
+    acs_url_scheme_not_supported:
+      'Apenas os esquemas HTTP e HTTPS são suportados para a URL do Assertion Consumer Service.',
     can_not_delete_active_secret: 'Não é possível excluir o segredo ativo.',
     no_active_secret: 'Nenhum segredo ativo encontrado.',
     entity_id_required: 'ID da entidade é necessário para gerar metadados.',

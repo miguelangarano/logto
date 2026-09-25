@@ -1,7 +1,22 @@
+/* eslint-disable max-lines -- Locale catalog mirrors the complete Account Center phrase schema. */
 const account_center = {
   home: {
     title: 'Seite nicht gefunden',
     description: 'Diese Seite ist nicht verfügbar.',
+  },
+  page: {
+    title: 'Konto',
+    security_title: 'Sicherheit',
+    security_description:
+      'Ändern Sie hier Ihre Kontoeinstellungen, um die Sicherheit Ihres Kontos zu gewährleisten.',
+    profile_title: 'Persönliche Informationen',
+    profile_description: 'Ändere hier deine persönlichen Informationen.',
+    sidebar_personal_info: 'Persönliche Informationen',
+    sidebar_security: 'Sicherheit',
+    sidebar_sessions: 'Sitzungen',
+    support: 'Hilfe',
+    user_menu: 'Benutzermenü',
+    sign_out: 'Abmelden',
   },
   verification: {
     title: 'Sicherheitsüberprüfung',
@@ -13,6 +28,9 @@ const account_center = {
     error_verify_failed: 'Verifizierung fehlgeschlagen. Bitte gib den Code erneut ein.',
     verification_required: 'Verifizierung abgelaufen. Bitte bestätige deine Identität erneut.',
     try_another_method: 'Versuche eine andere Verifizierungsmethode',
+    no_available_methods_title: 'Keine Verifizierungsmethoden verfügbar',
+    no_available_methods_description:
+      'Du hast noch keine Verifizierungsmethoden eingerichtet. Bitte füge zuerst ein Passwort, eine E-Mail-Adresse oder eine Telefonnummer zu deinem Konto hinzu.',
   },
   password_verification: {
     title: 'Passwort bestätigen',
@@ -57,20 +75,96 @@ const account_center = {
   username: {
     title: 'Benutzernamen festlegen',
     description: 'Benutzername darf nur Buchstaben, Zahlen und Unterstriche enthalten.',
+    policy_description: '{{requirements}}',
     success: 'Benutzername erfolgreich aktualisiert.',
+  },
+  security: {
+    add: 'Hinzufügen',
+    change: 'Ändern',
+    remove: 'Entfernen',
+    not_set: 'Nicht festgelegt',
+    social_sign_in: 'Social-Login',
+    social_not_linked: 'Nicht verknüpft',
+    email_phone: 'E-Mail / Telefon',
+    email: 'E-Mail',
+    phone: 'Telefon',
+    password: 'Passwort',
+    configured: 'Konfiguriert',
+    not_configured: 'Nicht konfiguriert',
+    two_step_verification: '2-Faktor-Authentifizierung',
+    authenticator_app: 'Authenticator-App',
+    passkeys: 'Passkeys',
+    backup_codes: 'Backup-Codes',
+    email_verification_code: 'E-Mail-Bestätigungscode',
+    phone_verification_code: 'Telefon-Bestätigungscode',
+    passkeys_count_one: '{{count}} Passkey',
+    passkeys_count_other: '{{count}} Passkeys',
+    backup_codes_count_one: '{{count}} Code verbleibend',
+    backup_codes_count_other: '{{count}} Codes verbleibend',
+    view: 'Ansehen',
+    manage: 'Verwalten',
+    turn_on_2_step_verification_description:
+      'Fügen Sie eine zusätzliche Sicherheitsebene hinzu. Sie werden bei der Anmeldung zu einem zweiten Verifizierungsschritt aufgefordert.',
+    turn_off_2_step_verification: '2-Faktor-Verifizierung deaktivieren',
+    turn_off_2_step_verification_description:
+      'Das Deaktivieren der 2-Faktor-Verifizierung entfernt die zusätzliche Schutzebene für Ihr Konto bei der Anmeldung. Möchten Sie wirklich fortfahren?',
+    disable_2_step_verification: 'Deaktivieren',
+    no_verification_method_warning:
+      'Sie haben keine zweite Verifizierungsmethode hinzugefügt. Fügen Sie mindestens eine hinzu, um die 2-Faktor-Verifizierung bei der Anmeldung zu aktivieren.',
+    passkey_sign_in_prompt: 'Zur Einrichtung eines Passkeys auffordern',
+    passkey_sign_in_prompt_description:
+      'Wenn aktiviert, werden Sie aufgefordert, einen Passkey für eine schnellere und sicherere Anmeldung einzurichten.',
+    account_removal: 'Kontolöschung',
+    delete_your_account: 'Ihr Konto löschen',
+    delete_account: 'Konto löschen',
+    remove_username_confirmation_title: 'Benutzernamen entfernen',
+    remove_username_confirmation_description:
+      'Nach dem Entfernen können Sie sich nicht mehr mit diesem Benutzernamen anmelden. Möchten Sie wirklich fortfahren?',
+    remove_email_confirmation_title: 'E-Mail-Adresse entfernen',
+    remove_email_confirmation_description:
+      'Nach dem Entfernen können Sie sich nicht mehr mit dieser E-Mail-Adresse anmelden. Möchten Sie wirklich fortfahren?',
+    remove_phone_confirmation_title: 'Telefonnummer entfernen',
+    remove_phone_confirmation_description:
+      'Nach dem Entfernen können Sie sich nicht mehr mit dieser Telefonnummer anmelden. Möchten Sie wirklich fortfahren?',
+    email_removed: 'E-Mail-Adresse wurde erfolgreich entfernt.',
+    phone_removed: 'Telefonnummer wurde erfolgreich entfernt.',
+    username_removed: 'Benutzername erfolgreich entfernt.',
+    trusted_devices: {
+      title: 'Vertrauenswürdige MFA-Geräte',
+      current_device: 'Aktuelles Gerät',
+      expires_on: 'Läuft am {{date}} ab',
+      unknown_location: 'Unbekannter Standort',
+      remove: 'Entfernen',
+      removed: 'Vertrauenswürdiges Gerät wurde erfolgreich entfernt.',
+      loading: 'Wird geladen...',
+      empty: 'Keine vertrauenswürdigen Geräte.',
+      load_failed:
+        'Vertrauenswürdige Geräte konnten nicht geladen werden. Bitte versuche es erneut.',
+      retry: 'Erneut versuchen',
+      remove_confirmation_title: 'Vertrauenswürdiges Gerät entfernen?',
+      remove_confirmation_description:
+        'Bei deiner nächsten Anmeldung auf diesem Gerät musst du MFA erneut abschließen. Deine aktuelle Sitzung bleibt aktiv.',
+    },
+  },
+  social: {
+    linked: '{{connector}} wurde erfolgreich verknüpft.',
+    not_enabled:
+      'Diese Social-Login-Methode ist nicht aktiviert. Bitte kontaktieren Sie Ihren Administrator um Hilfe.',
+    removed: '{{connector}} wurde erfolgreich entfernt.',
+    remove_confirmation_title: 'Soziales Konto entfernen',
+    remove_confirmation_description:
+      'Wenn Sie {{connector}} entfernen, können Sie sich möglicherweise nicht mehr damit anmelden, bis Sie es erneut hinzufügen.',
   },
   password: {
     title: 'Passwort festlegen',
     description: 'Erstelle ein neues Passwort, um dein Konto zu schützen.',
     success: 'Passwort erfolgreich aktualisiert.',
   },
-
   code_verification: {
     send: 'Bestätigungscode senden',
     resend: 'Noch nichts erhalten? <a>Bestätigungscode erneut senden</a>',
     resend_countdown: 'Noch nichts erhalten? Erneut senden nach {{seconds}} s.',
   },
-
   email_verification: {
     title: 'Bestätige deine E-Mail',
     prepare_description:
@@ -136,7 +230,6 @@ const account_center = {
       title: 'Benutzername geändert!',
       description: 'Ihr Benutzername wurde erfolgreich aktualisiert.',
     },
-
     password: {
       title: 'Passwort geändert!',
       description: 'Ihr Passwort wurde erfolgreich aktualisiert.',
@@ -144,6 +237,10 @@ const account_center = {
     totp: {
       title: 'Authenticator-App hinzugefügt!',
       description: 'Deine Authenticator-App wurde erfolgreich mit deinem Konto verknüpft.',
+    },
+    totp_replaced: {
+      title: 'Authenticator-App ersetzt!',
+      description: 'Ihre Authenticator-App wurde erfolgreich ersetzt.',
     },
     backup_code: {
       title: 'Backup-Codes generiert!',
@@ -189,6 +286,34 @@ const account_center = {
       'Sie haben dieses Gerät erfolgreich für die 2-Schritt-Authentifizierung verifiziert. Passen Sie den Namen an, um ihn zu erkennen, wenn Sie mehrere Schlüssel haben.',
     name_input_label: 'Name',
   },
+  sessions: {
+    page_title: 'Sitzungen',
+    page_description:
+      'Verwalten Sie Ihre aktiven Sitzungen und autorisierte Drittanbieter-Anwendungen.',
+    title: 'Sitzungen',
+    current_session: 'Aktuelle Sitzung',
+    signed_in_at: 'Angemeldet {{date}}',
+    revoke_session: 'Abmelden',
+    revoke_session_title: 'Sitzung abmelden',
+    revoke_session_description:
+      'Dadurch wird die Sitzung abgemeldet und alle zugehörigen Zugriffe widerrufen. Möchten Sie wirklich fortfahren?',
+    no_other_sessions: 'Keine weiteren aktiven Sitzungen.',
+    loading: 'Laden...',
+    third_party_apps_title: 'Drittanbieter-Apps',
+    no_third_party_apps: 'Keine autorisierten Drittanbieter-Anwendungen.',
+    third_party_apps_load_failed:
+      'Drittanbieter-Apps konnten nicht geladen werden. Bitte versuche es erneut.',
+    granted_at: 'Autorisiert {{date}}',
+    dynamic_app: 'Dynamische App',
+    client_id: 'Client-ID: {{clientId}}',
+    revoke_grant: 'Entfernen',
+    revoke_grant_title: 'Drittanbieter-App-Zugriff entfernen',
+    revoke_grant_description:
+      'Dadurch wird der dieser Anwendung gewährte Zugriff widerrufen. Bereits ausgestellte Zugriffstokens können bis zu ihrem Ablauf gültig bleiben. Möchten Sie wirklich fortfahren?',
+    revoke_grant_failed:
+      'Einige Berechtigungen konnten nicht widerrufen werden. Bitte versuchen Sie es erneut.',
+  },
 };
 
 export default Object.freeze(account_center);
+/* eslint-enable max-lines */

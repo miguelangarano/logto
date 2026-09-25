@@ -36,6 +36,8 @@ const description = {
   reset_password: 'Esqueceu a senha',
   reset_password_description:
     'Insira os {{types, list(type: disjunction;)}} associados à sua conta e enviaremos o código de verificação para redefinir sua senha.',
+  reset_password_magic_link_description:
+    'Introduz o endereço de email associado à tua conta para continuares a repor a palavra-passe.',
   new_password: 'Nova Senha',
   set_password: 'Definir senha',
   password_changed: 'Senha alterada',
@@ -46,6 +48,8 @@ const description = {
   enter_username: 'Definir nome de usuário',
   enter_username_description:
     'O nome de usuário é uma alternativa para o login. O nome de usuário deve conter apenas letras, números e sublinhados.',
+  enter_username_policy_description:
+    'O nome de usuário é uma alternativa para o login. {{requirements}}',
   link_email: 'Vincular email',
   link_phone: 'Vincular telefone',
   link_email_or_phone: 'Vincular email ou telefone',
@@ -56,6 +60,12 @@ const description = {
     'Para maior segurança, por favor complete os detalhes da conta abaixo.',
   create_your_account: 'Crie a sua conta',
   sign_in_to_your_account: 'Inicie sessão na sua conta',
+  device_activation: 'Ativação do dispositivo',
+  device_activation_description:
+    'Introduza o código apresentado no seu dispositivo. Certifique-se de que corresponde e, em seguida, continue para iniciar sessão neste dispositivo.',
+  device_activation_error_description: 'Introduza o código apresentado no seu dispositivo.',
+  device_activation_success: 'O seu dispositivo está agora ligado!',
+  device_activation_success_description: 'Regresse ao seu dispositivo para continuar.',
   no_region_code_found: 'Não foi possível encontrar o código de região do seu telefone.',
   verify_email: 'Verifique o seu email',
   verify_phone: 'Verifique o seu número de telefone',
@@ -77,12 +87,25 @@ const description = {
     character_types_other:
       'deve conter pelo menos {{count}} tipos de letras maiúsculas, letras minúsculas, dígitos e símbolos',
   },
+  username_requirements: 'Nome de utilizador {{items, list}}.',
+  username_requirement: {
+    length: 'deve ter de {{min}} a {{max}} caracteres',
+    characters: 'pode conter apenas {{characters, list}}',
+  },
+  username_character: {
+    uppercase: 'letras maiúsculas',
+    lowercase: 'letras minúsculas',
+    number: 'números',
+    underscore: 'sublinhados',
+  },
   use: 'Usar',
   single_sign_on_email_form: 'Insira o endereço de email corporativo',
   single_sign_on_connectors_list:
     'A sua empresa ativou o Single Sign-On para a conta de email {{email}}. Pode continuar a iniciar sessão com os seguintes fornecedores de SSO.',
   single_sign_on_enabled: 'Esta conta tem o Single Sign-On ativado.',
   authorize_title: 'Autorizar {{name}}',
+  unregistered_client_notice:
+    'Esta aplicação é autodeclarada por <hostname>{{host}}</hostname>, incluindo o seu nome e logótipo. Verifique o nome do anfitrião antes de continuar.',
   request_permission: '{{name}} está solicitando acesso a:',
   grant_organization_access: 'Conceder acesso à organização:',
   authorize_personal_data_usage: 'Autorizar o uso dos seus dados pessoais:',
@@ -101,6 +124,9 @@ const description = {
   identifier_register_description:
     'Introduza o seu {{types, list(type: disjunction;)}} para criar uma nova conta.',
   all_account_creation_options: 'Todas as opções de criação de conta',
+  password_expired:
+    'A sua palavra-passe expirou e deve ser redefinida antes de poder iniciar sessão.',
+  password_expiration_reset: 'Redefinir palavra-passe',
   back_to_sign_in: 'Voltar para o login',
   support_email: 'Email de suporte: <link></link>',
   support_website: 'Site de suporte: <link></link>',
@@ -108,6 +134,17 @@ const description = {
   switch_account_description:
     'Para continuar, você sairá da conta atual e mudará automaticamente para a nova conta.',
   about_yourself: 'Fala-nos sobre ti',
+  verify_identity: 'Verifique a sua identidade',
+  choose_verification_method: 'Escolha como pretende iniciar sessão',
+  verification_method: {
+    passkey: 'Chave de acesso',
+    passkey_description: 'Verifique através do seu dispositivo ou hardware USB',
+    password: 'Palavra-passe',
+    password_description: 'Introduza a sua palavra-passe',
+    email_verification_code: 'Código de verificação por e-mail',
+    phone_verification_code: 'Código de verificação por telefone',
+    verification_code_description: 'Enviar para {{target}}',
+  },
 };
 
 export default Object.freeze(description);

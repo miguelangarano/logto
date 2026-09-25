@@ -1,22 +1,39 @@
+/* eslint-disable max-lines */
 import {
   InteractionEvent,
   MfaFactor,
   SignInIdentifier,
   updateProfileApiPayloadGuard,
+  uploadFileGuard,
+  userAssetsGuard,
+  VerificationType,
 } from '@logto/schemas';
+import { addDays, format } from 'date-fns';
 import { type MiddlewareType } from 'koa';
 import type Router from 'koa-router';
-import { z } from 'zod';
+import { object, z } from 'zod';
 
 import RequestError from '#src/errors/RequestError/index.js';
 import { type WithLogContext } from '#src/middleware/koa-audit-log.js';
 import koaGuard from '#src/middleware/koa-guard.js';
+import SystemContext from '#src/tenants/SystemContext.js';
 import type TenantContext from '#src/tenants/TenantContext.js';
 import assertThat from '#src/utils/assert-that.js';
+import { getConsoleLogFromContext } from '#src/utils/console.js';
+
+import { uploadAvatar } from '../avatar-upload.js';
 
 import { createNewMfaCodeVerificationRecord } from './classes/verifications/code-verification.js';
 import { experienceRoutes } from './const.js';
 import { type ExperienceInteractionRouterContext } from './types.js';
+
+const pendingAvatarUploadExpiresInDays = 1;
+
+const buildPendingAvatarUploadObjectKeyPrefix = (tenantId: string, jti: string) => {
+  const expiresAt = format(addDays(new Date(), pendingAvatarUploadExpiresInDays), 'yyyy-MM-dd');
+
+  return `${tenantId}/_pending/${expiresAt}/avatar/${jti}`;
+};
 
 /**
  * This middleware is guards the current interaction status is MFA verified (if MFA is enabled)
@@ -52,7 +69,7 @@ function verifiedInteractionGuard<
 
 export default function interactionProfileRoutes<T extends ExperienceInteractionRouterContext>(
   router: Router<unknown, T>,
-  { libraries, queries }: TenantContext
+  { id: tenantId, libraries, queries }: TenantContext
 ) {
   router.post(
     `${experienceRoutes.profile}`,
@@ -76,9 +93,18 @@ export default function interactionProfileRoutes<T extends ExperienceInteraction
         })
       );
 
-      //  User profile updates require MFA verification (if MFA is enabled) during the sign-in event.
       if (interactionEvent === InteractionEvent.SignIn) {
-        await experienceInteraction.guardMfaVerificationStatus();
+        // Note:
+        // We intentionally allow social profile staging before MFA verification.
+        // This endpoint only writes to the interaction session, while `submit()` is the
+        // DB commit boundary and still enforces MFA for sign-in flows.
+        //
+        // On social linking flows, to simplify the front-end implementation, we allow social profile staging before MFA verification,
+        // and the final submission with `submit()` will enforce MFA verification.
+        // Identified user guard is still applied.
+        await (profilePayload.type === 'social'
+          ? experienceInteraction.guardIdentifiedUser()
+          : experienceInteraction.guardMfaVerificationStatus());
       }
 
       log.append({
@@ -116,6 +142,7 @@ export default function interactionProfileRoutes<T extends ExperienceInteraction
           await experienceInteraction.profile.setProfileWithValidation(
             validateAndParseCustomProfile(profilePayload.values)
           );
+          experienceInteraction.profile.markProfileSubmitted();
           break;
         }
       }
@@ -123,6 +150,51 @@ export default function interactionProfileRoutes<T extends ExperienceInteraction
       await experienceInteraction.save();
 
       ctx.status = 204;
+
+      return next();
+    }
+  );
+
+  router.post(
+    `${experienceRoutes.prefix}/user-assets/avatar`,
+    koaGuard({
+      files: object({
+        file: uploadFileGuard.array().min(1),
+      }),
+      response: userAssetsGuard,
+      status: [200, 400, 403, 404, 500],
+    }),
+    async (ctx, next) => {
+      const { experienceInteraction } = ctx;
+      const { interactionEvent } = experienceInteraction;
+
+      assertThat(
+        interactionEvent !== InteractionEvent.ForgotPassword,
+        new RequestError({ code: 'session.not_supported_for_forgot_password', status: 400 })
+      );
+      assertThat(
+        interactionEvent === InteractionEvent.Register,
+        new RequestError({ code: 'session.invalid_interaction_type', status: 400 })
+      );
+
+      const { storageProviderConfig } = SystemContext.shared;
+
+      const objectKeyPrefix = experienceInteraction.identifiedUserId
+        ? `${tenantId}/${experienceInteraction.identifiedUserId}`
+        : buildPendingAvatarUploadObjectKeyPrefix(tenantId, ctx.interactionDetails.jti);
+
+      const [file] = ctx.guard.files.file;
+
+      assertThat(file, 'guard.invalid_input');
+
+      ctx.body = await uploadAvatar({
+        file,
+        storageProviderConfig,
+        objectKeyPrefix,
+        logError: (error) => {
+          getConsoleLogFromContext(ctx).error(error);
+        },
+      });
 
       return next();
     }
@@ -169,6 +241,22 @@ export default function interactionProfileRoutes<T extends ExperienceInteraction
   );
 
   router.post(
+    `${experienceRoutes.mfa}/mfa-enabled`,
+    koaGuard({ status: [204, 400, 403, 404] }),
+    verifiedInteractionGuard(),
+    async (ctx, next) => {
+      const { experienceInteraction } = ctx;
+
+      experienceInteraction.mfa.markMfaEnabled();
+      await experienceInteraction.save();
+
+      ctx.status = 204;
+
+      return next();
+    }
+  );
+
+  router.post(
     `${experienceRoutes.mfa}/mfa-skipped`,
     koaGuard({ status: [204, 400, 403, 404, 422] }),
     verifiedInteractionGuard(),
@@ -184,7 +272,27 @@ export default function interactionProfileRoutes<T extends ExperienceInteraction
     }
   );
 
-  // Mark optional additional MFA binding suggestion as skipped in current interaction
+  router.post(
+    `${experienceRoutes.profile}/trusted-device`,
+    koaGuard({
+      body: z.object({ trusted: z.boolean() }),
+      status: [204, 400, 403, 404],
+    }),
+    verifiedInteractionGuard(),
+    async (ctx, next) => {
+      const { experienceInteraction } = ctx;
+      const { trusted } = ctx.guard.body;
+
+      await experienceInteraction.setTrustedDeviceOptInDecision(trusted);
+      await experienceInteraction.save();
+
+      ctx.status = 204;
+
+      return next();
+    }
+  );
+
+  // Mark optional additional MFA binding suggestion as skipped.
   router.post(
     `${experienceRoutes.mfa}/mfa-suggestion-skipped`,
     koaGuard({ status: [204, 400, 404] }),
@@ -209,6 +317,37 @@ export default function interactionProfileRoutes<T extends ExperienceInteraction
       const { experienceInteraction } = ctx;
 
       experienceInteraction.mfa.skipPasskey();
+      await experienceInteraction.save();
+
+      ctx.status = 204;
+
+      return next();
+    }
+  );
+
+  router.post(
+    `${experienceRoutes.mfa}/passkey`,
+    koaGuard({
+      body: z.object({
+        verificationId: z.string(),
+      }),
+      status: [204, 400, 404],
+    }),
+    verifiedInteractionGuard(),
+    async (ctx, next) => {
+      const { experienceInteraction, guard } = ctx;
+      const { verificationId } = guard.body;
+
+      const log = ctx.createLog(
+        `Interaction.${experienceInteraction.interactionEvent}.SignInPasskey.Submit`
+      );
+
+      log.append({
+        verificationId,
+      });
+
+      await experienceInteraction.mfa.addWebAuthnByVerificationId(verificationId, log);
+
       await experienceInteraction.save();
 
       ctx.status = 204;
@@ -272,6 +411,12 @@ export default function interactionProfileRoutes<T extends ExperienceInteraction
               true
             );
             experienceInteraction.setVerificationRecord(codeVerification);
+            // The email is now an MFA factor of the account: record that `bind` proof next to
+            // the `1fa` one the profile bind recorded for the same mailbox.
+            experienceInteraction.consumeForBindByType(
+              VerificationType.MfaEmailVerificationCode,
+              codeVerification.id
+            );
           }
           break;
         }
@@ -295,10 +440,16 @@ export default function interactionProfileRoutes<T extends ExperienceInteraction
               true
             );
             experienceInteraction.setVerificationRecord(codeVerification);
+            experienceInteraction.consumeForBindByType(
+              VerificationType.MfaPhoneVerificationCode,
+              codeVerification.id
+            );
           }
           break;
         }
       }
+
+      experienceInteraction.mfa.markMfaEnabled();
 
       await experienceInteraction.save();
 
@@ -308,3 +459,4 @@ export default function interactionProfileRoutes<T extends ExperienceInteraction
     }
   );
 }
+/* eslint-enable max-lines */

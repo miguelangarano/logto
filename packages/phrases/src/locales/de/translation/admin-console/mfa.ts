@@ -11,7 +11,6 @@ const mfa = {
   webauthn: 'Passkeys',
   webauthn_description:
     'Überprüfen Sie über browserunterstützte Methoden: Biometrie, Handy-Scan oder Sicherheitsschlüssel usw.',
-  webauthn_native_tip: 'WebAuthn wird für native Anwendungen nicht unterstützt.',
   webauthn_domain_tip:
     'WebAuthn bindet öffentliche Schlüssel an die spezifische Domain. Das Ändern Ihrer Servicedomain blockiert Benutzer daran, sich über vorhandene Passwörter zu authentifizieren.',
   backup_code: 'Backup-Codes',
@@ -42,7 +41,7 @@ const mfa = {
   require_mfa_optional:
     'Optionale MFA: Ermöglicht Benutzern, MFA für die Sicherheit ihres eigenen Kontos zu aktivieren',
   require_mfa_adaptive:
-    'Adaptive MFA: Nur nach MFA fragen, wenn eine Anmeldung riskant erscheint (z. B. neues Gerät/Standort)',
+    'Adaptive MFA: Nur nach MFA fragen, wenn eine Anmeldung riskant erscheint (z. B. neues Land / längere Inaktivität)',
   require_mfa_mandatory:
     'Obligatorische MFA: Erfordert, dass alle Benutzer bei jeder Anmeldung MFA abschließen',
   set_up_prompt: 'MFA-Einrichtungsaufforderung',
@@ -51,10 +50,14 @@ const mfa = {
     'Benutzer bei der Registrierung zur MFA-Einrichtung auffordern (überspringbare, einmalige Aufforderung)',
   prompt_only_at_sign_in:
     'Benutzer bei ihrem nächsten Anmeldeversuch nach der Registrierung zur MFA-Einrichtung auffordern (überspringbare, einmalige Aufforderung)',
+  prompt_at_sign_in_and_sign_up_mandatory:
+    'Benutzer bei der Registrierung zur MFA-Einrichtung auffordern. (nicht überspringbar)',
+  prompt_only_at_sign_in_mandatory:
+    'Benutzer bei ihrem nächsten Anmeldeversuch nach der Registrierung zur MFA-Einrichtung auffordern. (nicht überspringbar)',
   set_up_organization_required_mfa_prompt:
     'MFA-Einrichtungsaufforderung für Benutzer, nachdem die Organisation MFA aktiviert hat',
-  prompt_at_sign_in_no_skip:
-    'Benutzer bei der nächsten Anmeldung zur MFA-Einrichtung auffordern (keine Möglichkeit zum Überspringen)',
+  prompt_at_sign_in_non_skippable:
+    'Benutzer bei der nächsten Anmeldung zur MFA-Einrichtung auffordern (nicht überspringbar)',
   email_primary_method_tip:
     'E-Mail-Verifizierungscode ist bereits Ihre primäre Anmeldemethode. Um die Sicherheit zu gewährleisten, kann er nicht erneut für MFA verwendet werden.',
   phone_primary_method_tip:
@@ -68,6 +71,31 @@ const mfa = {
   no_sms_connector_error:
     'SMS-Verifizierungscode MFA kann nicht ohne einen SMS-Connector aktiviert werden. Bitte konfigurieren Sie zuerst einen SMS-Connector.',
   setup_link: 'Einrichten',
+  trusted_device: {
+    title: 'Vertrauenswürdige Geräte',
+    description:
+      'Lassen Sie vertrauenswürdige Browser die MFA-Verifizierung automatisch abschließen, wenn der aktuelle MFA-Ablauf sie erfordert.',
+    enable_title: 'Vertrauenswürdige Geräte aktivieren',
+    enable_description:
+      'Benutzern erlauben, diesen Browser nach einem zulässigen MFA-Faktor zu vertrauen.',
+    duration_title: 'Vertrauensdauer (Tage)',
+    duration_error: 'Geben Sie eine ganze Zahl zwischen {{min}} und {{max}} ein.',
+    duration_note: 'Änderungen der Vertrauensdauer gelten nur für danach vertraute Geräte.',
+    organization_allow_title: 'Vertrauenswürdige Geräte zulassen',
+    organization_allow_tip:
+      'Eine Organisation kann die Mandantenrichtlinie nur einschränken und die Funktion nicht aktivieren, wenn sie für den Mandanten deaktiviert ist.',
+    organization_allow_description:
+      'Verifizierung über vertrauenswürdige Geräte für Mitglieder dieser Organisation zulassen.',
+    organization_global_disabled:
+      'Aktivieren Sie vertrauenswürdige Geräte zuerst in den MFA-Einstellungen des Mandanten.',
+    management_description:
+      'Verwalten Sie Browser, denen dieser Benutzer nach Abschluss der MFA vertraut hat. Nach dem Entfernen ist bei der nächsten Anmeldung in diesem Browser erneut MFA erforderlich.',
+    management_hint: 'Der letzte Standort dient nur zur Information.',
+    management_empty: 'Dieser Benutzer hat keine aktiven vertrauenswürdigen Geräte.',
+    management_deletion_confirmation:
+      '{{name}} entfernen? In diesem Browser ist bei der nächsten Anmeldung erneut MFA erforderlich.',
+    management_removed: 'Vertrauenswürdiges Gerät entfernt.',
+  },
 };
 
 export default Object.freeze(mfa);

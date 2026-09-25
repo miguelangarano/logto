@@ -28,12 +28,24 @@ const sign_in_experiences = {
     'SMS doğrulama kodu, MFA için etkinleştirildiğinde oturum açma için kullanılamaz.',
   adaptive_mfa_requires_mfa:
     "Adaptive MFA'yı etkinleştirmeden önce MFA'yı etkinleştirmeniz gerekir.",
+  adaptive_mfa_requires_non_skippable_policy:
+    'Adaptive MFA zorunlu atlanamaz bir MFA istemi politikası gerektirir. PromptOnlyAtSignInMandatory veya PromptAtSignInAndSignUpMandatory kullanın.',
+  non_adaptive_mfa_requires_skippable_policy:
+    'Adaptive MFA devre dışı bırakıldığında, MFA istem politikası atlanabilir olmalıdır. PromptOnlyAtSignInMandatory veya PromptAtSignInAndSignUpMandatory kullanmayın.',
   duplicated_sign_up_identifiers: 'Yinelenen kayıt kimlikleri tespit edildi.',
   missing_sign_up_identifiers: 'Birincil kayıt kimliği boş olamaz.',
   invalid_custom_email_blocklist_format:
     'Geçersiz özel e-posta engelleme listesi öğeleri: {{items, list(type:conjunction)}}. Her öğe, geçerli bir e-posta adresi veya e-posta alan adı olmalıdır, örneğin, foo@example.com veya @example.com.',
   forgot_password_method_requires_connector:
     'Şifremi unuttum yöntemi, yapılandırılması gereken ilgili bir {{method}} bağlayıcı gerektirir.',
+  password_expiration_requires_forgot_password:
+    'Parola sona erme, geçerli bir bağlayıcıya sahip en az bir şifremi unuttum yöntemi gerektirir.',
+  password_expiration_not_enabled:
+    'Parola sona erme politikası etkinleştirilmemiş. Parolaların süresini doldurmadan önce oturum açma deneyimi ayarlarından etkinleştirin.',
+  password_expiration_invalid_period_days:
+    'Parola süresi dolma politikası etkin olduğunda, geçerli gün sayısı pozitif bir tam sayı olmalıdır.',
+  username_policy_case_conflicts_exist:
+    'Büyük/küçük harf farkı olan kullanıcı adları varken büyük/küçük harf duyarsız kullanıcı adlarına geçilemiyor. Çakışmaları çözün ve tekrar deneyin.',
 };
 
 export default Object.freeze(sign_in_experiences);

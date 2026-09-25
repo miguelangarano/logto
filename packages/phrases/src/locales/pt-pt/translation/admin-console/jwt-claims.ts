@@ -36,6 +36,7 @@ const jwt_claims = {
   restore: 'Restaurar predefinições',
   restored: 'Restaurado',
   data_source_tab: 'Fonte de dados',
+  error_handling_tab: 'Tratamento de erros',
   test_tab: 'Contexto de teste',
   jwt_claims_description:
     'As reivindicações predefinidas são automaticamente incluídas no JWT e não podem ser substituídas.',
@@ -52,12 +53,17 @@ const jwt_claims = {
   interaction_data: {
     title: 'Contexto de interação do utilizador',
     subtitle:
-      'Use o parâmetro `context.interaction` para aceder aos detalhes da interação do utilizador para a sessão de autenticação atual, incluindo `interactionEvent`, `userId` e `verificationRecords`.',
+      'Use o parâmetro `context.interaction` para aceder aos detalhes da interação do utilizador para a sessão de autenticação atual.',
   },
   application_data: {
     title: 'Contexto da aplicação',
     subtitle:
       'Utilize o parâmetro de entrada `context.application` para fornecer as informações da aplicação associadas ao token.',
+  },
+  organization_data: {
+    title: 'Contexto da organização',
+    subtitle:
+      'Utilize o parâmetro de entrada `context.organization` para fornecer as informações da organização de destino, disponível apenas para tokens de organização.',
   },
   token_data: {
     title: 'Dados do token',
@@ -66,6 +72,18 @@ const jwt_claims = {
   api_context: {
     title: 'Contexto da API: controlo de acesso',
     subtitle: 'Use o método `api.denyAccess` para rejeitar o pedido de token.',
+  },
+  error_handling: {
+    title: 'Tratamento de erros',
+    subtitle: 'Controla se a emissão do token deve ser bloqueada quando o script falha.',
+    input_field_title: 'Comportamento da emissão do token em caso de erro no script',
+    block_issuance_switch: 'Bloquear a emissão do token quando o script gerar erros',
+    default_hint_create:
+      'Novos scripts de claims personalizados bloqueiam por predefinição a emissão do token quando o script falha. Se a API já fornecer um valor, será usado o valor guardado.',
+    default_hint_edit:
+      'Scripts de claims personalizados existentes sem esta configuração mantêm o comportamento herdado com esta opção desativada até guardar explicitamente um valor.',
+    warning:
+      'Quando ativado, os erros de execução do script rejeitam o pedido de token com `invalid_request` (400) e um `error_description` localizado. As chamadas para `api.denyAccess` continuam a devolver `access_denied`.',
   },
   fetch_external_data: {
     title: 'Obter dados externos',
@@ -86,6 +104,11 @@ const jwt_claims = {
     subtitle: 'Ajustar token falso e dados do utilizador para teste.',
     run_button: 'Executar teste',
     result_title: 'Resultado do teste',
+  },
+  sandbox_warning: {
+    title: 'Os scripts são executados com privilégios do servidor',
+    description:
+      'No Logto self-hosted, este script é executado no mesmo ambiente que o próprio Logto: pode ler variáveis de ambiente do servidor e alcançar serviços na sua rede interna. Não está em sandbox. Dê acesso a esta página apenas a pessoas a quem confiaria o acesso ao servidor.',
   },
   form_error: {
     invalid_json: 'Formato JSON inválido',

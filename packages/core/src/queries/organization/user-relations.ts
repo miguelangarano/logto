@@ -25,6 +25,46 @@ export class UserRelationQueries extends TwoRelationsQueries<typeof Organization
     super(pool, OrganizationUserRelations.table, Organizations, Users);
   }
 
+  /**
+   * Given a candidate set of user IDs, return the subset that already have a
+   * row in `organization_user_relations` for the organization.
+   *
+   * Bounded by `userIds.length` (always the request body). Uses the
+   * `(organization_id, user_id)` primary-key index.
+   */
+  async getExistingUserIds(organizationId: string, userIds: string[]): Promise<string[]> {
+    if (userIds.length === 0) {
+      return [];
+    }
+
+    const { fields } = convertToIdentifiers(OrganizationUserRelations, true);
+    const rows = await this.pool.any<{ userId: string }>(sql`
+      select ${fields.userId}
+      from ${this.table}
+      where ${fields.organizationId} = ${organizationId}
+        and ${fields.userId} = any(${sql.array(userIds, 'varchar')})
+    `);
+
+    return rows.map((row) => row.userId);
+  }
+
+  /** Returns the subset of `organizationIds` that the user is already a member of. */
+  async getExistingOrganizationIds(userId: string, organizationIds: string[]): Promise<string[]> {
+    if (organizationIds.length === 0) {
+      return [];
+    }
+
+    const { fields } = convertToIdentifiers(OrganizationUserRelations, true);
+    const rows = await this.pool.any<{ organizationId: string }>(sql`
+      select ${fields.organizationId}
+      from ${this.table}
+      where ${fields.userId} = ${userId}
+        and ${fields.organizationId} = any(${sql.array(organizationIds, 'varchar')})
+    `);
+
+    return rows.map((row) => row.organizationId);
+  }
+
   async isMember(organizationId: string, email: string): Promise<boolean> {
     const users = convertToIdentifiers(Users, true);
     const relations = convertToIdentifiers(OrganizationUserRelations, true);
@@ -36,6 +76,20 @@ export class UserRelationQueries extends TwoRelationsQueries<typeof Organization
         on ${relations.fields.userId} = ${users.fields.id}
       where ${relations.fields.organizationId} = ${organizationId}
       and ${users.fields.primaryEmail} = ${email}
+    `);
+  }
+
+  async hasUserDisallowedTrustedDeviceOrganization(userId: string): Promise<boolean> {
+    const organizations = convertToIdentifiers(Organizations, true);
+    const relations = convertToIdentifiers(OrganizationUserRelations, true);
+
+    return this.pool.exists(sql`
+      select 1
+      from ${relations.table}
+      join ${organizations.table}
+        on ${relations.fields.organizationId} = ${organizations.fields.id}
+      where ${relations.fields.userId} = ${userId}
+        and ${organizations.fields.isTrustedDeviceAllowed} = false
     `);
   }
 
@@ -102,12 +156,24 @@ export class UserRelationQueries extends TwoRelationsQueries<typeof Organization
   async getUsersByOrganizationId(
     organizationId: string,
     { limit, offset }: GetEntitiesOptions,
-    search?: SearchOptions<(typeof userSearchKeys)[number]>
+    search?: SearchOptions<(typeof userSearchKeys)[number]>,
+    { organizationRoleId }: { organizationRoleId?: string } = {}
   ): Promise<[totalNumber: number, entities: Readonly<UserWithOrganizationRoles[]>]> {
     const roles = convertToIdentifiers(OrganizationRoles, true);
     const users = convertToIdentifiers(Users, true);
     const { fields } = convertToIdentifiers(OrganizationUserRelations, true);
     const relations = convertToIdentifiers(OrganizationRoleUserRelations, true);
+    const organizationRoleFilterSql = organizationRoleId
+      ? sql`
+        and exists (
+          select 1
+          from ${relations.table}
+          where ${relations.fields.organizationId} = ${organizationId}
+            and ${relations.fields.userId} = ${fields.userId}
+            and ${relations.fields.organizationRoleId} = ${organizationRoleId}
+        )
+      `
+      : sql``;
 
     const [{ count }, entities] = await Promise.all([
       this.pool.one<{ count: string }>(sql`
@@ -116,26 +182,44 @@ export class UserRelationQueries extends TwoRelationsQueries<typeof Organization
         left join ${users.table}
           on ${fields.userId} = ${users.fields.id}
         where ${fields.organizationId} = ${organizationId}
+        ${organizationRoleFilterSql}
         ${buildSearchSql(Users, search, sql`and `)}
       `),
+      // Aggregate roles via LATERAL so the per-user role lookup runs at most `limit` times
+      // instead of once over the full join. `order by` is explicit because the prior
+      // GROUP BY's ordering was incidental (Postgres does not guarantee GROUP BY ordering)
+      // and the rewrite removes the implementation accident that made it appear stable.
       this.pool.any<UserWithOrganizationRoles>(sql`
         select
           ${sql.join(
             userInfoSelectFields.map((field) => users.fields[field]),
             sql`, `
           )},
-          ${aggregateRoles()}
+          user_roles.${sql.identifier(['organizationRoles'])}
         from ${this.table}
         left join ${users.table}
           on ${fields.userId} = ${users.fields.id}
-        left join ${relations.table}
-          on ${relations.fields.userId} = ${users.fields.id}
-          and ${fields.organizationId} = ${relations.fields.organizationId}
-        left join ${roles.table}
-          on ${relations.fields.organizationRoleId} = ${roles.fields.id}
+        left join lateral (
+          select coalesce(
+            json_agg(
+              json_build_object(
+                'id', ${roles.fields.id},
+                'name', ${roles.fields.name}
+              )
+              order by ${roles.fields.name}
+            ),
+            '[]'::json
+          ) as ${sql.identifier(['organizationRoles'])}
+          from ${relations.table}
+          join ${roles.table}
+            on ${relations.fields.organizationRoleId} = ${roles.fields.id}
+          where ${relations.fields.organizationId} = ${organizationId}
+            and ${relations.fields.userId} = ${users.fields.id}
+        ) as user_roles on true
         where ${fields.organizationId} = ${organizationId}
+        ${organizationRoleFilterSql}
         ${buildSearchSql(Users, search, sql`and `)}
-        group by ${users.fields.id}
+        order by ${fields.userId}
         limit ${limit}
         offset ${offset}
       `),

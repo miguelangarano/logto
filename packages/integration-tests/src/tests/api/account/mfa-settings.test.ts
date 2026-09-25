@@ -200,17 +200,72 @@ describe('my-account (mfa-settings)', () => {
         scopes: [UserScope.Profile, UserScope.Identities],
       });
 
-      const response = await updateMyLogtoConfig(api, { mfa: { skipped: true } });
-      expect(response).toEqual({ mfa: { skipped: true } });
+      const verificationRecordId = await createVerificationRecordByPassword(api, password);
+      const response = await updateMyLogtoConfig(
+        api,
+        { mfa: { skipped: true } },
+        verificationRecordId
+      );
+      expect(response).toEqual({
+        mfa: { skipped: true, skipMfaOnSignIn: false },
+        passkeySignIn: { skipped: false },
+      });
 
       const updatedConfig = await getMyLogtoConfig(api);
       expect(updatedConfig.mfa.skipped).toBe(true);
 
-      const response2 = await updateMyLogtoConfig(api, { mfa: { skipped: false } });
-      expect(response2).toEqual({ mfa: { skipped: false } });
+      const verificationRecordId2 = await createVerificationRecordByPassword(api, password);
+      const response2 = await updateMyLogtoConfig(
+        api,
+        { mfa: { skipped: false } },
+        verificationRecordId2
+      );
+      expect(response2).toEqual({
+        mfa: { skipped: false, skipMfaOnSignIn: false },
+        passkeySignIn: { skipped: false },
+      });
 
       const updatedConfig2 = await getMyLogtoConfig(api);
       expect(updatedConfig2.mfa.skipped).toBe(false);
+
+      await deleteDefaultTenantUser(user.id);
+    });
+
+    it('should update passkey sign-in skip state successfully', async () => {
+      const { user, username, password } = await createDefaultTenantUserWithPassword();
+      const api = await signInAndGetUserApi(username, password, {
+        scopes: [UserScope.Profile, UserScope.Identities],
+      });
+
+      const verificationRecordId = await createVerificationRecordByPassword(api, password);
+      const response = await updateMyLogtoConfig(
+        api,
+        { passkeySignIn: { skipped: true } },
+        verificationRecordId
+      );
+      expect(response.passkeySignIn).toEqual({ skipped: true });
+
+      const verificationRecordId2 = await createVerificationRecordByPassword(api, password);
+      const response2 = await updateMyLogtoConfig(
+        api,
+        { passkeySignIn: { skipped: false } },
+        verificationRecordId2
+      );
+      expect(response2.passkeySignIn).toEqual({ skipped: false });
+
+      await deleteDefaultTenantUser(user.id);
+    });
+
+    it('should throw error if identity is not verified', async () => {
+      const { user, username, password } = await createDefaultTenantUserWithPassword();
+      const api = await signInAndGetUserApi(username, password, {
+        scopes: [UserScope.Profile, UserScope.Identities],
+      });
+
+      await expectRejects(updateMyLogtoConfig(api, { mfa: { skipped: true } }), {
+        code: 'verification_record.permission_denied',
+        status: 401,
+      });
 
       await deleteDefaultTenantUser(user.id);
     });
@@ -221,10 +276,15 @@ describe('my-account (mfa-settings)', () => {
         scopes: [UserScope.Profile],
       });
 
-      await expectRejects(updateMyLogtoConfig(api, { mfa: { skipped: true } }), {
-        code: 'auth.unauthorized',
-        status: 401,
-      });
+      const verificationRecordId = await createVerificationRecordByPassword(api, password);
+
+      await expectRejects(
+        updateMyLogtoConfig(api, { mfa: { skipped: true } }, verificationRecordId),
+        {
+          code: 'auth.unauthorized',
+          status: 401,
+        }
+      );
 
       await deleteDefaultTenantUser(user.id);
     });
@@ -240,10 +300,15 @@ describe('my-account (mfa-settings)', () => {
         scopes: [UserScope.Profile, UserScope.Identities],
       });
 
-      await expectRejects(updateMyLogtoConfig(api, { mfa: { skipped: true } }), {
-        code: 'account_center.field_not_editable',
-        status: 400,
-      });
+      const verificationRecordId = await createVerificationRecordByPassword(api, password);
+
+      await expectRejects(
+        updateMyLogtoConfig(api, { mfa: { skipped: true } }, verificationRecordId),
+        {
+          code: 'account_center.field_not_editable',
+          status: 400,
+        }
+      );
 
       await deleteDefaultTenantUser(user.id);
       await enableAllAccountCenterFields();
@@ -260,10 +325,15 @@ describe('my-account (mfa-settings)', () => {
         scopes: [UserScope.Profile, UserScope.Identities],
       });
 
-      await expectRejects(updateMyLogtoConfig(api, { mfa: { skipped: true } }), {
-        code: 'account_center.field_not_editable',
-        status: 400,
-      });
+      const verificationRecordId = await createVerificationRecordByPassword(api, password);
+
+      await expectRejects(
+        updateMyLogtoConfig(api, { mfa: { skipped: true } }, verificationRecordId),
+        {
+          code: 'account_center.field_not_editable',
+          status: 400,
+        }
+      );
 
       await deleteDefaultTenantUser(user.id);
       await enableAllAccountCenterFields();

@@ -1,5 +1,14 @@
 const user = {
+  id_already_in_use: 'Este ID de usuário já está em uso.',
   username_already_in_use: 'Este nome de usuário já está em uso.',
+  username_starts_with_number: 'Nome de usuário não pode começar com um número.',
+  username_invalid_charset_hard: 'Nome de usuário só pode conter letras, números e underscores.',
+  username_too_short: 'Nome de usuário é muito curto.',
+  username_too_long: 'Nome de usuário é muito longo.',
+  username_uppercase_not_allowed: 'Nome de usuário não pode conter letras maiúsculas.',
+  username_lowercase_not_allowed: 'Nome de usuário não pode conter letras minúsculas.',
+  username_numbers_not_allowed: 'Nome de usuário não pode conter números.',
+  username_underscore_not_allowed: 'Nome de usuário não pode conter underscores.',
   email_already_in_use: 'Este e-mail está associado a uma conta existente.',
   phone_already_in_use: 'Este número de telefone está associado a uma conta existente.',
   invalid_email: 'Endereço de e-mail inválido.',
@@ -31,6 +40,7 @@ const user = {
   role_exists: 'O id da função {{roleId}} já foi adicionado a este usuário',
   invalid_role_type:
     'Tipo de função inválido, não é possível atribuir uma função máquina a usuário.',
+  suggest_mfa: 'Para maior segurança da conta, recomendamos que você vincule MFA à sua conta.',
   missing_mfa: 'Você precisa vincular MFA adicional antes de fazer login.',
   totp_already_in_use: 'TOTP já está em uso.',
   backup_code_already_in_use: 'O código de backup já está em uso.',
@@ -43,6 +53,8 @@ const user = {
     'Nome de usuário é um identificador obrigatório, você não pode defini-lo como nulo.',
   email_or_phone_required:
     'Endereço de e-mail ou número de telefone é um identificador obrigatório, pelo menos um é necessário.',
+  last_sign_in_method_required:
+    'Você precisa manter pelo menos um método de login disponível na sua conta.',
   email_required:
     'Endereço de e-mail é um identificador obrigatório, você não pode defini-lo como nulo.',
   phone_required:

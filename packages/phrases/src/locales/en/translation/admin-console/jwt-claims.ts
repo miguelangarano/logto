@@ -35,6 +35,7 @@ const jwt_claims = {
   restore: 'Restore defaults',
   restored: 'Restored',
   data_source_tab: 'Data source',
+  error_handling_tab: 'Error handling',
   test_tab: 'Test context',
   jwt_claims_description: 'Default claims are auto-included in the  and cannot be overridden.',
   user_data: {
@@ -49,12 +50,17 @@ const jwt_claims = {
   interaction_data: {
     title: 'User interaction context',
     subtitle:
-      "Use the `context.interaction` parameter to access the user's interaction details for the current authentication session, including `interactionEvent`, `userId`, and `verificationRecords`.",
+      "Use the `context.interaction` parameter to access the user's interaction details for the current authentication session.",
   },
   application_data: {
     title: 'Application context',
     subtitle:
       'Use `context.application` input parameter to provide the application info associated with the token.',
+  },
+  organization_data: {
+    title: 'Organization context',
+    subtitle:
+      'Use `context.organization` input parameter to provide the target organization info, available only for organization tokens.',
   },
   token_data: {
     title: 'Token payload',
@@ -63,6 +69,18 @@ const jwt_claims = {
   api_context: {
     title: 'API context: access control',
     subtitle: 'Use `api.denyAccess` method to reject the token request.',
+  },
+  error_handling: {
+    title: 'Error handling',
+    subtitle: 'Control whether token issuance should be blocked when the script fails.',
+    input_field_title: 'Token issuance behavior on script error',
+    block_issuance_switch: 'Block token issuance when the script errors',
+    default_hint_create:
+      'New custom claims scripts default to blocking token issuance when the script fails. If the API already provides a value, the saved value is used instead.',
+    default_hint_edit:
+      'Existing custom claims scripts without this setting keep the legacy default off until you explicitly save a value.',
+    warning:
+      'When enabled, script runtime errors reject the token request with `invalid_request` (400) and a localized `error_description`. Calls to `api.denyAccess` still return `access_denied`.',
   },
   fetch_external_data: {
     title: 'Fetch external data',
@@ -82,6 +100,11 @@ const jwt_claims = {
     subtitle: 'Adjust mock token and user data for testing.',
     run_button: 'Run test',
     result_title: 'Test result',
+  },
+  sandbox_warning: {
+    title: 'Scripts run with server privileges',
+    description:
+      'On self-hosted Logto, this script runs in the same environment as Logto itself: it can read server environment variables and reach services on your internal network. It is not sandboxed. Only give access to this page to people you would trust with access to the server.',
   },
   form_error: {
     invalid_json: 'Invalid JSON format',

@@ -1,5 +1,56 @@
 # @logto/connector-apple
 
+## 1.6.9
+
+### Patch Changes
+
+- Updated dependencies [16f4b2e732]
+  - @logto/shared@3.4.3
+  - @logto/connector-kit@5.1.1
+
+## 1.6.8
+
+### Patch Changes
+
+- 4963a55b4: upgrade jose from v5 to v6
+
+  These connectors now use jose 6, which runs on the Web Crypto API instead of Node's crypto module. Token signing and ID token verification behave exactly as before.
+
+- Updated dependencies [58cb52c705]
+  - @logto/shared@3.4.2
+
+## 1.6.7
+
+### Patch Changes
+
+- Updated dependencies [e7b6e9de1]
+- Updated dependencies [b7386a5113]
+- Updated dependencies [67b99bba85]
+  - @logto/connector-kit@5.1.0
+  - @logto/shared@3.4.1
+
+## 1.6.6
+
+### Patch Changes
+
+- Updated dependencies [41a56f79e3]
+  - @logto/connector-kit@5.0.1
+
+## 1.6.5
+
+### Patch Changes
+
+- Updated dependencies [3350b13ec8]
+  - @logto/shared@3.4.0
+
+## 1.6.4
+
+### Patch Changes
+
+- Updated dependencies [4e25126228]
+- Updated dependencies [4e25126228]
+  - @logto/connector-kit@5.0.0
+
 ## 1.6.3
 
 ### Patch Changes

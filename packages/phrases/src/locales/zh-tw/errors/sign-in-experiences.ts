@@ -21,11 +21,21 @@ const sign_in_experiences = {
   phone_verification_code_cannot_be_used_for_sign_in:
     '當 SMS 驗證碼啟用用於 MFA 時，不能用於登錄。',
   adaptive_mfa_requires_mfa: '啟用自適應 MFA 前必須先啟用 MFA。',
+  adaptive_mfa_requires_non_skippable_policy:
+    '自適應 MFA 需要一個不可跳過的 MFA 提示政策。使用 PromptOnlyAtSignInMandatory 或 PromptAtSignInAndSignUpMandatory。',
+  non_adaptive_mfa_requires_skippable_policy:
+    '當自適應 MFA 被禁用時，MFA 提示政策必須是可跳過的。不要使用 PromptOnlyAtSignInMandatory 或 PromptAtSignInAndSignUpMandatory。',
   duplicated_sign_up_identifiers: '檢測到重複的註冊識別符。',
   missing_sign_up_identifiers: '主要註冊識別符不能為空。',
   invalid_custom_email_blocklist_format:
     '無效的自訂電子郵件封鎖清單項目：{{items, list(type:conjunction)}}。每個項目必須是有效的電子郵件地址或電子郵件域，例如：foo@example.com 或 @example.com。',
   forgot_password_method_requires_connector: '忘記密碼方法需要配置對應的 {{method}} 連接器。',
+  password_expiration_requires_forgot_password:
+    '密碼過期需要至少配置一種帶有有效連接器的忘記密碼方式。',
+  password_expiration_not_enabled: '密碼過期策略未啟用。在過期密碼前，請在登錄體驗設置中啟用它。',
+  password_expiration_invalid_period_days: '啟用密碼到期策略時，有效期天數必須為正整數。',
+  username_policy_case_conflicts_exist:
+    '在存在僅大小寫不同的用戶名時，無法切換到大小寫不敏感的用戶名。請解決衝突後重試。',
 };
 
 export default Object.freeze(sign_in_experiences);

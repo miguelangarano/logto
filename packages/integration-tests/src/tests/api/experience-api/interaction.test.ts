@@ -5,13 +5,18 @@ import {
   VerificationType,
 } from '@logto/schemas';
 
-import { mockEmailConnectorId, mockSocialConnectorId } from '#src/__mocks__/connectors-mock.js';
+import {
+  mockEmailConnectorId,
+  mockSmsConnectorId,
+  mockSocialConnectorId,
+} from '#src/__mocks__/connectors-mock.js';
 import { updateSignInExperience } from '#src/api/sign-in-experience.js';
 import { SsoConnectorApi } from '#src/api/sso-connector.js';
 import { initExperienceClient } from '#src/helpers/client.js';
 import {
   clearConnectorsByTypes,
   setEmailConnector,
+  setSmsConnector,
   setSocialConnector,
 } from '#src/helpers/connector.js';
 import {
@@ -29,7 +34,7 @@ import {
 } from '#src/helpers/experience/verification-code.js';
 import { expectRejects } from '#src/helpers/index.js';
 import { generateNewUserProfile, UserApiTest } from '#src/helpers/user.js';
-import { devFeatureTest, generateEmail, generateUserId, randomString } from '#src/utils.js';
+import { generateEmail, generateUserId, randomString } from '#src/utils.js';
 
 describe('PUT /experience API', () => {
   const userApi = new UserApiTest();
@@ -92,7 +97,7 @@ describe('PUT /experience API', () => {
   });
 });
 
-devFeatureTest.describe('GET /experience/interaction', () => {
+describe('GET /experience/interaction', () => {
   const userApi = new UserApiTest();
   const connectorIdMap = new Map<string, string>();
   const ssoConnectorApi = new SsoConnectorApi();
@@ -100,12 +105,15 @@ devFeatureTest.describe('GET /experience/interaction', () => {
   beforeAll(async () => {
     await clearConnectorsByTypes([ConnectorType.Social, ConnectorType.Email]);
 
-    const [emailConnector, socialConnector] = await Promise.all([
+    const [emailConnector, socialConnector, smsConnector] = await Promise.all([
       setEmailConnector(),
       setSocialConnector(),
+      setSmsConnector(),
     ]);
+
     connectorIdMap.set(mockEmailConnectorId, emailConnector.id);
     connectorIdMap.set(mockSocialConnectorId, socialConnector.id);
+    connectorIdMap.set(mockSmsConnectorId, smsConnector.id);
   });
 
   afterAll(async () => {
@@ -114,7 +122,7 @@ devFeatureTest.describe('GET /experience/interaction', () => {
     await ssoConnectorApi.cleanUp();
   });
 
-  devFeatureTest.it('should return public interaction data for fresh interaction', async () => {
+  it('should return public interaction data for fresh interaction', async () => {
     const client = await initExperienceClient();
     const data = await client.getInteractionData();
 
@@ -129,59 +137,53 @@ devFeatureTest.describe('GET /experience/interaction', () => {
     });
   });
 
-  devFeatureTest.it(
-    'should return correct interaction event type in interaction data',
-    async () => {
-      // Test SignIn event
-      const signInClient = await initExperienceClient({
-        interactionEvent: InteractionEvent.SignIn,
-      });
-      const signInData = await signInClient.getInteractionData();
-      expect(signInData.interactionEvent).toBe(InteractionEvent.SignIn);
+  it('should return correct interaction event type in interaction data', async () => {
+    // Test SignIn event
+    const signInClient = await initExperienceClient({
+      interactionEvent: InteractionEvent.SignIn,
+    });
+    const signInData = await signInClient.getInteractionData();
+    expect(signInData.interactionEvent).toBe(InteractionEvent.SignIn);
 
-      // Test Register event
-      const registerClient = await initExperienceClient({
-        interactionEvent: InteractionEvent.Register,
-      });
-      const registerData = await registerClient.getInteractionData();
-      expect(registerData.interactionEvent).toBe(InteractionEvent.Register);
+    // Test Register event
+    const registerClient = await initExperienceClient({
+      interactionEvent: InteractionEvent.Register,
+    });
+    const registerData = await registerClient.getInteractionData();
+    expect(registerData.interactionEvent).toBe(InteractionEvent.Register);
 
-      // Test ForgotPassword event
-      const forgotPasswordClient = await initExperienceClient({
-        interactionEvent: InteractionEvent.ForgotPassword,
-      });
-      const forgotPasswordData = await forgotPasswordClient.getInteractionData();
-      expect(forgotPasswordData.interactionEvent).toBe(InteractionEvent.ForgotPassword);
-    }
-  );
+    // Test ForgotPassword event
+    const forgotPasswordClient = await initExperienceClient({
+      interactionEvent: InteractionEvent.ForgotPassword,
+    });
+    const forgotPasswordData = await forgotPasswordClient.getInteractionData();
+    expect(forgotPasswordData.interactionEvent).toBe(InteractionEvent.ForgotPassword);
+  });
 
-  devFeatureTest.it(
-    'should return interaction data with password verification record',
-    async () => {
-      const { username, password } = generateNewUserProfile({ username: true, password: true });
-      await userApi.create({ username, password });
+  it('should return interaction data with password verification record', async () => {
+    const { username, password } = generateNewUserProfile({ username: true, password: true });
+    await userApi.create({ username, password });
 
-      const client = await initExperienceClient();
+    const client = await initExperienceClient();
 
-      // Create a password verification record
-      const { verificationId } = await client.verifyPassword({
-        identifier: { type: SignInIdentifier.Username, value: username },
-        password,
-      });
+    // Create a password verification record
+    const { verificationId } = await client.verifyPassword({
+      identifier: { type: SignInIdentifier.Username, value: username },
+      password,
+    });
 
-      const data = await client.getInteractionData();
+    const data = await client.getInteractionData();
 
-      expect(data.verificationRecords).toHaveLength(1);
-      expect(data.verificationRecords![0]).toMatchObject({
-        id: verificationId,
-        type: VerificationType.Password,
-        verified: true,
-        identifier: { type: SignInIdentifier.Username, value: username },
-      });
-    }
-  );
+    expect(data.verificationRecords).toHaveLength(1);
+    expect(data.verificationRecords![0]).toMatchObject({
+      id: verificationId,
+      type: VerificationType.Password,
+      verified: true,
+      identifier: { type: SignInIdentifier.Username, value: username },
+    });
+  });
 
-  devFeatureTest.it('should return interaction data with email verification record', async () => {
+  it('should return interaction data with email verification record', async () => {
     const { primaryEmail } = generateNewUserProfile({ primaryEmail: true });
     await userApi.create({ primaryEmail });
 
@@ -219,7 +221,7 @@ devFeatureTest.describe('GET /experience/interaction', () => {
     });
   });
 
-  devFeatureTest.it('should return interaction data with phone verification record', async () => {
+  it('should return interaction data with phone verification record', async () => {
     const { primaryPhone } = generateNewUserProfile({ primaryPhone: true });
     await userApi.create({ primaryPhone });
 
@@ -257,62 +259,59 @@ devFeatureTest.describe('GET /experience/interaction', () => {
     });
   });
 
-  devFeatureTest.it(
-    'should return interaction data with profile info after fulfilling profile',
-    async () => {
-      const { username, password } = generateNewUserProfile({ username: true, password: true });
-      const { id: userId } = await userApi.create({ username, password });
+  it('should return interaction data with profile info after fulfilling profile', async () => {
+    const { username, password } = generateNewUserProfile({ username: true, password: true });
+    const { id: userId } = await userApi.create({ username, password });
 
-      const client = await initExperienceClient();
-      const { verificationId: passwordVerificationId } = await identifyUserWithUsernamePassword(
-        client,
-        username,
-        password
-      );
+    const client = await initExperienceClient();
+    const { verificationId: passwordVerificationId } = await identifyUserWithUsernamePassword(
+      client,
+      username,
+      password
+    );
 
-      const primaryEmail = generateEmail();
+    const primaryEmail = generateEmail();
 
-      const { verificationId: emailVerificationId, code: verificationCode } =
-        await successfullySendVerificationCode(client, {
-          identifier: { type: SignInIdentifier.Email, value: primaryEmail },
-          interactionEvent: InteractionEvent.SignIn,
-        });
-      await successfullyVerifyVerificationCode(client, {
+    const { verificationId: emailVerificationId, code: verificationCode } =
+      await successfullySendVerificationCode(client, {
         identifier: { type: SignInIdentifier.Email, value: primaryEmail },
-        verificationId: emailVerificationId,
-        code: verificationCode,
-      });
-
-      await client.updateProfile({
-        type: SignInIdentifier.Email,
-        verificationId: emailVerificationId,
-      });
-
-      const data = await client.getInteractionData();
-
-      expect(data).toMatchObject({
         interactionEvent: InteractionEvent.SignIn,
-        userId,
-        profile: { primaryEmail },
-        verificationRecords: [
-          {
-            id: passwordVerificationId,
-            type: VerificationType.Password,
-            verified: true,
-            identifier: { type: SignInIdentifier.Username, value: username },
-          },
-          {
-            id: emailVerificationId,
-            type: VerificationType.EmailVerificationCode,
-            verified: true,
-            identifier: { type: SignInIdentifier.Email, value: primaryEmail },
-          },
-        ],
       });
-    }
-  );
+    await successfullyVerifyVerificationCode(client, {
+      identifier: { type: SignInIdentifier.Email, value: primaryEmail },
+      verificationId: emailVerificationId,
+      code: verificationCode,
+    });
 
-  devFeatureTest.it('should not include sensitive data in verification records', async () => {
+    await client.updateProfile({
+      type: SignInIdentifier.Email,
+      verificationId: emailVerificationId,
+    });
+
+    const data = await client.getInteractionData();
+
+    expect(data).toMatchObject({
+      interactionEvent: InteractionEvent.SignIn,
+      userId,
+      profile: { primaryEmail },
+      verificationRecords: [
+        {
+          id: passwordVerificationId,
+          type: VerificationType.Password,
+          verified: true,
+          identifier: { type: SignInIdentifier.Username, value: username },
+        },
+        {
+          id: emailVerificationId,
+          type: VerificationType.EmailVerificationCode,
+          verified: true,
+          identifier: { type: SignInIdentifier.Email, value: primaryEmail },
+        },
+      ],
+    });
+  });
+
+  it('should not include sensitive data in verification records', async () => {
     const { username, password } = generateNewUserProfile({ username: true, password: true });
     await userApi.create({ username, password });
 
@@ -332,7 +331,7 @@ devFeatureTest.describe('GET /experience/interaction', () => {
     expect(passwordRecord).not.toHaveProperty('passwordEncrypted');
   });
 
-  devFeatureTest.it('should return interaction data for social verification', async () => {
+  it('should return interaction data for social verification', async () => {
     const state = 'fake_state';
     const redirectUri = 'http://localhost:3000/redirect';
     const authorizationCode = 'fake_code';
@@ -370,7 +369,7 @@ devFeatureTest.describe('GET /experience/interaction', () => {
     });
   });
 
-  devFeatureTest.it('should return interaction data for enterprise SSO verification', async () => {
+  it('should return interaction data for enterprise SSO verification', async () => {
     const state = 'fake_state';
     const redirectUri = 'http://localhost:3000/redirect';
     const code = 'fake_code';

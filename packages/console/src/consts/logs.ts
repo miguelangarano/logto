@@ -17,6 +17,7 @@ export const auditLogEventTitle = Object.freeze({
   'Interaction.Register.Update': 'Update register interaction',
   'Interaction.SignIn.Profile.Update': 'Patch update sign-in interaction profile',
   'Interaction.SignIn.Submit': 'Submit sign-in interaction',
+  'Interaction.SignIn.StepUp.Submit': 'Submit step-up authentication',
   'Interaction.SignIn.Update': 'Update sign-in interaction',
   'Interaction.Register.Create': 'Create new register interaction',
   'Interaction.SignIn.Create': 'Create new sign-in interaction',
@@ -31,9 +32,9 @@ export const auditLogEventTitle = Object.freeze({
   'Interaction.SignIn.Verification.Totp.Submit': 'Sign-in: Verify TOTP code',
   'Interaction.SignIn.Verification.WebAuthn.Create': 'Sign-in: Create WebAuthn authentication',
   'Interaction.SignIn.Verification.WebAuthn.Submit': 'Sign-in: Verify WebAuthn authentication',
-  'Interaction.SignIn.Verification.SignInWebAuthn.Create':
+  'Interaction.SignIn.Verification.SignInPasskey.Create':
     'Sign-in: Create passkey sign-in authentication',
-  'Interaction.SignIn.Verification.SignInWebAuthn.Submit':
+  'Interaction.SignIn.Verification.SignInPasskey.Submit':
     'Sign-in: Verify passkey sign-in authentication',
   'Interaction.SignIn.Verification.EmailVerificationCode.Create':
     'Create and send sign-in email verification code',
@@ -93,6 +94,10 @@ export const auditLogEventTitle = Object.freeze({
   'JwtCustomizer.ClientCredentials': 'Get custom M2M access token claims',
   'SamlApplication.AuthnRequest': 'Receive SAML application authentication request',
   'SamlApplication.Callback': 'Handle SAML application callback',
+  'Action.PostFirstFactorVerification': 'Execute post first-factor verification action',
+  'Action.PostSignIn': 'Execute post sign-in action',
+  'TrustedDevice.Created': 'Create trusted device',
+  'TrustedDevice.Used': 'Use trusted device',
 } satisfies Partial<Record<Exclude<AuditLogKey, interaction.DeprecatedInteractionLogKey>, string>>);
 
 export const logEventTitle: Record<string, Optional<string>> & {

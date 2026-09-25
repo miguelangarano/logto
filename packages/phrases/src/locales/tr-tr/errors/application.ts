@@ -9,6 +9,8 @@ const application = {
     'Üçüncü taraf uygulamaları token değişimini etkinleştiremez.',
   user_consent_scopes_not_found: 'Geçersiz kullanıcı onay kapsamları.',
   consent_management_api_scopes_not_allowed: 'Yönetim API kapsamları izin verilmiyor.',
+  device_flow_native_only: 'Cihaz akışı yalnızca yerel uygulamalar için kullanılabilir.',
+  device_flow_not_changeable: 'Cihaz akışı uygulama oluşturulduktan sonra değiştirilemez.',
   protected_app_metadata_is_required: 'Korunan uygulama meta verileri gereklidir.',
   protected_app_not_configured:
     'Korunan uygulama sağlayıcısı yapılandırılmamıştır. Bu özellik açık kaynak sürümü için mevcut değil.',
@@ -21,6 +23,7 @@ const application = {
   should_delete_custom_domains_first: 'Özel domainleri önce silmelisiniz.',
   no_legacy_secret_found: 'Uygulamanın eski bir gizli anahtarı yok.',
   secret_name_exists: 'Gizli isim zaten mevcut.',
+  sync_application_secret_failed: 'Uygulama gizli anahtarı senkronize edilemedi.',
   saml: {
     use_saml_app_api:
       "`[METHOD] /saml-applications(/.*)?` API'sini SAML uygulamasını çalıştırmak için kullanın.",
@@ -29,6 +32,8 @@ const application = {
       '{{limit}} sınırına ulaşıldığı için daha fazla SAML uygulaması oluşturamazsınız.',
     acs_url_binding_not_supported:
       'SAML iddialarını almak için sadece HTTP-POST bağlaması desteklenir.',
+    acs_url_scheme_not_supported:
+      'Assertion Consumer Service URL’si için yalnızca HTTP ve HTTPS şemaları desteklenir.',
     can_not_delete_active_secret: 'Aktif gizli anahtar silinemez.',
     no_active_secret: 'Aktif gizli anahtar bulunamadı.',
     entity_id_required: 'Meta verileri oluşturmak için Kimlik Varlığı gereklidir.',

@@ -3,6 +3,8 @@ const applications = {
   title: '全部應用',
   subtitle: '創建一個移動、單頁、machine-to-machine 或傳統 web 應用程序，並通過 Logto 進行身份驗證',
   subtitle_with_app_type: '為你的 {{name}} 應用程序設置 Logto 身份驗證',
+  create_device_flow_description:
+    '建立一個使用 OAuth 2.0 裝置授權許可的原生應用程式，適用於輸入受限裝置或無頭應用程式。',
   create: '創建應用',
   create_third_party: '創建第三方應用程式',
   create_thrid_party_modal_title: '創建第三方應用（{{type}}）',
@@ -22,7 +24,7 @@ const applications = {
     native: {
       title: '原生應用',
       subtitle: '在原生環境中運行的應用程序',
-      description: '例如 iOS app，Android app',
+      description: '例如 iOS app、Android app、桌面 app、電視、CLI',
     },
     spa: {
       title: '單頁應用',
@@ -55,11 +57,65 @@ const applications = {
       description: '例如 OIDC，SAML',
     },
   },
+  authorization_flow: {
+    title: '授權流程',
+    tooltip: '選擇應用程式的授權流程。一旦設定，將無法更改。',
+    authorization_code: {
+      title: 'Authorization code',
+      description: '預設且最常見的授權類型。使用者將被重新導向到登入頁面以直接授權存取。',
+    },
+    device_flow: {
+      title: 'Device flow',
+      description:
+        '適用於輸入受限的裝置或無介面應用程式（如電視、CLI）。使用者在另一台裝置上透過輸入裝置碼或掃描 QR 碼完成登入。',
+    },
+  },
   placeholder_title: '選擇應用程式類型以繼續',
   placeholder_description:
     'Logto 使用 OIDC 的應用程式實體來幫助識別您的應用程式、管理登錄和創建審核日誌等任務。',
   third_party_application_placeholder_description:
     '使用 Logto 作為身份提供者為第三方服務提供 OAuth 授權。 \n 包括一個內建的用戶同意螢幕以訪問資源。<a>了解更多</a>',
+  dynamic_app: {
+    title: '動態應用',
+    subtitle: 'CIMD',
+    description: '動態應用允許 OAuth 用戶端無需預先註冊即可接入。',
+    settings_description:
+      '動態應用允許 OAuth 用戶端無需預先註冊即可接入，基於 OAuth Client ID Metadata Document (CIMD) 規範。',
+    beta_notice: '動態應用目前處於測試階段。歡迎探索並 <ContactLink>分享您的意見</ContactLink>。',
+    app_id_placeholder: '由每個用戶端動態提供',
+    enable_confirm_modal: {
+      title: '啟用動態用戶端接入？',
+      content:
+        '任何擁有有效公開 HTTPS 用戶端 ID URL 的 OAuth 用戶端，都可以無需預先註冊即向該租戶發起授權。存取範圍仍受你設定的最大權限和用戶同意的限制。',
+      beta_pricing_notice:
+        '動態應用在 Beta 期間免費使用。Beta 結束後可能會作為附加功能收費。屆時我們會提前通知你，你也可以隨時關閉它。',
+    },
+    enabled: '動態應用已成功啟用。',
+    disable_confirm_modal: {
+      title: '停用動態應用？',
+      content:
+        'CIMD 用戶端將無法再發起新的授權請求。既有的授權記錄會保留，已簽發的存取權杖在到期前可能仍然有效。',
+    },
+    disabled: '動態應用已成功停用。',
+    permissions: {
+      user_title: '用戶',
+      user_description: '選擇 OAuth 客戶端為存取特定用戶數據所需的權限。',
+      grant_user_level_permissions: '授予用戶權限',
+      organization_title: '組織',
+      organization_description: '選擇 OAuth 客戶端為存取特定組織數據所需的權限。',
+      grant_organization_level_permissions: '授予組織權限',
+      permission_delete_confirm:
+        '此操作將從動態應用中移除該權限，阻止 OAuth 客戶端就該權限請求用戶授權。是否確定要繼續？',
+    },
+    client_compatibility: {
+      title: '用戶端兼容性',
+      description:
+        '針對尚未完整支援 OpenID Connect 的 OAuth 用戶端，調整 Logto 處理其授權請求的方式。這些設定處於實驗階段，可能會變更或被移除。',
+      add_consent_prompt_for_offline_access: '為離線存取添加同意提示',
+      add_consent_prompt_for_offline_access_description:
+        '當 OAuth 用戶端請求 `offline_access` 但未附帶 `prompt=consent` 時，Logto 會添加同意提示，以便用戶端取得刷新令牌。建議在接入 ChatGPT、Codex 等用戶端時開啟。',
+    },
+  },
   guide: {
     third_party: {
       title: '整合第三方應用程式',

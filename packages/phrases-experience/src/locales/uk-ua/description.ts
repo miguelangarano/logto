@@ -36,6 +36,8 @@ const description = {
   reset_password: 'Скинути пароль',
   reset_password_description:
     'Введіть {{types, list(type: disjunction;)}}, пов’язаний з вашим обліковим записом, і ми надішлемо вам код підтвердження для скидання пароля.',
+  reset_password_magic_link_description:
+    'Введіть адресу електронної пошти, пов’язану з вашим обліковим записом, щоб продовжити скидання пароля.',
   new_password: 'Новий пароль',
   set_password: 'Встановити пароль',
   password_changed: 'Пароль змінено',
@@ -46,6 +48,7 @@ const description = {
   enter_username: 'Встановити ім’я користувача',
   enter_username_description:
     'Ім’я користувача є альтернативою для входу. Воно має містити лише літери, цифри та підкреслення.',
+  enter_username_policy_description: 'Ім’я користувача є альтернативою для входу. {{requirements}}',
   link_email: 'Зв’язати електронну пошту',
   link_phone: 'Зв’язати телефон',
   link_email_or_phone: 'Зв’язати електронну пошту або телефон',
@@ -59,6 +62,12 @@ const description = {
     'Для додаткової безпеки, будь ласка, заповніть наведені нижче дані облікового запису.',
   create_your_account: 'Створіть свій обліковий запис',
   sign_in_to_your_account: 'Увійдіть до свого облікового запису',
+  device_activation: 'Активація пристрою',
+  device_activation_description:
+    'Введіть код, що відображається на вашому пристрої. Переконайтеся, що він збігається, потім продовжіть вхід на цьому пристрої.',
+  device_activation_error_description: 'Введіть код, що відображається на вашому пристрої.',
+  device_activation_success: 'Ваш пристрій підключено!',
+  device_activation_success_description: 'Поверніться до свого пристрою, щоб продовжити.',
   no_region_code_found: 'Код регіону не знайдено',
   verify_email: 'Підтвердіть вашу електронну пошту',
   verify_phone: 'Підтвердіть ваш номер телефону',
@@ -80,12 +89,25 @@ const description = {
     character_types_other:
       'має містити щонайменше {{count}} типів символів: великі літери, малі літери, цифри та спеціальні символи',
   },
+  username_requirements: "Ім'я користувача {{items, list}}.",
+  username_requirement: {
+    length: 'має містити від {{min}} до {{max}} символів',
+    characters: 'може містити лише {{characters, list}}',
+  },
+  username_character: {
+    uppercase: 'великі літери',
+    lowercase: 'малі літери',
+    number: 'цифри',
+    underscore: 'підкреслення',
+  },
   use: 'Використовувати',
   single_sign_on_email_form: 'Введіть вашу корпоративну електронну адресу',
   single_sign_on_connectors_list:
     'Ваше підприємство увімкнуло єдиний вхід (SSO) для електронної пошти {{email}}. Ви можете продовжити вхід за допомогою таких постачальників SSO.',
   single_sign_on_enabled: 'Єдиний вхід (SSO) увімкнено для цього облікового запису',
   authorize_title: 'Авторизувати {{name}}',
+  unregistered_client_notice:
+    'Цей застосунок самозаявлений доменом <hostname>{{host}}</hostname>, включно з назвою та логотипом. Перевірте імʼя хоста, перш ніж продовжити.',
   request_permission: '{{name}} запитує доступ до:',
   grant_organization_access: 'Надати доступ організації:',
   authorize_personal_data_usage: 'Дозволити використання ваших персональних даних:',
@@ -104,6 +126,8 @@ const description = {
   identifier_register_description:
     'Введіть {{types, list(type: disjunction;)}} для створення нового облікового запису.',
   all_account_creation_options: 'Усі варіанти створення облікового запису',
+  password_expired: 'Термін дії вашого пароля закінчився, і його потрібно скинути перед входом.',
+  password_expiration_reset: 'Скинути пароль',
   back_to_sign_in: 'Повернутися до входу',
   support_email: 'Електронна пошта підтримки: <link></link>',
   support_website: 'Вебсайт підтримки: <link></link>',
@@ -111,6 +135,17 @@ const description = {
   switch_account_description:
     'Щоб продовжити, ви будете вийдені з поточного облікового запису та автоматично переключені на новий.',
   about_yourself: 'Розкажіть про себе',
+  verify_identity: 'Підтвердьте свою особу',
+  choose_verification_method: 'Виберіть спосіб входу',
+  verification_method: {
+    passkey: 'Ключ доступу',
+    passkey_description: 'Підтвердження через пристрій або USB-обладнання',
+    password: 'Пароль',
+    password_description: 'Введіть пароль',
+    email_verification_code: 'Код підтвердження електронною поштою',
+    phone_verification_code: 'Код підтвердження телефоном',
+    verification_code_description: 'Надіслати на {{target}}',
+  },
 };
 
 export default Object.freeze(description);

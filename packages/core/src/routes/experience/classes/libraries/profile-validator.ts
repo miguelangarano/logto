@@ -13,13 +13,19 @@ import {
 } from '@logto/schemas';
 
 import RequestError from '#src/errors/RequestError/index.js';
+import { resolveSignUpCustomProfileFields } from '#src/libraries/custom-profile-fields/utils.js';
 import type Queries from '#src/tenants/Queries.js';
 import assertThat from '#src/utils/assert-that.js';
 
 import type { InteractionProfile } from '../../types.js';
 
+import type { SignInExperienceValidator } from './sign-in-experience-validator.js';
+
 export class ProfileValidator {
-  constructor(private readonly queries: Queries) {}
+  constructor(
+    private readonly queries: Queries,
+    private readonly signInExperienceValidator: SignInExperienceValidator
+  ) {}
 
   public async guardProfileUniquenessAcrossUsers(profile: InteractionProfile = {}) {
     const { hasUser, hasUserWithEmail, hasUserWithNormalizedPhone, hasUserWithIdentity } =
@@ -30,7 +36,7 @@ export class ProfileValidator {
 
     if (username) {
       assertThat(
-        !(await hasUser(username)),
+        !(await hasUser(username, await this.queries.signInExperiences.getUsernameCaseSensitive())),
         new RequestError({
           code: 'user.username_already_in_use',
           status: 422,
@@ -198,18 +204,47 @@ export class ProfileValidator {
     return missingProfile;
   }
 
+  /**
+   * Check if there are missing extra profile fields.
+   *
+   * @param profile - The current interaction profile data.
+   * @param user - The existing user (if any).
+   * @param extraProfileSubmitted - Whether the user has already submitted the extra profile form.
+   *   When true, only required fields are enforced; optional fields can be skipped.
+   */
   public async hasMissingExtraProfileFields(profile: InteractionProfile, user?: User) {
-    const customProfileFields = await this.queries.customProfileFields.findAllCustomProfileFields();
-    const mandatoryCustomProfileFieldNames = customProfileFields
-      .filter(({ required }) => required)
-      .reduce((accumulator, currentField) => {
-        if (currentField.name === 'fullname') {
-          return [...accumulator, ...(currentField.config.parts?.map(({ name }) => name) ?? [])];
-        }
-        return [...accumulator, currentField.name];
-      }, new Array<string>());
+    const [allCustomProfileFields, signInExperience] = await Promise.all([
+      this.queries.customProfileFields.findAllCustomProfileFields(),
+      this.signInExperienceValidator.getSignInExperienceData(),
+    ]);
 
-    for (const name of mandatoryCustomProfileFieldNames) {
+    // Resolve which fields are relevant for sign-up. The helper owns the dev-feature and
+    // null/undefined fallback logic; explicit arrays narrow the catalog to a sign-up subset.
+    const customProfileFields = resolveSignUpCustomProfileFields(
+      allCustomProfileFields,
+      signInExperience.signUpProfileFields
+    );
+
+    // Return false early if there are no custom profile fields to collect
+    if (customProfileFields.length === 0) {
+      return false;
+    }
+
+    // If user has already submitted the extra profile form (even with empty values),
+    // only enforce required fields. Optional fields can be skipped.
+    const fieldsToCheck = profile.submitted
+      ? customProfileFields.filter(({ required }) => required)
+      : customProfileFields;
+
+    // Get all field names to check (expanding fullname into its subfields)
+    const fieldNamesToCheck = fieldsToCheck.reduce((accumulator, currentField) => {
+      if (currentField.name === 'fullname') {
+        return [...accumulator, ...(currentField.config.parts?.map(({ name }) => name) ?? [])];
+      }
+      return [...accumulator, currentField.name];
+    }, new Array<string>());
+
+    for (const name of fieldNamesToCheck) {
       const foundInUser =
         this.hasField(user, name) ||
         this.hasField(user?.profile, name) ||

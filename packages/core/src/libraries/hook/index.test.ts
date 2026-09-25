@@ -70,6 +70,7 @@ const { triggerInteractionHooks, triggerTestHook, triggerDataHooks, resendWebhoo
         findUserById: jest.fn().mockReturnValue({
           id: 'user_id',
           username: 'user',
+          cimdClientId: 'https://client.example.com/metadata.json',
           extraField: 'not_ok',
         }),
       },
@@ -97,11 +98,14 @@ describe('triggerInteractionHooks()', () => {
       sessionId: 'some_jti',
     });
 
-    interactionHookContext.assignInteractionHookResult({
+    interactionHookContext.assignReleaseOnSuccessInteractionHookResult({
       userId: '123',
     });
 
-    await triggerInteractionHooks(new ConsoleLog(), interactionHookContext);
+    await triggerInteractionHooks(
+      new ConsoleLog(),
+      interactionHookContext.getReleaseOnSuccessDispatchContext()
+    );
 
     expect(findAllHooks).toHaveBeenCalled();
     expect(findApplicationById).toHaveBeenCalledWith('some_client');
@@ -113,7 +117,11 @@ describe('triggerInteractionHooks()', () => {
         interactionEvent: 'SignIn',
         sessionId: interactionHookContext.metadata.sessionId,
         userId: '123',
-        user: { id: 'user_id', username: 'user' },
+        user: {
+          id: 'user_id',
+          username: 'user',
+          cimdClientId: 'https://client.example.com/metadata.json',
+        },
         application: { id: 'app_id' },
         createdAt: new Date(100_000).toISOString(),
       },
@@ -138,6 +146,114 @@ describe('triggerInteractionHooks()', () => {
     expect(calledPayload).toHaveProperty('payload.response.statusCode', 200);
     expect(calledPayload).toHaveProperty('payload.response.body.message', 'ok');
     jest.useRealTimers();
+  });
+
+  it('should trigger adaptive MFA interaction webhook without dropping post sign-in webhook', async () => {
+    const adaptiveMfaHook: Hook = {
+      ...hook,
+      id: 'adaptive-mfa-hook',
+      event: InteractionHookEvent.PostSignInAdaptiveMfaTriggered,
+      events: [InteractionHookEvent.PostSignInAdaptiveMfaTriggered],
+    };
+
+    findAllHooks.mockResolvedValueOnce([hook, adaptiveMfaHook, dataHook]);
+
+    const interactionHookContext = new InteractionHookContextManager({
+      interactionEvent: InteractionEvent.SignIn,
+      applicationId: 'some_client',
+      sessionId: 'some_jti',
+    });
+
+    interactionHookContext.assignReleaseAnywayInteractionHookResult({
+      event: InteractionHookEvent.PostSignInAdaptiveMfaTriggered,
+      payload: {
+        adaptiveMfaResult: {
+          requiresMfa: true,
+          triggeredRules: [{ rule: 'untrusted_ip' }],
+        },
+        event: InteractionHookEvent.PostRegister,
+        userId: 'override-user-id',
+        sessionId: 'override-session-id',
+      } as unknown as never,
+      userId: '123',
+    });
+    interactionHookContext.assignReleaseOnSuccessInteractionHookResult({
+      userId: '123',
+    });
+
+    await triggerInteractionHooks(new ConsoleLog(), {
+      metadata: interactionHookContext.metadata,
+      hookEvent: interactionHookContext.hookEvent,
+      interactionHookResults: interactionHookContext.interactionHookResults,
+    });
+
+    expect(sendWebhookRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hookConfig: adaptiveMfaHook.config,
+        payload: expect.objectContaining({
+          event: InteractionHookEvent.PostSignInAdaptiveMfaTriggered,
+          interactionEvent: InteractionEvent.SignIn,
+          adaptiveMfaResult: {
+            requiresMfa: true,
+            triggeredRules: [{ rule: 'untrusted_ip' }],
+          },
+        }) as unknown,
+      })
+    );
+
+    expect(sendWebhookRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hookConfig: hook.config,
+        payload: expect.objectContaining({
+          event: InteractionHookEvent.PostSignIn,
+          interactionEvent: InteractionEvent.SignIn,
+        }) as unknown,
+      })
+    );
+  });
+
+  it('should not allow custom payload to override reserved interaction fields', async () => {
+    const adaptiveMfaHook: Hook = {
+      ...hook,
+      id: 'adaptive-mfa-hook',
+      event: InteractionHookEvent.PostSignInAdaptiveMfaTriggered,
+      events: [InteractionHookEvent.PostSignInAdaptiveMfaTriggered],
+    };
+
+    findAllHooks.mockResolvedValueOnce([adaptiveMfaHook]);
+
+    const interactionHookContext = new InteractionHookContextManager({
+      interactionEvent: InteractionEvent.SignIn,
+      applicationId: 'some_client',
+      sessionId: 'some_jti',
+    });
+
+    interactionHookContext.assignReleaseAnywayInteractionHookResult({
+      event: InteractionHookEvent.PostSignInAdaptiveMfaTriggered,
+      payload: {
+        adaptiveMfaResult: {
+          requiresMfa: true,
+          triggeredRules: [{ rule: 'untrusted_ip' }],
+        },
+      },
+      userId: '123',
+    });
+
+    await triggerInteractionHooks(
+      new ConsoleLog(),
+      interactionHookContext.getReleaseAnywayDispatchContext()
+    );
+
+    expect(sendWebhookRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          event: InteractionHookEvent.PostSignInAdaptiveMfaTriggered,
+          userId: '123',
+          interactionEvent: InteractionEvent.SignIn,
+          sessionId: 'some_jti',
+        }) as unknown,
+      })
+    );
   });
 });
 
@@ -303,5 +419,38 @@ describe('triggerDataHooks()', () => {
       },
       signingKey: dataHook.signingKey,
     });
+  });
+
+  it('should omit request IP from trusted-device lifecycle payloads', async () => {
+    jest.useFakeTimers().setSystemTime(100_000);
+    const trustedDeviceHook: Hook = {
+      ...dataHook,
+      event: 'TrustedDevice.Created',
+      events: ['TrustedDevice.Created'],
+    };
+    findAllHooks.mockResolvedValueOnce([trustedDeviceHook]);
+    const hooksManager = new HookContextManager({ userAgent: 'ua', ip: 'request-ip' });
+    const data = { id: 'device-id', userId: 'user-id', expiresAt: 200_000 };
+
+    hooksManager.appendDataHookContext('TrustedDevice.Created', {
+      data,
+      includeRequestIp: false,
+    });
+
+    await triggerDataHooks(new ConsoleLog(), hooksManager);
+
+    expect(sendWebhookRequest).toHaveBeenCalledWith({
+      hookConfig: trustedDeviceHook.config,
+      payload: {
+        hookId: trustedDeviceHook.id,
+        event: 'TrustedDevice.Created',
+        createdAt: new Date(100_000).toISOString(),
+        data,
+        userAgent: 'ua',
+      },
+      signingKey: trustedDeviceHook.signingKey,
+    });
+
+    jest.useRealTimers();
   });
 });

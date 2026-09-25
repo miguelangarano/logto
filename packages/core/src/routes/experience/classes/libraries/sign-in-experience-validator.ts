@@ -1,7 +1,9 @@
+/* eslint-disable max-lines */
 import {
   AlternativeSignUpIdentifier,
   ForgotPasswordMethod,
   InteractionEvent,
+  MfaFactor,
   MissingProfile,
   type SignInExperience,
   SignInIdentifier,
@@ -15,6 +17,7 @@ import type Libraries from '#src/tenants/Libraries.js';
 import type Queries from '#src/tenants/Queries.js';
 import assertThat from '#src/utils/assert-that.js';
 
+import { sortMfaFactors } from '../helpers.js';
 import { type EnterpriseSsoVerification } from '../verifications/enterprise-sso-verification.js';
 import { type VerificationRecord } from '../verifications/index.js';
 
@@ -73,6 +76,9 @@ const parseMandatoryPrimaryIdentifier = (
     return MissingProfile.phone;
   }
 };
+
+const filterOutBackupCodeFactor = (factors: MfaFactor[]) =>
+  factors.filter((factor) => factor !== MfaFactor.BackupCode);
 
 /**
  *  SignInExperienceValidator class provides all the sign-in experience settings validation logic.
@@ -169,16 +175,83 @@ export class SignInExperienceValidator {
     return mfa;
   }
 
-  public async getPasskeySignInSettings() {
-    const { passkeySignIn } = await this.getSignInExperienceData();
+  /**
+   * Get all MFA factors that are currently considered enabled for binding validation.
+   *
+   * @remarks
+   * This is the broadest "enabled" set for binding-time checks:
+   * - Includes all factors in `mfa.factors`.
+   * - Includes `WebAuthn` when passkey sign-in is enabled, even if it is not explicitly listed
+   *   in `mfa.factors`.
+   * - Keeps `BackupCode` in the returned set.
+   *
+   * @example
+   * Used when validating user-submitted binding requests, to ensure every requested factor is
+   * actually enabled by tenant settings before accepting the bind operation.
+   */
+  public async getMfaFactorsEnabledForBinding() {
+    const { mfa, passkeySignIn } = await this.getSignInExperienceData();
 
-    return passkeySignIn;
+    return sortMfaFactors([
+      ...new Set([...mfa.factors, ...(passkeySignIn.enabled ? [MfaFactor.WebAuthn] : [])]),
+    ]);
+  }
+
+  /**
+   * Get actionable MFA factors that can be presented to end users for binding.
+   *
+   * @remarks
+   * This is derived from {@link getMfaFactorsEnabledForBinding} and excludes `BackupCode`.
+   * Backup code is not treated as a primary, user-facing binding option for "bind an MFA factor now"
+   * prompts.
+   *
+   * @example
+   * Used in adaptive MFA flows when risk requires MFA and the user has no available verification
+   * factor, to populate `availableFactors` in `user.missing_mfa` responses.
+   */
+  public async getBindableMfaFactors() {
+    const enabledFactors = await this.getMfaFactorsEnabledForBinding();
+
+    return filterOutBackupCodeFactor(enabledFactors);
+  }
+
+  /**
+   * Get MFA factors configured in sign-in experience for policy-fulfillment checks.
+   *
+   * @remarks
+   * This method reflects explicit MFA configuration only:
+   * - Reads from `mfa.factors`.
+   * - Excludes `BackupCode`.
+   * - Does not inject passkey-backed `WebAuthn`.
+   *
+   * Backup code is validated separately as an additive requirement, not as a primary factor candidate.
+   *
+   * @example
+   * Used when checking whether a user has fulfilled mandatory MFA policy (or organization-required
+   * MFA), i.e. whether the user has at least one configured primary MFA factor bound.
+   */
+  public async getConfiguredMfaFactors() {
+    const { mfa } = await this.getSignInExperienceData();
+
+    return sortMfaFactors(filterOutBackupCodeFactor(mfa.factors));
   }
 
   public async getPasswordPolicy() {
     const { passwordPolicy } = await this.getSignInExperienceData();
 
     return passwordPolicy;
+  }
+
+  public async getUsernamePolicy() {
+    const { usernamePolicy } = await this.getSignInExperienceData();
+
+    return usernamePolicy;
+  }
+
+  public async getPasswordExpirationPolicy() {
+    const { passwordExpiration } = await this.getSignInExperienceData();
+
+    return passwordExpiration;
   }
 
   public async getSocialSignInPolicy() {
@@ -192,6 +265,18 @@ export class SignInExperienceValidator {
       await this.queries.signInExperiences.findDefaultSignInExperience();
 
     return this.signInExperienceDataCache;
+  }
+
+  /**
+   * Whether new-user registration is disabled for the tenant (sign-in only). Used by the
+   * verification-code send flow to suppress delivery to unknown recipients: when registration is
+   * off, an unregistered recipient can never use the code to authenticate, so a delivered code
+   * would only serve account enumeration / spam.
+   */
+  public async isRegistrationDisabled(): Promise<boolean> {
+    const { signInMode } = await this.getSignInExperienceData();
+
+    return signInMode === SignInMode.SignIn;
   }
 
   public async getMandatoryUserProfileBySignUpMethods(): Promise<Set<MissingProfile>> {
@@ -320,6 +405,12 @@ export class SignInExperienceValidator {
       case VerificationType.Password:
       case VerificationType.EmailVerificationCode:
       case VerificationType.PhoneVerificationCode: {
+        // A record created for the subject verifies an enrolled credential offered by the step-up
+        // eligibility, not a sign-in method.
+        if (verificationRecord.userId) {
+          return;
+        }
+
         const {
           identifier: { type },
         } = verificationRecord;
@@ -348,7 +439,7 @@ export class SignInExperienceValidator {
         );
         break;
       }
-      case VerificationType.SignInWebAuthn: {
+      case VerificationType.SignInPasskey: {
         assertThat(
           passkeySignIn.enabled,
           new RequestError({ code: 'user.sign_in_method_not_enabled', status: 422 })
@@ -407,3 +498,4 @@ export class SignInExperienceValidator {
     assertThat(ssoIdentities.length === 0, 'session.passkey_sign_in.sso_users_not_allowed');
   }
 }
+/* eslint-enable max-lines */

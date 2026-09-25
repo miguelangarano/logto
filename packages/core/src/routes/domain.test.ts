@@ -1,4 +1,4 @@
-import { type Domain } from '@logto/schemas';
+import { type Domain, DomainVerificationFileContentType } from '@logto/schemas';
 import { createMockUtils, pickDefault } from '@logto/shared/esm';
 
 import { mockDomain, mockDomainResponse } from '#src/__mocks__/domain.js';
@@ -29,6 +29,13 @@ const domains = {
   findDomain: jest.fn(async (domain: string) => {
     return [mockDomain].find((item) => item.domain === domain) ?? null;
   }),
+  updateDomainById: jest.fn(
+    async (id: string, data: Partial<Domain>): Promise<Domain> => ({
+      ...mockDomain,
+      ...data,
+      id,
+    })
+  ),
 };
 
 const syncDomainStatus = jest.fn(async (domain: Domain): Promise<Domain> => domain);
@@ -39,16 +46,21 @@ const addDomain = jest.fn(
   })
 );
 const deleteDomain = jest.fn();
+const cleanupDomains = jest.fn();
 
 const mockLibraries = {
   domains: {
     syncDomainStatus,
     addDomain,
     deleteDomain,
+    cleanupDomains,
   },
   quota: createMockQuotaLibrary(),
   samlApplications: {
     syncCustomDomainsToSamlApplicationRedirectUrls: jest.fn(),
+  },
+  protectedApps: {
+    syncAllAppConfigsToRemote: jest.fn(),
   },
 };
 
@@ -99,6 +111,69 @@ describe('domain routes', () => {
     expect(addDomain).toBeCalledWith('another.com');
     expect(response.status).toEqual(201);
     expect(response.body.domain).toEqual('another.com');
+  });
+
+  it('POST /domains/cleanup', async () => {
+    cleanupDomains.mockResolvedValueOnce({
+      scannedCount: 3,
+      deletedCount: 1,
+      skippedActiveCount: 2,
+      failedCount: 0,
+    });
+
+    const response = await domainRequest.post('/domains/cleanup').send({ staleDays: 14 });
+
+    expect(response.status).toEqual(200);
+    expect(cleanupDomains).toHaveBeenCalledWith(14);
+    expect(
+      mockLibraries.samlApplications.syncCustomDomainsToSamlApplicationRedirectUrls
+    ).toHaveBeenCalledTimes(1);
+    expect(mockLibraries.protectedApps.syncAllAppConfigsToRemote).toHaveBeenCalledTimes(1);
+    expect(response.body).toEqual({
+      scannedCount: 3,
+      deletedCount: 1,
+      skippedActiveCount: 2,
+      failedCount: 0,
+    });
+  });
+
+  it('GET /domains/:id/verification-files', async () => {
+    const response = await domainRequest.get(`/domains/${mockDomain.id}/verification-files`);
+
+    expect(response.status).toEqual(200);
+    expect(response.body).toEqual([]);
+  });
+
+  it('PUT /domains/:id/verification-files', async () => {
+    const verificationFiles = [
+      {
+        path: '/verify.txt',
+        content: 'verification-content',
+        contentType: DomainVerificationFileContentType.Text,
+      },
+    ];
+    const response = await domainRequest
+      .put(`/domains/${mockDomain.id}/verification-files`)
+      .send({ verificationFiles });
+
+    expect(response.status).toEqual(200);
+    expect(response.body).toEqual(verificationFiles);
+    expect(domains.updateDomainById).toHaveBeenCalledWith(mockDomain.id, { verificationFiles });
+  });
+
+  it('PUT /domains/:id/verification-files rejects invalid paths', async () => {
+    const response = await domainRequest.put(`/domains/${mockDomain.id}/verification-files`).send({
+      verificationFiles: [
+        {
+          path: '/nested/verify.txt',
+          content: 'verification-content',
+          contentType: DomainVerificationFileContentType.Text,
+        },
+      ],
+    });
+
+    expect(response.status).toEqual(400);
+    expect(domains.updateDomainById).not.toHaveBeenCalled();
   });
 
   it('DELETE /domains/:id', async () => {

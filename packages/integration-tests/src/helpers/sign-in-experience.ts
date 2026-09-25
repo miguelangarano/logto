@@ -212,6 +212,11 @@ export const enableMandatoryMfaWithWebAuthnAndBackupCode = async () =>
 export const resetMfaSettings = async () =>
   updateSignInExperience({ mfa: { policy: MfaPolicy.PromptAtSignInAndSignUp, factors: [] } });
 
+export const resetPasskeySignInSettings = async () =>
+  updateSignInExperience({
+    passkeySignIn: { enabled: false, showPasskeyButton: false, allowAutofill: false },
+  });
+
 /** Enable only username and password sign-in and sign-up. */
 export const setUsernamePasswordOnly = async () => {
   await clearConnectorsByTypes([ConnectorType.Email, ConnectorType.Sms]);
@@ -257,6 +262,25 @@ export const enableCaptcha = async () =>
 export const disableCaptcha = async () =>
   updateSignInExperience({
     captchaPolicy: {
+      enabled: false,
+    },
+  });
+
+export const enablePasswordExpiration = async ({
+  validPeriodDays = 30,
+}: {
+  validPeriodDays?: number;
+}) =>
+  updateSignInExperience({
+    passwordExpiration: {
+      enabled: true,
+      validPeriodDays,
+    },
+  });
+
+export const disablePasswordExpiration = async () =>
+  updateSignInExperience({
+    passwordExpiration: {
       enabled: false,
     },
   });

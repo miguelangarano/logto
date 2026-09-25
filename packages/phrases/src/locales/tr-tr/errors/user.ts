@@ -1,5 +1,14 @@
 const user = {
+  id_already_in_use: 'Bu kullanıcı kimliği zaten kullanımda.',
   username_already_in_use: 'Bu kullanıcı adı zaten kullanımda.',
+  username_starts_with_number: 'Kullanıcı adı bir sayı ile başlayamaz.',
+  username_invalid_charset_hard: 'Kullanıcı adı yalnızca harfler, sayılar ve alt çizgi içerebilir.',
+  username_too_short: 'Kullanıcı adı çok kısa.',
+  username_too_long: 'Kullanıcı adı çok uzun.',
+  username_uppercase_not_allowed: 'Kullanıcı adı büyük harf içeremez.',
+  username_lowercase_not_allowed: 'Kullanıcı adı küçük harf içeremez.',
+  username_numbers_not_allowed: 'Kullanıcı adı rakam içeremez.',
+  username_underscore_not_allowed: 'Kullanıcı adı alt çizgi içeremez.',
   email_already_in_use: 'Bu e-posta mevcut bir hesapla ilişkilendirilmiştir.',
   phone_already_in_use: 'Bu telefon numarası mevcut bir hesapla ilişkilendirilmiştir.',
   invalid_email: 'Geçersiz e-posta adresi.',
@@ -30,6 +39,7 @@ const user = {
   missing_profile: 'Oturum açmadan önce ek bilgi sağlamanız gerekiyor.',
   role_exists: '{{roleId}} rol kimliği bu kullanıcıya zaten eklenmiştir.',
   invalid_role_type: 'Geçersiz rol türü, makine-makine rolü kullanıcıya atanamaz.',
+  suggest_mfa: "Daha iyi hesap güvenliği için MFA'yı hesabınıza bağlamanızı öneririz.",
   missing_mfa: 'Oturum açmadan önce ekstra MFA bağlamanız gerekiyor.',
   totp_already_in_use: 'TOTP zaten kullanımda.',
   backup_code_already_in_use: 'Yedek kod zaten kullanımda.',
@@ -41,6 +51,8 @@ const user = {
   username_required: 'Kullanıcı adı gerekli bir tanımlayıcıdır, boş bırakılamaz.',
   email_or_phone_required:
     'E-posta adresi veya telefon numarası gerekli bir tanımlayıcıdır, en az bir tanesi gereklidir.',
+  last_sign_in_method_required:
+    'Hesabınızda kullanılabilir en az bir oturum açma yöntemi bulundurmanız gerekir.',
   email_required: 'E-posta adresi gerekli bir tanımlayıcıdır, boş bırakılamaz.',
   phone_required: 'Telefon numarası gerekli bir tanımlayıcıdır, boş bırakılamaz.',
   enterprise_sso_identity_not_exists:

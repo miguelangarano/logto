@@ -1,5 +1,87 @@
 # Change Log
 
+## 2.13.0
+
+### Minor Changes
+
+- ab106cdb82: add `UserScope.TrustedDevices` for authorizing trusted-device management
+
+### Patch Changes
+
+- ebfefb513d: fix date validation regex to match the complete string, rejecting trailing input after a valid date
+- 28c3c9283e: treat Gmail address aliases as the same address in custom email allowlist and blocklist rules
+
+  The matcher treats gmail.com and googlemail.com as equivalent and ignores local-part dots. The Console now shows custom email rule examples and Gmail matching behavior in the field descriptions, with shorter input placeholders.
+
+- Updated dependencies [7464c6a97a]
+- Updated dependencies [16f4b2e732]
+  - @logto/language-kit@1.4.0
+  - @logto/shared@3.4.3
+
+## 2.12.0
+
+### Minor Changes
+
+- af678dd84: add reusable email blocklist validation and matching helpers
+
+### Patch Changes
+
+- 1650be05e: fix email or email domain validation to match complete values and stricter domain labels
+- Updated dependencies [58cb52c705]
+  - @logto/shared@3.4.2
+
+## 2.11.0
+
+### Minor Changes
+
+- e1fadfb1a: add a shared username policy type, Zod guard, and default value
+- a88413689: add a shared username policy validator
+
+### Patch Changes
+
+- Updated dependencies [67b99bba85]
+  - @logto/shared@3.4.1
+
+## 2.10.0
+
+### Minor Changes
+
+- e4eaa5aef5: add custom CSP utility methods
+
+## 2.9.0
+
+### Minor Changes
+
+- 93523a1ae0: add subtle primary overlay color token for console themes
+
+  This adds the missing `--color-overlay-primary-subtle` token for both light and dark console themes.
+
+### Patch Changes
+
+- Updated dependencies [3350b13ec8]
+  - @logto/shared@3.4.0
+
+## 2.8.0
+
+### Minor Changes
+
+- 74c993a91e: introduce new `UserScope.Sessions` scope
+
+  This change introduces a new `urn:logto:scope:sessions` user scope to the Logto system.
+
+  This new scope does not issue any additional user claims, but serves as a permission marker for accessing session-related endpoints in the user account API. By including this scope in the user's permissions, applications can enable features such as session management and session revocation for that user.
+
+### Patch Changes
+
+- Updated dependencies [5ab931e7ac]
+  - @logto/language-kit@1.3.0
+
+## 2.7.1
+
+### Patch Changes
+
+- 57b0008ee8: add extended id token claims exports
+
 ## 2.7.0
 
 ### Minor Changes

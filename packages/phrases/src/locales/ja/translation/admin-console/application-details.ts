@@ -1,3 +1,5 @@
+import concurrent_device_limit from './concurrent-device-limit.js';
+
 const application_details = {
   page_title: 'アプリケーションの詳細',
   back_to_applications: 'アプリケーションに戻る',
@@ -85,6 +87,10 @@ const application_details = {
     'このアプリケーションがトークン交換リクエストを開始できるようにします。これは <impersonationLink>ユーザーなりすまし</impersonationLink> と <patLink>個人用アクセストークン</patLink> に必要です。',
   allow_token_exchange_public_client_warning:
     'パブリッククライアント（シングルページアプリ／ネイティブアプリ）でトークン交換を有効にすることは推奨されません。パブリッククライアントは資格情報を安全に保存できないため、アプリケーションがトークンなりすましのリスクにさらされる可能性があります。',
+  device_flow_tag: 'デバイスフロー',
+  device_flow_notification:
+    'このアプリは入力制限のあるデバイスやヘッドレスアプリ（テレビ、CLIなど）向けに OAuth 2.0 Device Authorization Flow を有効にしています。ユーザーはデバイスコードの入力または QR コードのスキャンにより、別のデバイスでログインを完了します。<a>詳細はこちら</a>',
+  device_flow_try_demo: 'デモを試す',
   delete_description:
     'この操作は元に戻すことはできません。アプリケーション名「<span>{{name}}</span>」を入力して確認してください。',
   enter_your_application_name: 'アプリケーション名を入力してください',
@@ -115,6 +121,45 @@ const application_details = {
   field_custom_data_tip:
     '事前定義されたアプリケーションプロパティにリストされていない追加のカスタムアプリケーション情報。例えば、ビジネス固有の設定と構成。',
   custom_data_invalid: 'カスタムデータは有効な JSON オブジェクトである必要があります',
+  access_control: {
+    name: 'ルール',
+    title: 'アクセス制御',
+    description: 'アプリレベルのアクセス制御ルールをカスタマイズします。',
+    enable: 'アプリレベルのアクセス制御を有効化',
+    enable_description:
+      'きめ細かなアクセス制御を有効にして、このアプリケーションにアクセスできるユーザーを制限します。無効の場合、システム内の登録済みユーザー全員がアクセスできます。',
+    enable_without_rules_notice:
+      'アクセス制御を有効にする前に、少なくとも 1 つのアクセスルールを追加してください。',
+    load_error: 'アクセス制御ルールの読み込みに失敗しました。',
+    custom_allow_rules: 'カスタム許可ルール',
+    custom_allow_rules_description:
+      '特定の属性を持つユーザーが自動的にアクセスできるようにルールを作成します。有効にするには少なくとも 1 つのルールが必要です。',
+    rules: 'アクセスルール',
+    add_rules: 'ルールを追加',
+    rules_description:
+      'ユーザーはいずれかの設定済みルールに一致すると、このアプリにアクセスできます。',
+    empty_rules_description: 'まだルールが設定されていません。',
+    delete_rule_confirmation: 'このルールを削除してもよろしいですか？',
+    rule_table_rules: 'ルール',
+    rule_table_description: '説明',
+    rule_table_users: 'ユーザー',
+    rule_table_members: 'メンバー',
+    rule_table_user_id: 'ユーザー ID',
+    rule_count: '{{count}} 件のルール',
+    rule_count_other: '{{count}} 件のルール',
+    rule_users: 'ユーザー',
+    rule_users_description: '特定のユーザーがこのアプリにアクセスできます。',
+    rule_roles: 'ロール',
+    rule_user_roles: 'ユーザーロール',
+    rule_user_roles_description:
+      '選択したユーザーロールに割り当てられたユーザーがこのアプリにアクセスできます。',
+    rule_organizations: '組織',
+    rule_organizations_description:
+      '選択した組織の現在および将来のすべてのメンバーがこのアプリにアクセスできます。',
+    rule_organization_roles: '組織ロール',
+    rule_organization_roles_description:
+      '選択した組織内で選択した組織ロールを持つメンバーがこのアプリにアクセスできます。',
+  },
   branding: {
     name: 'ブランディング',
     description: 'Consent 画面上でアプリケーションの表示名とロゴをカスタマイズします。',
@@ -255,6 +300,13 @@ const application_details = {
     email_address: 'メールアドレス',
     email_address_description: 'メールアドレスを Name ID として使用',
   },
+  saml_idp_authentication: {
+    always_force_authn: '常に認証を強制する',
+    always_force_authn_description:
+      'すでに Logto セッションを持っていても、このアプリケーションにアクセスするたびにユーザーに再びサインインを要求します。',
+    always_force_authn_tip:
+      '有効にすると、Logto はユーザーにこのアプリケーションのために再度サインインするように求めます。無効にすると、サービスプロバイダーが ForceAuthn で新規認証を要求しない限り、既存の Logto セッションが再利用されます。',
+  },
   saml_encryption_config: {
     encrypt_assertion: 'SAML アサーションを暗号化',
     encrypt_assertion_description:
@@ -280,6 +332,7 @@ const application_details = {
     col_sp_claims: 'アプリケーションの値名',
     add_button: '別のものを追加',
   },
+  concurrent_device_limit,
 };
 
 export default Object.freeze(application_details);

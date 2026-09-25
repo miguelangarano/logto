@@ -1,5 +1,148 @@
 # Change Log
 
+## 1.43.0
+
+### Patch Changes
+
+- Updated dependencies [ebfefb513d]
+- Updated dependencies [ab106cdb82]
+- Updated dependencies [b64d46d495]
+- Updated dependencies [28c3c9283e]
+- Updated dependencies [8b2aaab9b0]
+- Updated dependencies [16f4b2e732]
+  - @logto/core-kit@2.13.0
+  - @logto/schemas@1.43.0
+  - @logto/shared@3.4.3
+  - @logto/connector-kit@5.1.1
+
+## 1.42.0
+
+### Patch Changes
+
+- Updated dependencies [af678dd84]
+- Updated dependencies [292da8db9]
+- Updated dependencies [1650be05e]
+- Updated dependencies [ea3ede350]
+- Updated dependencies [a1e0f2b680]
+- Updated dependencies [829646a4a]
+- Updated dependencies [58cb52c705]
+  - @logto/core-kit@2.12.0
+  - @logto/schemas@1.42.0
+  - @logto/shared@3.4.2
+
+## 1.41.0
+
+### Patch Changes
+
+- Updated dependencies [e7b6e9de1]
+- Updated dependencies [a305713bb2]
+- Updated dependencies [c7f17d6c5c]
+- Updated dependencies [d41082bd7d]
+- Updated dependencies [c2016a044c]
+- Updated dependencies [72820ac41e]
+- Updated dependencies [b7386a5113]
+- Updated dependencies [e1fadfb1a]
+- Updated dependencies [67b99bba85]
+- Updated dependencies [a88413689]
+- Updated dependencies [eb45edbe34]
+  - @logto/connector-kit@5.1.0
+  - @logto/schemas@1.41.0
+  - @logto/core-kit@2.11.0
+  - @logto/shared@3.4.1
+
+## 1.40.1
+
+### Patch Changes
+
+- Updated dependencies [e4eaa5aef5]
+  - @logto/core-kit@2.10.0
+  - @logto/schemas@1.40.1
+
+## 1.40.0
+
+### Minor Changes
+
+- 32c9ea4d81: add `--dapc` (alias `--disable-admin-pwned-password-check`) option to both `install` and `db seed` commands for air-gapped OSS deployments.
+
+  The admin tenant's seeded password policy enables the Have I Been Pwned (HIBP) breach check by default, which sends an outbound request to `api.pwnedpasswords.com` on every admin password submission. This causes the first admin sign-up to hang on deployments where the endpoint is unreachable. Passing the option seeds the policy with the breach check disabled, so admin sign-up no longer depends on outbound network access.
+
+### Patch Changes
+
+- Updated dependencies [fafe81e8f]
+- Updated dependencies [617275158]
+- Updated dependencies [41a56f79e3]
+- Updated dependencies [16553c027]
+- Updated dependencies [32c9ea4d81]
+  - @logto/schemas@1.40.0
+  - @logto/connector-kit@5.0.1
+
+## 1.39.0
+
+### Minor Changes
+
+- 3350b13ec8: add grace period support to private signing key rotation
+
+  This update adds support for a grace period during private signing key rotation, through the environment variable `PRIVATE_KEY_ROTATION_GRACE_PERIOD`, or CLI `--gracePeriod` option.
+
+  During the grace period, the new signing key is marked as "Next", and the existing signing key remains active. This allows for a smoother transition when rotating keys, as it provides a window of time for clients to refresh cached JWKS without experiencing downtime or authentication failures.
+
+  After the grace period ends, the new private signing key will transition to "Current" state, and the old signing key will be marked as "Previous".
+
+  Check out the [documentation](https://docs.logto.io/logto-oss/using-cli/rotate-signing-keys) for more details.
+
+### Patch Changes
+
+- Updated dependencies [93523a1ae0]
+- Updated dependencies [ab073bb65f]
+- Updated dependencies [3350b13ec8]
+  - @logto/core-kit@2.9.0
+  - @logto/schemas@1.39.0
+  - @logto/shared@3.4.0
+
+## 1.38.0
+
+### Patch Changes
+
+- Updated dependencies [7cee48bd97]
+- Updated dependencies [56cec74a00]
+- Updated dependencies [74c993a91e]
+- Updated dependencies [4e25126228]
+- Updated dependencies [5b7f1cb794]
+- Updated dependencies [4e25126228]
+- Updated dependencies [d2afe7351f]
+  - @logto/schemas@1.38.0
+  - @logto/core-kit@2.8.0
+  - @logto/connector-kit@5.0.0
+
+## 1.37.1
+
+### Patch Changes
+
+- Updated dependencies [57b0008ee8]
+  - @logto/core-kit@2.7.1
+  - @logto/schemas@1.37.1
+
+## 1.37.0
+
+### Minor Changes
+
+- 32d1562699: add out-of-the-box account center app
+
+  Summary
+
+  - Release the Account Center single-page app as a built-in Logto application for end users.
+  - Support profile updates for primary email, phone, username, and password with verification flows.
+  - Provide MFA management for TOTP, backup codes (download/regenerate), and passkeys (WebAuthn), including rename and delete actions.
+  - Gate sensitive operations behind password/email/phone verification and surface dedicated success screens.
+
+  To learn more about this feature, please refer to the documentation: https://docs.logto.io/end-user-flows/account-settings/by-account-api
+
+### Patch Changes
+
+- Updated dependencies [32d1562699]
+- Updated dependencies [eced1f02d4]
+  - @logto/schemas@1.37.0
+
 ## 1.36.0
 
 ### Patch Changes

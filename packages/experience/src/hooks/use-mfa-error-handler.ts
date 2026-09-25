@@ -1,11 +1,10 @@
 import { MfaFactor, SignInIdentifier, type RequestErrorBody } from '@logto/schemas';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { validate } from 'superstruct';
 
 import useNavigateWithPreservedSearchParams from '@/hooks/use-navigate-with-preserved-search-params';
 import { UserMfaFlow } from '@/types';
-import { type MfaFlowState, mfaErrorDataGuard } from '@/types/guard';
+import { type MfaFlowState, mfaErrorDataGuard, parseGuard } from '@/types/guard';
 import { isNativeWebview } from '@/utils/native-sdk';
 
 import type { ErrorHandlers } from './use-error-handler';
@@ -27,7 +26,7 @@ const useMfaErrorHandler = ({ replace }: Options = {}) => {
   const startTotpBinding = useStartTotpBinding();
   const startWebAuthnProcessing = useStartWebAuthnProcessing();
   const startBackupCodeBinding = useStartBackupCodeBinding();
-  const { onSubmit: startMfaVerificationCodeProcessing } = useSendMfaVerificationCode();
+  const { onSubmit: startMfaVerificationCodeProcessing } = useSendMfaVerificationCode({ replace });
 
   /**
    * Redirect the user to the corresponding MFA page.
@@ -113,11 +112,17 @@ const useMfaErrorHandler = ({ replace }: Options = {}) => {
   const handleMfaError = useCallback(
     (flow: UserMfaFlow) => {
       return async (error: RequestErrorBody) => {
-        const [_, data] = validate(error.data, mfaErrorDataGuard);
+        if (error.code === 'user.suggest_mfa') {
+          navigate({ pathname: `/mfa-onboarding` }, { replace });
+          return;
+        }
+
+        const data = parseGuard(error.data, mfaErrorDataGuard);
         const factors = data?.availableFactors ?? [];
         const skippable = data?.skippable;
         const maskedIdentifiers = data?.maskedIdentifiers;
         const suggestion = data?.suggestion;
+        const isWebAuthnUsedAsSignInPasskey = data?.isWebAuthnUsedAsSignInPasskey;
 
         if (factors.length === 0) {
           setToast(error.message);
@@ -135,14 +140,16 @@ const useMfaErrorHandler = ({ replace }: Options = {}) => {
           skippable,
           maskedIdentifiers,
           suggestion,
+          isWebAuthnUsedAsSignInPasskey,
         });
       };
     },
-    [handleMfaRedirect, setToast]
+    [handleMfaRedirect, navigate, replace, setToast]
   );
 
   const mfaVerificationErrorHandler = useMemo<ErrorHandlers>(
     () => ({
+      'user.suggest_mfa': handleMfaError(UserMfaFlow.MfaBinding),
       'user.missing_mfa': handleMfaError(UserMfaFlow.MfaBinding),
       'session.mfa.require_mfa_verification': handleMfaError(UserMfaFlow.MfaVerification),
       // Optional suggestion to add another MFA during registration

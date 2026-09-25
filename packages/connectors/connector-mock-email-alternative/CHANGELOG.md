@@ -1,5 +1,45 @@
 # @logto/connector-mock-standard-email
 
+## 3.0.3
+
+### Patch Changes
+
+- @logto/connector-kit@5.1.1
+
+## 3.0.2
+
+### Patch Changes
+
+- Updated dependencies [e7b6e9de1]
+- Updated dependencies [b7386a5113]
+  - @logto/connector-kit@5.1.0
+
+## 3.0.1
+
+### Patch Changes
+
+- Updated dependencies [41a56f79e3]
+  - @logto/connector-kit@5.0.1
+
+## 3.0.0
+
+### Major Changes
+
+- 4e25126228: update mock connector file paths
+
+  Update the file paths used by mock connectors to store sent messages.
+
+  - `/tmp/logto_mock_email_record.txt` -> `/tmp/logto/mock_email_record.txt`
+  - `/tmp/logto_mock_sms_record.txt` -> `/tmp/logto/mock_sms_record.txt`
+
+  This can help create a more consistent and organized structure for the mock connector files, making it easier to manage and mount in the docker environment.
+
+### Patch Changes
+
+- Updated dependencies [4e25126228]
+- Updated dependencies [4e25126228]
+  - @logto/connector-kit@5.0.0
+
 ## 2.2.3
 
 ### Patch Changes

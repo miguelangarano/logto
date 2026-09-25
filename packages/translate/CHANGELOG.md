@@ -1,5 +1,113 @@
 # @logto/translate
 
+## 0.2.17
+
+### Patch Changes
+
+- Updated dependencies [c377946617]
+- Updated dependencies [ebfefb513d]
+- Updated dependencies [ab106cdb82]
+- Updated dependencies [7464c6a97a]
+- Updated dependencies [28c3c9283e]
+- Updated dependencies [6dd496bd2e]
+- Updated dependencies [8b2aaab9b0]
+- Updated dependencies [16f4b2e732]
+  - @logto/phrases-experience@1.15.0
+  - @logto/core-kit@2.13.0
+  - @logto/language-kit@1.4.0
+  - @logto/phrases@1.31.0
+  - @logto/shared@3.4.3
+
+## 0.2.16
+
+### Patch Changes
+
+- Updated dependencies [af678dd84]
+- Updated dependencies [292da8db9]
+- Updated dependencies [1650be05e]
+- Updated dependencies [829646a4a]
+- Updated dependencies [58cb52c705]
+  - @logto/core-kit@2.12.0
+  - @logto/phrases@1.30.0
+  - @logto/shared@3.4.2
+  - @logto/phrases-experience@1.14.1
+
+## 0.2.15
+
+### Patch Changes
+
+- Updated dependencies [413b7ec1a7]
+- Updated dependencies [d41082bd7d]
+- Updated dependencies [c2016a044c]
+- Updated dependencies [c73d32b5ee]
+- Updated dependencies [67b99bba85]
+- Updated dependencies [67b99bba85]
+- Updated dependencies [e1fadfb1a]
+- Updated dependencies [67b99bba85]
+- Updated dependencies [a88413689]
+  - @logto/phrases@1.29.0
+  - @logto/phrases-experience@1.14.0
+  - @logto/core-kit@2.11.0
+  - @logto/shared@3.4.1
+
+## 0.2.14
+
+### Patch Changes
+
+- Updated dependencies [e4eaa5aef5]
+  - @logto/core-kit@2.10.0
+  - @logto/phrases-experience@1.13.3
+
+## 0.2.13
+
+### Patch Changes
+
+- Updated dependencies [32c40b1ad]
+- Updated dependencies [6b9944d01f]
+  - @logto/phrases-experience@1.13.2
+
+## 0.2.12
+
+### Patch Changes
+
+- Updated dependencies [93523a1ae0]
+- Updated dependencies [ab073bb65f]
+- Updated dependencies [3350b13ec8]
+  - @logto/core-kit@2.9.0
+  - @logto/phrases@1.28.0
+  - @logto/shared@3.4.0
+  - @logto/phrases-experience@1.13.1
+
+## 0.2.11
+
+### Patch Changes
+
+- Updated dependencies [7cee48bd97]
+- Updated dependencies [74c993a91e]
+- Updated dependencies [343410f2b0]
+- Updated dependencies [a816cf77cb]
+- Updated dependencies [5ab931e7ac]
+  - @logto/phrases@1.27.0
+  - @logto/phrases-experience@1.13.0
+  - @logto/core-kit@2.8.0
+  - @logto/language-kit@1.3.0
+
+## 0.2.10
+
+### Patch Changes
+
+- Updated dependencies [57b0008ee8]
+  - @logto/core-kit@2.7.1
+  - @logto/phrases-experience@1.12.2
+
+## 0.2.9
+
+### Patch Changes
+
+- Updated dependencies [eced1f02d4]
+- Updated dependencies [b8ca1a40c7]
+  - @logto/phrases@1.26.0
+
 ## 0.2.8
 
 ### Patch Changes

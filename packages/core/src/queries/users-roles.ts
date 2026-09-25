@@ -34,6 +34,19 @@ export const createUsersRolesQueries = (pool: CommonQueryMethods) => {
       where ${fields.userId}=${userId}
     `);
 
+  const hasUserRole = async (userId: string, roleIds: readonly string[]): Promise<boolean> => {
+    if (roleIds.length === 0) {
+      return false;
+    }
+
+    return pool.exists(sql`
+      select 1
+      from ${table}
+      where ${fields.userId} = ${userId}
+        and ${fields.roleId} = any(${sql.array(roleIds, 'varchar')})
+    `);
+  };
+
   const findUsersRolesByRoleId = async (roleId: string, limit?: number) =>
     pool.any<UsersRole>(sql`
       select ${sql.join(Object.values(fields), sql`,`)}
@@ -67,11 +80,37 @@ export const createUsersRolesQueries = (pool: CommonQueryMethods) => {
     }
   };
 
+  const countUsersRolesByRoleIds = async (roleIds: string[]) =>
+    roleIds.length > 0
+      ? pool.any<{ roleId: string; count: number }>(sql`
+        select ${fields.roleId} as "roleId", count(*)
+        from ${table}
+        where ${fields.roleId} in (${sql.join(roleIds, sql`, `)})
+        group by ${fields.roleId}
+      `)
+      : [];
+
+  const findUsersRolesByRoleIds = async (roleIds: string[], limit = 3) =>
+    roleIds.length > 0
+      ? pool.any<UsersRole>(sql`
+        select ${sql.join(Object.values(fields), sql`,`)}
+        from (
+          select *, row_number() over (partition by ${fields.roleId}) as rn
+          from ${table}
+          where ${fields.roleId} in (${sql.join(roleIds, sql`, `)})
+        ) as ranked
+        where ranked.rn <= ${limit}
+      `)
+      : [];
+
   return {
     countUsersRolesByRoleId,
+    countUsersRolesByRoleIds,
     findFirstUsersRolesByRoleIdAndUserIds,
     findUsersRolesByUserId,
+    hasUserRole,
     findUsersRolesByRoleId,
+    findUsersRolesByRoleIds,
     insertUsersRoles,
     deleteUsersRolesByUserIdAndRoleId,
   };

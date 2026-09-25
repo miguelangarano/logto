@@ -1,5 +1,293 @@
 # Change Log
 
+## 1.43.0
+
+### Minor Changes
+
+- b64d46d495: unify social callback URI between Sign-in Experience and Account Center
+- 8b2aaab9b0: add dynamic app support (OAuth Client ID Metadata Documents)
+
+  The dynamic app lets compatible public clients, such as MCP clients, connect to your tenant without registering an application. Following the OAuth Client ID Metadata Documents (CIMD) draft, such a client presents a public HTTPS URL as its `client_id`, and Logto fetches the client metadata from that URL.
+
+  Enable it from the dynamic app card in the third-party app section on the create application page in Console. The switch is tenant-level and off by default, and requires the OIDC provider SSRF protection to be active. Control what dynamic app clients can request with the permission settings on the dynamic app page.
+
+### Patch Changes
+
+- Updated dependencies [c377946617]
+- Updated dependencies [ebfefb513d]
+- Updated dependencies [ab106cdb82]
+- Updated dependencies [7464c6a97a]
+- Updated dependencies [28c3c9283e]
+- Updated dependencies [6dd496bd2e]
+- Updated dependencies [8b2aaab9b0]
+- Updated dependencies [16f4b2e732]
+  - @logto/phrases-experience@1.15.0
+  - @logto/core-kit@2.13.0
+  - @logto/language-kit@1.4.0
+  - @logto/phrases@1.31.0
+  - @logto/shared@3.4.3
+  - @logto/connector-kit@5.1.1
+
+## 1.42.0
+
+### Minor Changes
+
+- 829646a4a: add custom domain verification file support
+
+  Admins can configure small text or JSON verification files for active custom domains. Files are limited to root-level filenames or paths under `/.well-known/`, with caps on count and content size. Exact GET and HEAD matches are served with safe content types while existing Logto routes take precedence.
+
+### Patch Changes
+
+- 292da8db9: support wildcard email address patterns in custom email blocklist rules
+- ea3ede350: remove email blocklist policy from public sign-in experience responses
+- a1e0f2b680: prevent internal application secrets from being exposed through Management APIs
+- Updated dependencies [af678dd84]
+- Updated dependencies [292da8db9]
+- Updated dependencies [1650be05e]
+- Updated dependencies [829646a4a]
+- Updated dependencies [58cb52c705]
+  - @logto/core-kit@2.12.0
+  - @logto/phrases@1.30.0
+  - @logto/shared@3.4.2
+  - @logto/phrases-experience@1.14.1
+
+## 1.41.0
+
+### Minor Changes
+
+- a305713bb2: expose the target organization to the access token JWT customizer for organization (API resource) tokens
+
+  When Logto issues an organization access token (a token requested with both `organization_id` and `resource`), the access token JWT customizer now receives a `context.organization` object with the target organization's `id`, `name`, `description` and `customData`. Previously the customizer was invoked with the same payload as a regular user access token and had no way to know which organization the token was being issued for — the `organization_id` claim is only injected after the customizer runs.
+
+  This lets scripts attach per-organization claims (for example mapping the Logto organization id to an internal id stored in `organization.customData`) without embedding a map of every organization the user belongs to into every token.
+
+- c7f17d6c5c: rate-limit outbound verification-code and message sends per recipient and suppress delivery to unknown recipients
+
+  Adds a mandatory, system-level per-recipient send rate limit across all email/SMS send paths (experience verification codes including MFA, the account and management verification-code APIs, `/me`, organization invitations, and the legacy interaction API), emits a `Message.RateLimited` webhook when a send is throttled, and suppresses verification-code delivery to unregistered recipients when registration is disabled to prevent account enumeration. The `Message.RateLimited` event is now selectable in the Console webhook settings.
+
+- d41082bd7d: add app-level access control for applications
+
+  Add a new application access control feature that allows administrators to restrict user access to applications. When enabled, users who do not have permission to access an application will see an access denied error message when they attempt to sign in or access the application. This feature can be configured in the Console Security settings.
+
+  Supported custom control rules include:
+
+  - User IDs
+  - User roles
+  - Organizations
+  - Organization roles
+
+  Refer to the documentation for more details: https://docs.logto.io/integrate-logto/app-level-access-control
+
+- c2016a044c: add a configurable per-tenant password expiration policy
+
+  Operators can enable password expiration from Console → Security → Password policy and set the number of days a password stays valid. When a password reaches the end of its valid period — or is manually expired for a specific user — the end user is forced through the forgot-password flow on their next password sign-in before they can continue. Users signing in via SSO or passkey are not affected.
+
+  - **Console**: a new "Password expiration" card with an enable toggle and a valid-period (days) input, an inline reminder when sign-up requires no contact identifier to guarantee password recovery, and a per-user "Expire password" action on the user details page.
+  - **Core / API**: the policy is stored on the sign-in experience (`passwordExpiration`) and enforced after password verification. `PATCH /api/users/:userId/password/expiration` lets admins manually expire a user's password, and deleting the last forgot-password connector is rejected while the policy is enabled.
+  - **Experience**: an expired password prompts the user to reset it via the configured recovery method before sign-in completes.
+
+  Legacy users without a recorded password-change date are anchored to the timestamp the policy was enabled, so they get a full valid period instead of being expired immediately.
+
+- 67b99bba85: add per-tenant username policy enforcement and mirror preferred_username from username by default
+
+  The sign-in experience now stores a per-tenant username policy (case sensitivity, length bounds, and allowed character types) that is enforced on end-user username writes: experience sign-up and profile fulfillment, the account API, and `/me`. Admin (Management API) writes keep the always-on baseline rules only.
+
+  Switching usernames to case-insensitive is guarded: `PATCH /api/sign-in-exp` is rejected with a 409 while usernames that differ only by case exist, and the new `GET /api/sign-in-exp/username-policy/case-sensitivity-conflicts` endpoint reports such conflicts.
+
+  For deployments using the legacy `CASE_SENSITIVE_USERNAME` environment variable: the effective case sensitivity is the per-tenant policy AND-combined with the env var, so usernames are treated case-insensitively if either is false. Existing `CASE_SENSITIVE_USERNAME=false` setups keep their behavior — the env var acts as a runtime override that forces case-insensitive handling for every tenant, and the per-tenant policy cannot re-enable case sensitivity while it is set. The env var is deprecated and slated for removal in the next major; migrate by unsetting it and configuring `usernamePolicy.caseSensitive` per tenant instead.
+
+  The OIDC `preferred_username` claim now falls back to the user's `username` when `profile.preferredUsername` is unset, so standards-compliant clients receive a usable value out of the box.
+
+- eb45edbe34: allow customizing verification code settings
+
+  Admins can configure the verification code expiration duration and maximum retry attempts in Console Security settings.
+
+### Patch Changes
+
+- 72820ac41e: prevent theme flash in sign-in experience and account center
+
+  Sign-in experience and account center now apply tenant theme, platform, and brand color before the app hydrates, reducing flashes of the wrong theme during initial page load.
+
+- Updated dependencies [e7b6e9de1]
+- Updated dependencies [413b7ec1a7]
+- Updated dependencies [d41082bd7d]
+- Updated dependencies [c2016a044c]
+- Updated dependencies [c73d32b5ee]
+- Updated dependencies [b7386a5113]
+- Updated dependencies [67b99bba85]
+- Updated dependencies [67b99bba85]
+- Updated dependencies [e1fadfb1a]
+- Updated dependencies [67b99bba85]
+- Updated dependencies [a88413689]
+  - @logto/connector-kit@5.1.0
+  - @logto/phrases@1.29.0
+  - @logto/phrases-experience@1.14.0
+  - @logto/core-kit@2.11.0
+  - @logto/shared@3.4.1
+
+## 1.40.1
+
+### Patch Changes
+
+- Updated dependencies [e4eaa5aef5]
+  - @logto/core-kit@2.10.0
+  - @logto/phrases-experience@1.13.3
+
+## 1.40.0
+
+### Patch Changes
+
+- fafe81e8f: add secondary index on `organization_role_user_relations (tenant_id, organization_id, user_id)` to speed up per-user role lookups
+
+  The primary key column order is `(tenant_id, organization_id, organization_role_id, user_id)`, which prevents queries that filter by `(organization_id, user_id)` without specifying `organization_role_id` from using the index. This pattern is hit by `getUserScopes` (called on every `GET /organizations/:id/users/:userId/scopes`) and by the per-user role join in `getUsersByOrganizationId`.
+
+- 617275158: add secondary index on `organization_user_relations (tenant_id, user_id)` to speed up reverse lookups
+
+  The primary key column order is `(tenant_id, organization_id, user_id)`, which prevents queries that filter by `user_id` without specifying `organization_id` from using the index. This pattern is hit on every sign-in (via `getOrganizationsByUserId`) and on every request to the `/organizations/:id/users/:userId/roles` family (via the membership-existence middleware).
+
+- 16553c027: expose `isCurrent` on the Account API sessions response
+
+  `GET /api/my-account/sessions` now returns `isCurrent: boolean` on every entry. The session whose OIDC uid backs the calling access token is `true`; the others are `false`. Use this to mark the "This device" entry in session-management UIs and to avoid revoking the caller's own session.
+
+  The admin user-sessions endpoints (`GET /users/:userId/sessions` and `GET /users/:userId/sessions/:sessionId`) are unchanged — they have no caller-session concept and continue to use the original response shape.
+
+  Closes [#8681](https://github.com/logto-io/logto/issues/8681).
+
+- 32c9ea4d81: add `--dapc` (alias `--disable-admin-pwned-password-check`) option to both `install` and `db seed` commands for air-gapped OSS deployments.
+
+  The admin tenant's seeded password policy enables the Have I Been Pwned (HIBP) breach check by default, which sends an outbound request to `api.pwnedpasswords.com` on every admin password submission. This causes the first admin sign-up to hang on deployments where the endpoint is unreachable. Passing the option seeds the policy with the breach check disabled, so admin sign-up no longer depends on outbound network access.
+
+- Updated dependencies [32c40b1ad]
+- Updated dependencies [6b9944d01f]
+- Updated dependencies [41a56f79e3]
+  - @logto/phrases-experience@1.13.2
+  - @logto/connector-kit@5.0.1
+
+## 1.39.0
+
+### Minor Changes
+
+- ab073bb65f: support blocking token issuance when custom JWT scripts fail
+
+  This update adds configurable JWT customizer error handling for access tokens and client credentials flows.
+
+  - core now preserves `api.denyAccess()` as `access_denied` and converts other blocking-mode script failures into localized `invalid_request` responses
+  - console adds a dedicated `Error handling` tab for configuring the behavior, defaults `blockIssuanceOnError` to enabled for newly created scripts, keeps existing scripts without a saved value on the legacy disabled default, and aligns the related guidance copy
+  - schemas, phrases, and integration coverage are updated to match the new blocking behavior and localized error messages
+
+- 3350b13ec8: add grace period support to private signing key rotation
+
+  This update adds support for a grace period during private signing key rotation, through the environment variable `PRIVATE_KEY_ROTATION_GRACE_PERIOD`, or CLI `--gracePeriod` option.
+
+  During the grace period, the new signing key is marked as "Next", and the existing signing key remains active. This allows for a smoother transition when rotating keys, as it provides a window of time for clients to refresh cached JWKS without experiencing downtime or authentication failures.
+
+  After the grace period ends, the new private signing key will transition to "Current" state, and the old signing key will be marked as "Previous".
+
+  Check out the [documentation](https://docs.logto.io/logto-oss/using-cli/rotate-signing-keys) for more details.
+
+### Patch Changes
+
+- Updated dependencies [93523a1ae0]
+- Updated dependencies [ab073bb65f]
+- Updated dependencies [3350b13ec8]
+  - @logto/core-kit@2.9.0
+  - @logto/phrases@1.28.0
+  - @logto/shared@3.4.0
+  - @logto/phrases-experience@1.13.1
+
+## 1.38.0
+
+### Minor Changes
+
+- 7cee48bd97: support OAuth 2.0 Device Authorization Grant (device flow)
+
+  Device flow lets users sign in on input-limited devices such as smart TVs, CLI tools, IoT gadgets, and gaming consoles by completing authentication on a separate device like a phone or laptop.
+
+  How it works:
+
+  1. The device displays a short user code and a verification URL.
+  2. The user opens the URL on another device, enters the code, and signs in.
+  3. Once approved, the original device receives tokens and completes authentication.
+
+  To create a device flow application in Console:
+
+  - Select "Input-limited app / CLI" under the Native framework list, or
+  - Create an app without framework, then choose "Device flow" as the authorization flow, or
+  - Create a third-party Native app, then choose "Device flow" as the authorization flow.
+
+  The application settings page shows a device-flow-specific guide and a built-in demo you can try immediately.
+
+- 56cec74a00: support sentinel protection for MFA verification routes
+
+  TOTP, WebAuthn, and backup code MFA verifications now report activity to Sentinel so repeated failures can be detected and blocked consistently during multi-factor authentication.
+
+  The new MFA-specific Sentinel actions keep MFA attempts isolated from the shared primary sign-in pool, which avoids lockouts leaking across unrelated verification stages or factors.
+
+- 5b7f1cb794: introduce optional `oidc.session.ttl` config in logto-config for oidc session ttl
+
+  - Added a new optional `oidc.session.ttl` field in `logto-config`.
+  - This config allows developers to customize the OIDC provider session TTL in seconds.
+  - If `oidc.session.ttl` is not provided, the default session TTL remains `14 days`.
+  - For OSS deployments, restart the service instance after config changes so the server can pick up the latest OIDC config updates. To apply all OIDC configuration updates automatically without rebooting the service, [enable central redis cache](https://docs.logto.io/logto-oss/central-cache).
+
+- d2afe7351f: add app-level `maxAllowedGrants` config and enforce concurrent grant limits on authorization success
+
+  1. Extended application `customClientMetadata` with a new optional field `maxAllowedGrants`.
+     - Use this field to configure the max concurrent grants limit for the current app.
+     - Default is `undefined`; when not provided, no concurrent grant limit is applied.
+  2. Added a new OIDC `authorization.success` event listener.
+     - Triggered after each successful user authorization.
+     - Validates concurrent grants against the current authorization client and user.
+     - If `customClientMetadata.maxAllowedGrants` is configured, revokes the oldest grants when the active grant count exceeds the limit.
+
+### Patch Changes
+
+- Updated dependencies [7cee48bd97]
+- Updated dependencies [74c993a91e]
+- Updated dependencies [343410f2b0]
+- Updated dependencies [4e25126228]
+- Updated dependencies [a816cf77cb]
+- Updated dependencies [5ab931e7ac]
+- Updated dependencies [4e25126228]
+  - @logto/phrases@1.27.0
+  - @logto/phrases-experience@1.13.0
+  - @logto/core-kit@2.8.0
+  - @logto/connector-kit@5.0.0
+  - @logto/language-kit@1.3.0
+
+## 1.37.1
+
+### Patch Changes
+
+- Updated dependencies [57b0008ee8]
+  - @logto/core-kit@2.7.1
+  - @logto/phrases-experience@1.12.2
+
+## 1.37.0
+
+### Minor Changes
+
+- 32d1562699: add out-of-the-box account center app
+
+  Summary
+
+  - Release the Account Center single-page app as a built-in Logto application for end users.
+  - Support profile updates for primary email, phone, username, and password with verification flows.
+  - Provide MFA management for TOTP, backup codes (download/regenerate), and passkeys (WebAuthn), including rename and delete actions.
+  - Gate sensitive operations behind password/email/phone verification and surface dedicated success screens.
+
+  To learn more about this feature, please refer to the documentation: https://docs.logto.io/end-user-flows/account-settings/by-account-api
+
+- eced1f02d4: add application context to JWT customizer
+
+  The application context is now available in the JWT customizer script for both access token and client credentials token types. This allows you to access application details (e.g., name, description, custom data) when customizing JWT claims.
+
+### Patch Changes
+
+- Updated dependencies [eced1f02d4]
+- Updated dependencies [b8ca1a40c7]
+  - @logto/phrases@1.26.0
+
 ## 1.36.0
 
 ### Minor Changes

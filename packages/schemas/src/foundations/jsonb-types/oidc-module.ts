@@ -95,6 +95,19 @@ export enum CustomClientMetadataKey {
    * If `true`, the sign-up option will be hidden in the sign-in widget.
    */
   RegistrationDisabled = 'registrationDisabled',
+  /**
+   * Whether the application uses the OAuth 2.0 Device Authorization Grant (RFC 8628)
+   * instead of the standard Authorization Code flow.
+   *
+   * Only applicable to native applications. Defaults to `false`.
+   */
+  IsDeviceFlow = 'isDeviceFlow',
+  /**
+   * The maximum number of active sessions (devices) allowed per user for this application.
+   *
+   * When exceeded, old sessions should be revoked according to server policy.
+   */
+  MaxAllowedGrants = 'maxAllowedGrants',
 }
 
 export const customClientMetadataGuard = z.object({
@@ -107,9 +120,59 @@ export const customClientMetadataGuard = z.object({
   [CustomClientMetadataKey.RotateRefreshToken]: z.boolean().optional(),
   [CustomClientMetadataKey.AllowTokenExchange]: z.boolean().optional(),
   [CustomClientMetadataKey.RegistrationDisabled]: z.boolean().optional(),
+  [CustomClientMetadataKey.IsDeviceFlow]: z.boolean().optional(),
+  [CustomClientMetadataKey.MaxAllowedGrants]: z.number().int().positive().optional(),
 } satisfies Record<CustomClientMetadataKey, z.ZodType>);
 
 /**
  * @see {@link CustomClientMetadataKey} for key descriptions.
  */
 export type CustomClientMetadata = z.infer<typeof customClientMetadataGuard>;
+
+export const oidcSessionAuthorizationDetailsGuard = z
+  .object({
+    /**
+     * The `sid` (session ID) Claim associated with the session for the current client.
+     *
+     * @remarks
+     * Mark optional to make the guard more robust.
+     * Should always be present in the session authorization details
+     */
+    sid: z.string().optional(),
+    /**
+     * The grantId associated with the session for the current client.
+     *
+     * @remarks
+     * Mark optional to make the guard more robust.
+     * Should always be present in the session authorization details when the session is authorized with a grant.
+     */
+    grantId: z.string().optional(),
+    /**
+     * Whether the grant associated with the session should be persisted after the session is terminated.
+     *
+     * @remarks
+     * Mark optional to make the guard more robust.
+     */
+    persistsLogout: z.boolean().optional(),
+  })
+  .catchall(z.unknown());
+
+export type OidcSessionAuthorizationDetails = z.infer<typeof oidcSessionAuthorizationDetailsGuard>;
+
+export const oidcSessionInstancePayloadGuard = z
+  .object({
+    exp: z.number(),
+    iat: z.number(),
+    jti: z.string(),
+    uid: z.string(),
+    kind: z.literal('Session'),
+    loginTs: z.number(),
+    accountId: z.string(),
+    /**
+     * A map of client_id to session authorization details. @see OidcSessionAuthorizationDetails
+     */
+    authorizations: z.record(z.string(), oidcSessionAuthorizationDetailsGuard).optional(),
+  })
+  .catchall(z.unknown());
+
+export type OidcSessionInstancePayload = z.infer<typeof oidcSessionInstancePayloadGuard>;

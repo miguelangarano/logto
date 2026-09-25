@@ -35,6 +35,7 @@ const jwt_claims = {
   restore: 'デフォルトに戻す',
   restored: '復元されました',
   data_source_tab: 'データソース',
+  error_handling_tab: 'エラーハンドリング',
   test_tab: 'コンテキストをテスト',
   jwt_claims_description: 'デフォルトクレームはJWTに自動的に含まれ、オーバーライドできません。',
   user_data: {
@@ -49,12 +50,17 @@ const jwt_claims = {
   interaction_data: {
     title: 'ユーザーインタラクションコンテキスト',
     subtitle:
-      '`context.interaction` パラメーターを使用して、現在の認証セッションにおけるユーザーのインタラクション詳細にアクセスします。包含されるのは `interactionEvent`、`userId`、`verificationRecords` です。',
+      '`context.interaction` パラメーターを使用して、現在の認証セッションにおけるユーザーのインタラクション詳細にアクセスします。',
   },
   application_data: {
     title: 'アプリケーションコンテキスト',
     subtitle:
       '`context.application` 入力パラメータを使用して、トークンに関連するアプリケーション情報を提供します。',
+  },
+  organization_data: {
+    title: '組織コンテキスト',
+    subtitle:
+      '`context.organization` 入力パラメータを使用して、対象組織の情報を提供します。組織トークンでのみ利用可能です。',
   },
   token_data: {
     title: 'トークンデータ',
@@ -63,6 +69,18 @@ const jwt_claims = {
   api_context: {
     title: 'API コンテキスト：アクセス制御',
     subtitle: '`api.denyAccess` メソッドを使用してトークンリクエストを拒否します。',
+  },
+  error_handling: {
+    title: 'エラーハンドリング',
+    subtitle: 'スクリプトが失敗したときにトークン発行をブロックするかどうかを制御します。',
+    input_field_title: 'スクリプトエラー時のトークン発行動作',
+    block_issuance_switch: 'スクリプトがエラーになった場合はトークン発行をブロックする',
+    default_hint_create:
+      '新しいカスタムクレームスクリプトでは、スクリプトが失敗した場合にトークン発行をブロックする設定がデフォルトで有効になります。API がすでに値を返している場合は、保存済みの値が優先されます。',
+    default_hint_edit:
+      'この設定を持たない既存のカスタムクレームスクリプトでは、明示的に値を保存するまで、従来どおりデフォルトで無効のままになります。',
+    warning:
+      '有効にすると、スクリプト実行時エラーによりトークンリクエストは `invalid_request` (400) とローカライズされた `error_description` で拒否されます。`api.denyAccess` の呼び出しは引き続き `access_denied` を返します。',
   },
   fetch_external_data: {
     title: '外部データを取得',
@@ -81,6 +99,11 @@ const jwt_claims = {
     subtitle: 'テストのためにモックトークンとユーザーデータを調整します。',
     run_button: 'テストを実行',
     result_title: 'テスト結果',
+  },
+  sandbox_warning: {
+    title: 'スクリプトはサーバー権限で実行されます',
+    description:
+      'セルフホスト版 Logto では、このスクリプトは Logto 本体と同じ環境で実行されます。サーバーの環境変数を読み取り、内部ネットワーク上のサービスに到達できます。サンドボックス化されていません。サーバーへのアクセスを許可してもよい相手にのみ、このページへのアクセスを付与してください。',
   },
   form_error: {
     invalid_json: '無効なJSON形式',

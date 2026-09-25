@@ -26,12 +26,24 @@ const sign_in_experiences = {
   phone_verification_code_cannot_be_used_for_sign_in:
     'SMS 확인 코드는 MFA 에 활성화된 경우 로그인에 사용할 수 없습니다.',
   adaptive_mfa_requires_mfa: 'Adaptive MFA를 활성화하려면 먼저 MFA를 활성화해야 합니다.',
+  adaptive_mfa_requires_non_skippable_policy:
+    'Adaptive MFA 를 활성화하려면 건너뛸 수 없는 MFA 프롬프트 정책이 필요합니다. PromptOnlyAtSignInMandatory 또는 PromptAtSignInAndSignUpMandatory 를 사용하세요.',
+  non_adaptive_mfa_requires_skippable_policy:
+    'Adaptive MFA 가 비활성화된 경우, MFA 프롬프트 정책은 건너뛸 수 있어야 합니다. PromptOnlyAtSignInMandatory 또는 PromptAtSignInAndSignUpMandatory 를 사용하지 마세요.',
   duplicated_sign_up_identifiers: '중복된 회원가입 식별자가 감지되었습니다.',
   missing_sign_up_identifiers: '기본 회원가입 식별자는 비워 둘 수 없습니다.',
   invalid_custom_email_blocklist_format:
     '잘못된 사용자 정의 이메일 차단 목록 항목: {{items, list(type:conjunction)}}. 각 항목은 유효한 이메일 주소 또는 이메일 도메인이어야 합니다. 예: foo@example.com 또는 @example.com.',
   forgot_password_method_requires_connector:
     '비밀번호 찾기 방법은 해당 {{method}} 커넥터를 구성해야 합니다.',
+  password_expiration_requires_forgot_password:
+    '비밀번호 만료를 사용하려면 유효한 커넥터가 연결된 비밀번호 찾기 방법이 하나 이상 필요합니다.',
+  password_expiration_not_enabled:
+    '비밀번호 만료 정책이 활성화되지 않았습니다. 비밀번호를 만료시키기 전에 로그인 경험 설정에서 이를 활성화하세요.',
+  password_expiration_invalid_period_days:
+    '비밀번호 만료가 활성화된 경우 유효 기간(일)은 양의 정수여야 합니다.',
+  username_policy_case_conflicts_exist:
+    '대소문자만 다른 사용자 이름이 존재하는 경우 대소문자 구분 안 함으로 전환할 수 없습니다. 충돌을 해결한 후 다시 시도하세요.',
 };
 
 export default Object.freeze(sign_in_experiences);

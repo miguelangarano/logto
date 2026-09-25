@@ -4,6 +4,7 @@ export enum ApplicationDetailsTabs {
   Logs = 'logs',
   Branding = 'branding',
   Permissions = 'permissions',
+  Rules = 'rules',
   Organizations = 'organizations',
   AttributeMapping = 'attribute-mapping',
 }
@@ -41,8 +42,10 @@ export enum TenantSettingsTabs {
   Settings = 'settings',
   Members = 'members',
   Domains = 'domains',
+  OidcConfigs = 'oidc-configs',
   Subscription = 'subscription',
   BillingHistory = 'billing-history',
+  License = 'license',
 }
 
 export enum EnterpriseSsoDetailsTabs {

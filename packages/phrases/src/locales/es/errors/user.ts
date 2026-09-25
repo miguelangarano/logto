@@ -1,5 +1,15 @@
 const user = {
+  id_already_in_use: 'Este ID de usuario ya está en uso.',
   username_already_in_use: 'Este nombre de usuario ya está en uso.',
+  username_starts_with_number: 'El nombre de usuario no puede comenzar con un número.',
+  username_invalid_charset_hard:
+    'El nombre de usuario solo puede contener letras, números y guiones bajos.',
+  username_too_short: 'El nombre de usuario es demasiado corto.',
+  username_too_long: 'El nombre de usuario es demasiado largo.',
+  username_uppercase_not_allowed: 'El nombre de usuario no puede contener letras mayúsculas.',
+  username_lowercase_not_allowed: 'El nombre de usuario no puede contener letras minúsculas.',
+  username_numbers_not_allowed: 'El nombre de usuario no puede contener números.',
+  username_underscore_not_allowed: 'El nombre de usuario no puede contener guiones bajos.',
   email_already_in_use: 'Este correo electrónico está asociado a una cuenta existente.',
   phone_already_in_use: 'Este número de teléfono está asociado a una cuenta existente.',
   invalid_email: 'Dirección de correo electrónico inválida.',
@@ -32,6 +42,7 @@ const user = {
   role_exists: 'El id de rol {{roleId}} ya ha sido agregado a este usuario',
   invalid_role_type:
     'Tipo de rol no válido, no se puede asignar un rol de máquina a máquina a un usuario.',
+  suggest_mfa: 'Para una mejor seguridad de la cuenta, te recomendamos vincular MFA a tu cuenta.',
   missing_mfa: 'Debes vincular un MFA adicional antes de iniciar sesión.',
   totp_already_in_use: 'TOTP ya está en uso.',
   backup_code_already_in_use: 'El código de respaldo ya está en uso.',
@@ -45,6 +56,8 @@ const user = {
     'El nombre de usuario es un identificador requerido, no puedes establecerlo como nulo.',
   email_or_phone_required:
     'La dirección de correo electrónico o el número de teléfono es un identificador requerido, se requiere al menos uno.',
+  last_sign_in_method_required:
+    'Debes mantener al menos un método de inicio de sesión disponible en tu cuenta.',
   email_required:
     'La dirección de correo electrónico es un identificador requerido, no puedes establecerla como nula.',
   phone_required:

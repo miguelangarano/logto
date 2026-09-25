@@ -18,6 +18,8 @@ export const getHookCreationPayload = (
   },
 });
 
+export const getSupportedHookEvents = (events: HookEvent[]): HookEvent[] => events;
+
 export class WebHookApiTest {
   readonly #hooks = new Map<string, Hook>();
 

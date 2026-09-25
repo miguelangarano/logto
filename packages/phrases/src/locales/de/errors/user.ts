@@ -1,5 +1,15 @@
 const user = {
+  id_already_in_use: 'Diese Benutzer-ID wird bereits verwendet.',
   username_already_in_use: 'Dieser Benutzername wird bereits verwendet.',
+  username_starts_with_number: 'Benutzername darf nicht mit einer Zahl beginnen.',
+  username_invalid_charset_hard:
+    'Benutzername darf nur Buchstaben, Zahlen und Unterstriche enthalten.',
+  username_too_short: 'Benutzername ist zu kurz.',
+  username_too_long: 'Benutzername ist zu lang.',
+  username_uppercase_not_allowed: 'Benutzername darf keine Großbuchstaben enthalten.',
+  username_lowercase_not_allowed: 'Benutzername darf keine Kleinbuchstaben enthalten.',
+  username_numbers_not_allowed: 'Benutzername darf keine Zahlen enthalten.',
+  username_underscore_not_allowed: 'Benutzername darf keine Unterstriche enthalten.',
   email_already_in_use: 'Diese E-Mail-Adresse ist mit einem vorhandenen Konto verknüpft.',
   phone_already_in_use: 'Diese Telefonnummer ist mit einem vorhandenen Konto verknüpft.',
   invalid_email: 'Ungültige E-Mail.',
@@ -35,6 +45,8 @@ const user = {
   role_exists: 'Die Rollen-ID {{roleId}} wurde diesem Benutzer bereits hinzugefügt.',
   invalid_role_type:
     'Ungültiger Rollentyp, kann keine Maschinen-zu-Maschinen-Rolle einem Benutzer zuweisen.',
+  suggest_mfa:
+    'Für eine bessere Kontosicherheit empfehlen wir Ihnen, MFA mit Ihrem Konto zu verbinden.',
   missing_mfa: 'Sie müssen zusätzliches MFA verbinden, bevor Sie sich anmelden können.',
   totp_already_in_use: 'TOTP wird bereits verwendet.',
   backup_code_already_in_use: 'Backup-Code wird bereits verwendet.',
@@ -47,6 +59,8 @@ const user = {
   username_required: 'Benutzername ist ein erforderlicher Bezeichner, er kann nicht null sein.',
   email_or_phone_required:
     'E-Mail-Adresse oder Telefonnummer ist ein erforderlicher Bezeichner, mindestens eine ist erforderlich.',
+  last_sign_in_method_required:
+    'Sie müssen mindestens eine verfügbare Anmeldemethode in Ihrem Konto behalten.',
   email_required: 'E-Mail-Adresse ist ein erforderlicher Bezeichner, sie kann nicht null sein.',
   phone_required: 'Telefonnummer ist ein erforderlicher Bezeichner, sie kann nicht null sein.',
   enterprise_sso_identity_not_exists:

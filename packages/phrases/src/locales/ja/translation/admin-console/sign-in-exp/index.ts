@@ -45,6 +45,7 @@ const sign_in_exp = {
     hide_logto_branding: 'Logtoのブランディングを非表示にする',
     hide_logto_branding_description:
       '「Powered by Logto」を削除します。クリーンでプロフェッショナルなサインイン体験で自社ブランドだけを際立たせましょう。',
+    hide_logto_branding_oss_note: 'この機能は <a>Logto Cloud</a> でネイティブに利用できます。',
   },
   branding_uploads: {
     app_logo: {
@@ -80,24 +81,42 @@ const sign_in_exp = {
   },
   custom_ui: {
     title: 'カスタム UI',
+    cloud_tag: 'Cloud',
     css_code_editor_title: 'カスタム CSS',
+    css_code_editor_field_title: 'CSS オーバーライド',
     css_code_editor_description1: 'カスタム CSS の例をご覧ください。',
     css_code_editor_description2: '<a>{{link}}</a>',
     css_code_editor_description_link_content: '詳しくはこちら',
     css_code_editor_content_placeholder:
-      'カスタム CSS を入力して、あらゆるスタイルを精確に調整してください。創造性を発揮して、あなたの UI を際立たせましょう。',
+      'ここに CSS オーバーライドを入力して、あらゆる要素のスタイルを思いどおりに調整できます。創造性を表現し、UI を際立たせましょう。',
     bring_your_ui_title: 'あなたの UI を持参',
+    bring_your_ui_upload_title: 'カスタム UI アセットをアップロード',
     bring_your_ui_description:
       '圧縮パッケージ (.zip) をアップロードして、Logto のビルトイン UI を独自のコードで置き換えます。<a>詳しくはこちら</a>',
+    bring_your_ui_oss_description: '独自のコードでサインイン UI をカスタマイズします。',
+    bring_your_ui_oss_card_description:
+      'カスタムのサインイン UI を <a>Logto Cloud</a> に直接アップロードできます。フォークや再デプロイは不要です。',
+    bring_your_ui_oss_try_cloud: 'Cloud を試す',
     preview_with_bring_your_ui_description:
       'カスタム UI のアセットは正常にアップロードされ、現在提供されています。したがって、組み込みのプレビューウィンドウは無効になりました。\nパーソナライズされたサインイン UI をテストするには、「ライブプレビュー」ボタンをクリックして新しいブラウザタブで開きます。',
+    csp_description:
+      'カスタムサインイン UI に追加のソース式を許可します。これらの値は、カスタム UI アセットが提供される場合にのみ適用されます。',
+    csp_script_src: '許可された script-src',
+    csp_script_src_tip:
+      'カスタム UI が読み込むスクリプトに対して、https://scripts.example.com や https://*.example.com などの HTTPS ソース式を許可します。',
+    csp_connect_src: '許可された connect-src',
+    csp_connect_src_tip:
+      'カスタム UI が行うネットワークリクエストに対して、https://api.example.com や wss://events.example.com などの HTTPS または WSS ソース式を許可します。',
+    csp_source_invalid_error:
+      '有効なソース式を入力してください。https:// URL を使用してください。connect-src では wss:// もサポートされています。CSP キーワードとセミコロンはサポートされていません。',
+    csp_source_duplicate_error: 'このソース式はすでに一覧に含まれています。',
   },
   account_center: {
     title: 'アカウントセンター',
     description: 'Logto API を使用してアカウントセンターのフローをカスタマイズします。',
-    enable_account_api: 'Account API を有効化',
+    enable_account_api: 'アカウントセンターと Account API を有効化',
     enable_account_api_description:
-      'Account API を有効化してカスタムのアカウントセンターを構築し、Logto 管理 API を使わずにエンドユーザーへ直接 API へのアクセスを提供します。',
+      'エンドユーザー向けの Account API と Logto のすぐに使えるアカウントセンターを同時に有効にします。オフにすると、両方の機能が利用できなくなります。',
     field_options: {
       off: 'オフ',
       edit: '編集',
@@ -121,6 +140,9 @@ const sign_in_exp = {
           },
           authentication_factors: {
             title: '認証要素',
+          },
+          session_management: {
+            title: 'セッション管理',
           },
         },
       },
@@ -155,6 +177,7 @@ const sign_in_exp = {
       password: 'パスワード',
       mfa: '多要素認証',
       mfa_description: 'ユーザーがアカウントセンターから MFA 方法を管理できるようにします。',
+      passkey: 'Passkey',
       username: 'ユーザー名',
       name: '名前',
       avatar: 'アバター',
@@ -163,34 +186,75 @@ const sign_in_exp = {
       custom_data: 'カスタムデータ',
       custom_data_description:
         'ユーザーに保存されているカスタム JSON データへのアクセスを制御します。',
+      sessions: 'セッション',
+      trusted_devices: '信頼済みデバイス',
+    },
+    profile_fields: {
+      title: 'ビルトインアカウントセンターのプロフィールフィールド',
+      add_profile_fields: 'プロフィールフィールドを追加',
+      hint: {
+        not_in_list: 'リストにない？',
+        set_up: '設定する',
+        go_to: '他のプロフィールフィールドを今すぐ。',
+      },
+      disabled_hint: {
+        name: 'このフィールドを追加するには、下のユーザープロフィールセクションで「名前」の権限を「編集/閲覧のみ」に設定してください。',
+        avatar:
+          'このフィールドを追加するには、下のユーザープロフィールセクションで「アバター」の権限を「編集/閲覧のみ」に設定してください。',
+        profile:
+          'このフィールドを追加するには、下のユーザープロフィールセクションで「プロフィール」の権限を「編集/閲覧のみ」に設定してください。',
+        custom_data:
+          'このフィールドを追加するには、下のユーザープロフィールセクションで「カスタムデータ」の権限を「編集/閲覧のみ」に設定してください。',
+      },
     },
     webauthn_related_origins: 'WebAuthn 関連オリジン',
     webauthn_related_origins_description:
       'Account API を通じてパスキーを登録できるフロントエンドアプリケーションのドメインを追加します。',
     webauthn_related_origins_error: 'オリジンは https:// または http:// で始める必要があります',
+    delete_account_url: 'アカウントを削除',
+    delete_account_url_description:
+      '独自のロジックでアカウント削除を処理するためのエンドポイント URL を指定してください。',
     prebuilt_ui: {
       title: '組み込み UI を統合',
       description:
-        'すぐに使える検証フローとセキュリティ設定フローを組み込み UI で迅速に統合します。',
+        '組み込み UI を使用して、すぐに使えるアカウントセンター、セキュリティ検証、または単一のプロフィール更新フローを迅速に統合します。ドメインとルートを組み合わせるだけで、アカウントセンター URL を形成できます（例: https://auth.foo.com/account/email）。',
       permission_notice:
         'これらのプリビルトフローを統合するには、以下の設定で関連するアカウント API の権限を<strong>編集</strong>に設定してください。',
+      account_center_title: 'すぐに使えるアカウントセンターを統合',
+      account_center_description:
+        'ユーザーをアカウントセンターにルーティングし、メールアドレス、電話番号、ユーザー名、パスワード、MFA、接続済みアカウントなどのセキュリティ設定を管理します。',
       flows_title: 'すぐに使えるセキュリティ設定フローを統合',
+      single_task_flows_title: 'すぐに使える単一タスクフローを統合',
       flows_description:
-        'ドメインとルートを組み合わせてアカウント設定 URL を形成します（例: https://auth.foo.com/account/email）。更新後にユーザーをアプリに戻すために「redirect=」URL パラメータをオプションで追加できます。',
+        'ドメインとルートを組み合わせてアカウント設定 URL を形成します（例: https://auth.foo.com/account/email）。オプションで `redirect=` を追加して更新成功後にユーザーをアプリに戻したり、`show_success=true` で成功ページを表示し続けたり、`ui_locales=` でデフォルト言語を上書きしたり、`identifier=` で識別子入力フィールドを事前入力したりできます。',
+      single_task_flows_description:
+        'ユーザーを特定のフロー（例: メール連携）に直接ルーティングします。オプションで、成功した更新後にユーザーをアプリに戻すための `redirect=`、成功ページを表示し続けるための `show_success=true`、デフォルト言語を上書きするための `ui_locales=`、または識別子入力フィールドを事前入力するための `identifier=` を追加できます。',
       tooltips: {
         email: 'プライマリメールアドレスを更新',
         phone: 'プライマリ電話番号を更新',
         username: 'ユーザー名を更新',
         password: '新しいパスワードを設定',
+        social: 'サインイン用にソーシャルアカウントを連携',
+        social_change: '別の連携済みソーシャルアカウントに変更',
+        social_remove: '連携済みのソーシャルアカウントを削除',
         authenticator_app: '多要素認証のための新しい認証アプリを設定',
+        authenticator_app_replace: 'Replace your existing authenticator app with a new one',
         passkey_add: '新しいパスキーを登録',
         passkey_manage: '既存のパスキーを管理または新しいものを追加',
         backup_codes_generate: '新しいバックアップコード 10 セットを生成',
         backup_codes_manage: '使用可能なバックアップコードを表示または新しいものを生成',
+        account_center:
+          'アカウントセンターにアクセスして、メールアドレス、電話番号、ユーザー名、パスワード、MFA、接続済みアカウントなどのセキュリティ設定を管理',
+        profile: '個人情報（名前、アバターなど）を管理する中央ハブ',
+        sessions: 'デバイス間のアクティブなセッションを表示・管理',
       },
       customize_note:
         'すぐに使えるエクスペリエンスを望まない？ 代わりに Account API でフローを完全に',
       customize_link: 'カスタマイズできます。',
+    },
+    custom_css: {
+      title: 'カスタム CSS',
+      description: 'カスタム CSS を使用してアカウントセンターの外観をカスタマイズします。',
     },
   },
   sign_up_and_sign_in,

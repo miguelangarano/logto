@@ -1,3 +1,5 @@
+import concurrent_device_limit from './concurrent-device-limit.js';
+
 const application_details = {
   page_title: '應用詳細資料',
   back_to_applications: '返回全部應用',
@@ -63,7 +65,7 @@ const application_details = {
   refresh_token_ttl: 'Refresh Token 有效期（天數）',
   refresh_token_ttl_tip:
     'Refresh Token 可用來獲取新的訪問令牌，失效日期之前可用。獲取訪問令牌時，該令牌的期限將被延長至此值。',
-  rotate_refresh_token: '旋轉 Refresh Token',
+  rotate_refresh_token: '輪換 Refresh Token',
   rotate_refresh_token_label:
     '啟用此配置將使 Logto 當 Refresh Token 的原始有效期剩下 70% 時或當滿足某些條件時，授予新的 Refresh Token 以獲取新的 Access Token。<a>了解更多</a>',
   rotate_refresh_token_label_for_public_clients:
@@ -81,6 +83,10 @@ const application_details = {
     '允許此應用程式發起權杖交換請求。這是 <impersonationLink>使用者冒充</impersonationLink> 與 <patLink>個人存取權杖</patLink> 所必需的。',
   allow_token_exchange_public_client_warning:
     '不建議為公開用戶端（單頁應用／原生應用）啟用權杖交換。公開用戶端無法安全儲存憑證，可能使你的應用暴露於權杖冒充風險。',
+  device_flow_tag: '裝置流程',
+  device_flow_notification:
+    '此應用程式啟用了 OAuth 2.0 Device Authorization Flow，適用於輸入受限的裝置或無介面應用程式（如電視、CLI）。使用者在另一台裝置上透過輸入裝置碼或掃描 QR 碼完成登入。<a>瞭解更多</a>',
+  device_flow_try_demo: '試用示範',
   delete_description:
     '本操作會永久性地刪除該應用程式，且不可撤銷。輸入 <span>{{name}}</span> 確認。',
   enter_your_application_name: '輸入你的應用程式姓名',
@@ -107,6 +113,40 @@ const application_details = {
   field_custom_data: '自定義資料',
   field_custom_data_tip: '額外的自定義應用資訊，不在預定義的應用屬性中，例如業務特定的設置和配置。',
   custom_data_invalid: '自定義資料必須是有效的 JSON 對象',
+  access_control: {
+    name: '規則',
+    title: '存取控制',
+    description: '自訂應用程式層級存取控制規則。',
+    enable: '啟用應用程式層級存取控制',
+    enable_description:
+      '啟用精細化存取控制，以限制哪些使用者可以存取此應用程式。如果停用，系統中的所有已註冊使用者都可以存取。',
+    enable_without_rules_notice: '請先新增至少一條存取規則，再啟用存取控制。',
+    load_error: '載入存取控制規則失敗。',
+    custom_allow_rules: '自訂允許規則',
+    custom_allow_rules_description:
+      '建立規則，讓具備特定屬性的使用者可以自動存取。啟用時至少需要一條規則。',
+    rules: '存取規則',
+    add_rules: '新增規則',
+    rules_description: '使用者符合任一條已配置規則時即可存取此應用程式。',
+    empty_rules_description: '尚未配置任何規則。',
+    delete_rule_confirmation: '確定要移除此規則嗎？',
+    rule_table_rules: '規則',
+    rule_table_description: '描述',
+    rule_table_users: '使用者',
+    rule_table_members: '成員',
+    rule_table_user_id: '使用者 ID',
+    rule_count: '{{count}} 條規則',
+    rule_count_other: '{{count}} 條規則',
+    rule_users: '使用者',
+    rule_users_description: '指定使用者可以存取此應用程式。',
+    rule_roles: '角色',
+    rule_user_roles: '使用者角色',
+    rule_user_roles_description: '擁有所選使用者角色的使用者可以存取此應用程式。',
+    rule_organizations: '組織',
+    rule_organizations_description: '所選組織中的目前與未來成員都可以存取此應用程式。',
+    rule_organization_roles: '組織角色',
+    rule_organization_roles_description: '在所選組織中擁有所選組織角色的成員可以存取此應用程式。',
+  },
   branding: {
     name: '品牌',
     description: '在同意畫面上自訂應用程式的顯示名稱和標誌。',
@@ -238,6 +278,13 @@ const application_details = {
     email_address: '電子郵件地址',
     email_address_description: '使用電子郵件地址作為 Name ID',
   },
+  saml_idp_authentication: {
+    always_force_authn: '始終強制身份驗證',
+    always_force_authn_description:
+      '要求使用者每次訪問此應用程式時再次登錄，即使他們已經有 Logto 會話。',
+    always_force_authn_tip:
+      '啟用時，Logto 總是要求使用者為此應用程式再次登錄。禁用時，除非服務提供者要求新的身份驗證（使用 ForceAuthn），否則會重用現有的 Logto 會話。',
+  },
   saml_encryption_config: {
     encrypt_assertion: '加密 SAML 斷言',
     encrypt_assertion_description: '啟用此選項，SAML 斷言將被加密。',
@@ -259,6 +306,7 @@ const application_details = {
     col_sp_claims: '你應用程式的值名稱',
     add_button: '添加其他',
   },
+  concurrent_device_limit,
 };
 
 export default Object.freeze(application_details);

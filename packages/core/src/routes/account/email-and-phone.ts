@@ -1,8 +1,10 @@
 import { emailRegEx, phoneRegEx, UserScope } from '@logto/core-kit';
-import { VerificationType, AccountCenterControlValue, SignInIdentifier } from '@logto/schemas';
+import { VerificationType, AccountCenterControlValue } from '@logto/schemas';
 import { z } from 'zod';
 
 import koaGuard from '#src/middleware/koa-guard.js';
+import { assertFirstPartyClient } from '#src/utils/assert-first-party-client.js';
+import { assertUserHasRemainingIdentifier } from '#src/utils/user.js';
 
 import RequestError from '../../errors/RequestError/index.js';
 import { validateEmailAgainstBlocklistPolicy } from '../../libraries/sign-in-experience/email-blocklist-policy.js';
@@ -17,6 +19,7 @@ export default function emailAndPhoneRoutes<T extends UserRouter>(...args: Route
   const {
     users: { updateUserById, findUserById },
     signInExperiences: { findDefaultSignInExperience },
+    userSsoIdentities,
   } = queries;
 
   const {
@@ -30,10 +33,10 @@ export default function emailAndPhoneRoutes<T extends UserRouter>(...args: Route
         email: z.string().regex(emailRegEx),
         newIdentifierVerificationRecordId: z.string(),
       }),
-      status: [204, 400, 401, 422],
+      status: [204, 400, 401, 403, 422],
     }),
     async (ctx, next) => {
-      const { id: userId, scopes, identityVerified } = ctx.auth;
+      const { id: userId, scopes, identityVerified, clientId } = ctx.auth;
       assertThat(
         identityVerified,
         new RequestError({ code: 'verification_record.permission_denied', status: 401 })
@@ -46,6 +49,7 @@ export default function emailAndPhoneRoutes<T extends UserRouter>(...args: Route
       );
 
       assertThat(scopes.has(UserScope.Email), 'auth.unauthorized');
+      await assertFirstPartyClient(queries, clientId);
 
       // Validate email blocklist policy
       const { emailBlocklistPolicy } = await findDefaultSignInExperience();
@@ -76,10 +80,10 @@ export default function emailAndPhoneRoutes<T extends UserRouter>(...args: Route
   router.delete(
     `${accountApiPrefix}/primary-email`,
     koaGuard({
-      status: [204, 400, 401],
+      status: [204, 400, 401, 403],
     }),
     async (ctx, next) => {
-      const { id: userId, scopes, identityVerified } = ctx.auth;
+      const { id: userId, scopes, identityVerified, clientId } = ctx.auth;
       assertThat(
         identityVerified,
         new RequestError({ code: 'verification_record.permission_denied', status: 401 })
@@ -91,16 +95,13 @@ export default function emailAndPhoneRoutes<T extends UserRouter>(...args: Route
       );
 
       assertThat(scopes.has(UserScope.Email), 'auth.unauthorized');
+      await assertFirstPartyClient(queries, clientId);
 
-      const { signUp } = await findDefaultSignInExperience();
-
-      if (signUp.identifiers.includes(SignInIdentifier.Email)) {
-        // If email is the only sign-up identifier, we need to keep the email
-        assertThat(signUp.identifiers.includes(SignInIdentifier.Phone), 'user.email_required');
-        // If phone is also a sign-up identifier, check if phone is set
-        const user = await findUserById(userId);
-        assertThat(user.primaryPhone, 'user.email_or_phone_required');
-      }
+      const [user, ssoIdentities] = await Promise.all([
+        findUserById(userId),
+        userSsoIdentities.findUserSsoIdentitiesByUserId(userId),
+      ]);
+      assertUserHasRemainingIdentifier(user, { primaryEmail: null }, ssoIdentities.length);
 
       const updatedUser = await updateUserById(userId, { primaryEmail: null });
 
@@ -119,10 +120,10 @@ export default function emailAndPhoneRoutes<T extends UserRouter>(...args: Route
         phone: z.string().regex(phoneRegEx),
         newIdentifierVerificationRecordId: z.string(),
       }),
-      status: [204, 400, 401, 422],
+      status: [204, 400, 401, 403, 422],
     }),
     async (ctx, next) => {
-      const { id: userId, scopes, identityVerified } = ctx.auth;
+      const { id: userId, scopes, identityVerified, clientId } = ctx.auth;
       assertThat(
         identityVerified,
         new RequestError({ code: 'verification_record.permission_denied', status: 401 })
@@ -135,6 +136,7 @@ export default function emailAndPhoneRoutes<T extends UserRouter>(...args: Route
       );
 
       assertThat(scopes.has(UserScope.Phone), 'auth.unauthorized');
+      await assertFirstPartyClient(queries, clientId);
 
       // Check new identifier
       const newVerificationRecord = await buildVerificationRecordByIdAndType({
@@ -161,10 +163,10 @@ export default function emailAndPhoneRoutes<T extends UserRouter>(...args: Route
   router.delete(
     `${accountApiPrefix}/primary-phone`,
     koaGuard({
-      status: [204, 400, 401],
+      status: [204, 400, 401, 403],
     }),
     async (ctx, next) => {
-      const { id: userId, scopes, identityVerified } = ctx.auth;
+      const { id: userId, scopes, identityVerified, clientId } = ctx.auth;
       assertThat(
         identityVerified,
         new RequestError({ code: 'verification_record.permission_denied', status: 401 })
@@ -176,16 +178,13 @@ export default function emailAndPhoneRoutes<T extends UserRouter>(...args: Route
       );
 
       assertThat(scopes.has(UserScope.Phone), 'auth.unauthorized');
+      await assertFirstPartyClient(queries, clientId);
 
-      const { signUp } = await findDefaultSignInExperience();
-
-      if (signUp.identifiers.includes(SignInIdentifier.Phone)) {
-        // If phone is the only sign-up identifier, we need to keep the phone
-        assertThat(signUp.identifiers.includes(SignInIdentifier.Email), 'user.phone_required');
-        // If email is also a sign-up identifier, check if email is set
-        const user = await findUserById(userId);
-        assertThat(user.primaryEmail, 'user.email_or_phone_required');
-      }
+      const [user, ssoIdentities] = await Promise.all([
+        findUserById(userId),
+        userSsoIdentities.findUserSsoIdentitiesByUserId(userId),
+      ]);
+      assertUserHasRemainingIdentifier(user, { primaryPhone: null }, ssoIdentities.length);
 
       const updatedUser = await updateUserById(userId, { primaryPhone: null });
 

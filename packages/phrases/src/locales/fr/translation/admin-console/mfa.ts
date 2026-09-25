@@ -12,7 +12,6 @@ const mfa = {
   webauthn: 'Passkeys',
   webauthn_description:
     'Vérifiez via une méthode prise en charge par le navigateur : biométrie, scan de téléphone ou clé de sécurité, etc.',
-  webauthn_native_tip: "WebAuthn n'est pas pris en charge pour les applications natives.",
   webauthn_domain_tip:
     "WebAuthn lie les clés publiques au domaine spécifique. Modifier votre domaine de service bloquera les utilisateurs pour l'authentification via les passkeys existantes.",
   backup_code: 'Codes de secours',
@@ -43,7 +42,7 @@ const mfa = {
   require_mfa_optional:
     "MFA facultative : laissez les utilisateurs choisir d'activer MFA pour la sécurité de leur propre compte",
   require_mfa_adaptive:
-    'MFA adaptative : ne demandez MFA que lorsque une connexion semble risquée (par ex. nouvel appareil / localisation)',
+    "MFA adaptative : ne demandez MFA que lorsqu'une connexion semble risquée (par ex. nouveau pays / longue période d'inactivité)",
   require_mfa_mandatory:
     'MFA obligatoire : exige que tous les utilisateurs effectuent MFA à chaque connexion',
   set_up_prompt: 'Invite de configuration MFA',
@@ -52,10 +51,14 @@ const mfa = {
     "Demander aux utilisateurs de configurer MFA lors de l'inscription (optionnel, invitation unique)",
   prompt_only_at_sign_in:
     "Demander aux utilisateurs de configurer MFA lors de leur prochaine tentative de connexion après l'inscription (optionnel, invitation unique)",
+  prompt_at_sign_in_and_sign_up_mandatory:
+    "Demander aux utilisateurs de configurer MFA lors de l'inscription. (non ignoré)",
+  prompt_only_at_sign_in_mandatory:
+    "Demander aux utilisateurs de configurer MFA lors de leur prochaine tentative de connexion après l'inscription. (non ignoré)",
   set_up_organization_required_mfa_prompt:
     "Invite de configuration MFA pour les utilisateurs après que l'organisation a activé MFA",
-  prompt_at_sign_in_no_skip:
-    'Demander aux utilisateurs de configurer MFA lors de la prochaine connexion (pas de possibilité de passer)',
+  prompt_at_sign_in_non_skippable:
+    'Demander aux utilisateurs de configurer MFA lors de la prochaine connexion (impossible à ignorer)',
   email_primary_method_tip:
     'Le code de vérification par e-mail est déjà votre méthode de connexion principale. Pour maintenir la sécurité, il ne peut pas être réutilisé pour MFA.',
   phone_primary_method_tip:
@@ -69,6 +72,31 @@ const mfa = {
   no_sms_connector_error:
     "Impossible d'activer MFA avec code de vérification SMS sans connecteur SMS. Veuillez d'abord configurer un connecteur SMS.",
   setup_link: 'Configurer',
+  trusted_device: {
+    title: 'Appareils de confiance',
+    description:
+      'Permettez aux navigateurs de confiance d’effectuer automatiquement la vérification MFA lorsque le parcours MFA en cours l’exige.',
+    enable_title: 'Activer les appareils de confiance',
+    enable_description:
+      'Autorisez les utilisateurs à faire confiance à ce navigateur après un facteur MFA éligible.',
+    duration_title: 'Durée de confiance (jours)',
+    duration_error: 'Saisissez un nombre entier compris entre {{min}} et {{max}}.',
+    duration_note: 'Les changements de durée ne concernent que les appareils approuvés ensuite.',
+    organization_allow_title: 'Autoriser les appareils de confiance',
+    organization_allow_tip:
+      "Une organisation peut seulement restreindre la politique du locataire ; elle ne peut pas l'activer si la politique globale est désactivée.",
+    organization_allow_description:
+      'Autorisez la vérification par appareil de confiance pour les membres de cette organisation.',
+    organization_global_disabled:
+      "Activez d'abord les appareils de confiance dans les paramètres MFA du locataire.",
+    management_description:
+      "Gérez les navigateurs auxquels cet utilisateur a fait confiance après avoir effectué l'authentification multifacteur. Après suppression, ce navigateur exigera de nouveau l'authentification multifacteur à la prochaine connexion.",
+    management_hint: 'Le dernier emplacement est fourni à titre informatif uniquement.',
+    management_empty: "Cet utilisateur n'a aucun appareil de confiance actif.",
+    management_deletion_confirmation:
+      "Supprimer {{name}} ? Ce navigateur exigera de nouveau l'authentification multifacteur à la prochaine connexion.",
+    management_removed: 'Appareil de confiance supprimé.',
+  },
 };
 
 export default Object.freeze(mfa);

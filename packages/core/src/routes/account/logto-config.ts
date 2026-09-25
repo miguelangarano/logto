@@ -1,8 +1,18 @@
 import { UserScope } from '@logto/core-kit';
-import { AccountCenterControlValue, userMfaDataGuard, userMfaDataKey } from '@logto/schemas';
+import {
+  AccountCenterControlValue,
+  userMfaDataGuard,
+  userPasskeySignInDataGuard,
+} from '@logto/schemas';
 import { z } from 'zod';
 
+import {
+  buildUpdatedUserLogtoConfig,
+  buildUserLogtoConfigResponse,
+  userLogtoConfigResponseGuard,
+} from '#src/libraries/user-logto-config.js';
 import koaGuard from '#src/middleware/koa-guard.js';
+import { assertFirstPartyClient } from '#src/utils/assert-first-party-client.js';
 
 import RequestError from '../../errors/RequestError/index.js';
 import assertThat from '../../utils/assert-that.js';
@@ -19,11 +29,7 @@ export default function logtoConfigRoutes<T extends UserRouter>(...args: RouterI
   router.get(
     `${accountApiPrefix}/logto-configs`,
     koaGuard({
-      response: z.object({
-        mfa: z.object({
-          skipped: z.boolean(),
-        }),
-      }),
+      response: userLogtoConfigResponseGuard,
       status: [200, 400, 401],
     }),
     async (ctx, next) => {
@@ -35,23 +41,15 @@ export default function logtoConfigRoutes<T extends UserRouter>(...args: RouterI
       );
 
       const { fields } = ctx.accountCenter;
-      // Currently, only the MFA skip state is exposed in logto_config
-      // so we only need to check the MFA field
+      const passkeyControl = fields.passkey ?? fields.mfa;
       assertThat(
-        fields.mfa === AccountCenterControlValue.Edit ||
-          fields.mfa === AccountCenterControlValue.ReadOnly,
+        passkeyControl === AccountCenterControlValue.Edit ||
+          passkeyControl === AccountCenterControlValue.ReadOnly,
         new RequestError({ code: 'account_center.field_not_enabled', status: 400 })
       );
 
       const user = await findUserById(userId);
-      const mfaData = userMfaDataGuard.safeParse(user.logtoConfig[userMfaDataKey]);
-      const skipped = mfaData.success ? (mfaData.data.skipped ?? false) : false;
-
-      ctx.body = {
-        mfa: {
-          skipped,
-        },
-      };
+      ctx.body = buildUserLogtoConfigResponse(user.logtoConfig);
 
       return next();
     }
@@ -61,54 +59,39 @@ export default function logtoConfigRoutes<T extends UserRouter>(...args: RouterI
     `${accountApiPrefix}/logto-configs`,
     koaGuard({
       body: z.object({
-        mfa: z.object({
-          skipped: z.boolean(),
-        }),
+        mfa: userMfaDataGuard.optional(),
+        passkeySignIn: userPasskeySignInDataGuard.optional(),
       }),
-      response: z.object({
-        mfa: z.object({
-          skipped: z.boolean(),
-        }),
-      }),
-      status: [200, 400, 401],
+      response: userLogtoConfigResponseGuard,
+      status: [200, 400, 401, 403],
     }),
     async (ctx, next) => {
-      const { id: userId, scopes } = ctx.auth;
+      const { id: userId, identityVerified, scopes, clientId } = ctx.auth;
+
+      assertThat(
+        identityVerified,
+        new RequestError({ code: 'verification_record.permission_denied', status: 401 })
+      );
       assertThat(
         scopes.has(UserScope.Identities),
         new RequestError({ code: 'auth.unauthorized', status: 401 })
       );
-      const {
-        mfa: { skipped },
-      } = ctx.guard.body;
+      await assertFirstPartyClient(queries, clientId);
+
       const { fields } = ctx.accountCenter;
-      // Currently, only the MFA skip state is exposed in logto_config
-      // so we only need to check the MFA field
+      const passkeyControl = fields.passkey ?? fields.mfa;
       assertThat(
-        fields.mfa === AccountCenterControlValue.Edit,
+        passkeyControl === AccountCenterControlValue.Edit,
         new RequestError({ code: 'account_center.field_not_editable', status: 400 })
       );
 
       const user = await findUserById(userId);
-      const existingMfaData = userMfaDataGuard.safeParse(user.logtoConfig[userMfaDataKey]);
-
       const updatedUser = await updateUserById(userId, {
-        logtoConfig: {
-          ...user.logtoConfig,
-          [userMfaDataKey]: {
-            ...(existingMfaData.success ? existingMfaData.data : {}),
-            skipped,
-          },
-        },
+        logtoConfig: buildUpdatedUserLogtoConfig(user, ctx.guard.body),
       });
 
       ctx.appendDataHookContext('User.Data.Updated', { user: updatedUser });
-
-      ctx.body = {
-        mfa: {
-          skipped,
-        },
-      };
+      ctx.body = buildUserLogtoConfigResponse(updatedUser.logtoConfig);
 
       return next();
     }

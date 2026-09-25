@@ -1,6 +1,7 @@
 import {
   type BindWebAuthnPayload,
-  MfaFactor,
+  InteractionEvent,
+  type SignInIdentifier,
   type WebAuthnAuthenticationOptions,
   type WebAuthnVerificationPayload,
 } from '@logto/schemas';
@@ -8,22 +9,33 @@ import {
 import api from '../api';
 
 import { experienceApiRoutes } from './const';
-import { identifyAndSubmitInteraction, submitInteraction } from './interaction';
-import { bindMfa } from './mfa';
+import { identifyAndSubmitInteraction, initInteraction, submitInteraction } from './interaction';
 
-export { createWebAuthnRegistration as createSignInWebAuthnRegistrationOptions } from './mfa';
+export { createWebAuthnRegistration as createSignInPasskeyRegistrationOptions } from './mfa';
 
-export const bindSignInWebAuthn = async (payload: BindWebAuthnPayload, verificationId: string) =>
-  bindMfa(MfaFactor.WebAuthn, verificationId, payload);
+export const bindSignInPasskey = async (payload: BindWebAuthnPayload, verificationId: string) => {
+  await api.post(`${experienceApiRoutes.verification}/web-authn/registration/verify`, {
+    json: {
+      verificationId,
+      payload,
+    },
+  });
+  await api.post(`${experienceApiRoutes.profile}/mfa/passkey`, {
+    json: {
+      verificationId,
+    },
+  });
+  return submitInteraction();
+};
 
-export const createSignInWebAuthnAuthenticationOptions = async () =>
-  api.post(`${experienceApiRoutes.prefix}/preflight/sign-in-web-authn/authentication`).json<{
+export const createSignInPasskeyAuthenticationOptions = async () =>
+  api.post(`${experienceApiRoutes.prefix}/preflight/sign-in-passkey/authentication`).json<{
     authenticationOptions: WebAuthnAuthenticationOptions;
   }>();
 
-export const verifySignInWebAuthn = async (payload: WebAuthnVerificationPayload) => {
+export const verifySignInPasskey = async (payload: WebAuthnVerificationPayload) => {
   const { verificationId } = await api
-    .post(`${experienceApiRoutes.verification}/sign-in-web-authn/authentication/verify`, {
+    .post(`${experienceApiRoutes.verification}/sign-in-passkey/authentication/verify`, {
       json: { payload },
     })
     .json<{ verificationId: string }>();
@@ -40,4 +52,44 @@ export const verifySignInWebAuthn = async (payload: WebAuthnVerificationPayload)
 export const skipPasskeyBinding = async () => {
   await api.post(`${experienceApiRoutes.profile}/mfa/passkey-skipped`);
   return submitInteraction();
+};
+
+/**
+ * Create WebAuthn authentication options for identifier-based passkey sign-in.
+ * The user has already provided an identifier (email/phone/username) and we
+ * generate non-discoverable authentication options for their passkey credentials.
+ */
+export const createIdentifierPasskeyAuthentication = async (identifier: {
+  type: SignInIdentifier;
+  value: string;
+}) => {
+  await initInteraction(InteractionEvent.SignIn);
+
+  const { verificationId, authenticationOptions } = await api
+    .post(`${experienceApiRoutes.verification}/sign-in-passkey/authentication`, {
+      json: { identifier },
+    })
+    .json<{
+      verificationId: string;
+      authenticationOptions: WebAuthnAuthenticationOptions;
+    }>();
+
+  return { verificationId, options: authenticationOptions };
+};
+
+/**
+ * Verify the identifier-based passkey authentication response
+ * and identify + submit the interaction.
+ */
+export const verifyIdentifierPasskey = async (
+  verificationId: string,
+  payload: WebAuthnVerificationPayload
+) => {
+  const result = await api
+    .post(`${experienceApiRoutes.verification}/sign-in-passkey/authentication/verify`, {
+      json: { verificationId, payload },
+    })
+    .json<{ verificationId: string }>();
+
+  return identifyAndSubmitInteraction({ verificationId: result.verificationId });
 };

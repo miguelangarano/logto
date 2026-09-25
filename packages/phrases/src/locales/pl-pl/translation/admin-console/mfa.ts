@@ -11,7 +11,6 @@ const mfa = {
   webauthn: 'Passkeys',
   webauthn_description:
     'Zweryfikuj za pomocą metody obsługiwanej przez przeglądarkę: biometria, skanowanie telefonem lub klucz zabezpieczeń, itp.',
-  webauthn_native_tip: 'WebAuthn nie jest obsługiwane dla aplikacji natywnych.',
   webauthn_domain_tip:
     'WebAuthn łączy klucze publiczne z konkretną domeną. Modyfikacja domeny usługi zablokuje użytkowników przed uwierzytelnianiem za pomocą istniejących kluczy przechodnich.',
   backup_code: 'Kody zapasowe',
@@ -42,7 +41,7 @@ const mfa = {
   require_mfa_optional:
     'Opcjonalne MFA: pozwól użytkownikom zdecydować o włączeniu MFA dla bezpieczeństwa własnego konta',
   require_mfa_adaptive:
-    'Adaptacyjne MFA: wymagaj MFA tylko wtedy, gdy logowanie wydaje się ryzykowne (np. nowe urządzenie / lokalizacja)',
+    'Adaptacyjne MFA: wymagaj MFA tylko wtedy, gdy logowanie wydaje się ryzykowne (np. nowy kraj / długi okres nieaktywności)',
   require_mfa_mandatory:
     'Obowiązkowe MFA: wymaga od wszystkich użytkowników ukończenia MFA przy każdym logowaniu',
   set_up_prompt: 'Monit o skonfigurowanie MFA',
@@ -51,9 +50,13 @@ const mfa = {
     'Zapytaj użytkowników o skonfigurowanie MFA podczas rejestracji (można pominąć, jednorazowy monit)',
   prompt_only_at_sign_in:
     'Zapytaj użytkowników o skonfigurowanie MFA przy następnym logowaniu po rejestracji (można pominąć, jednorazowy monit)',
+  prompt_at_sign_in_and_sign_up_mandatory:
+    'Poproś użytkowników o skonfigurowanie MFA podczas rejestracji. (nie można pominąć)',
+  prompt_only_at_sign_in_mandatory:
+    'Poproś użytkowników o skonfigurowanie MFA przy następnym logowaniu po rejestracji. (nie można pominąć)',
   set_up_organization_required_mfa_prompt:
     'Monit o konfigurację MFA dla organizacji wymagającej MFA',
-  prompt_at_sign_in_no_skip:
+  prompt_at_sign_in_non_skippable:
     'Wymagaj od użytkowników skonfigurowania MFA przy następnym logowaniu (nie można pominąć)',
   email_primary_method_tip:
     'Kod weryfikacyjny e-mail jest już twoją główną metodą logowania. Aby utrzymać bezpieczeństwo, nie można go ponownie używać do MFA.',
@@ -68,6 +71,29 @@ const mfa = {
   no_sms_connector_error:
     'Nie można włączyć MFA z kodem weryfikacyjnym SMS bez łącznika SMS. Proszę najpierw skonfigurować łącznik SMS.',
   setup_link: 'Skonfiguruj',
+  trusted_device: {
+    title: 'Zaufane urządzenia',
+    description:
+      'Pozwól zaufanym przeglądarkom automatycznie ukończyć weryfikację MFA, gdy wymaga jej bieżący proces MFA.',
+    enable_title: 'Włącz zaufane urządzenia',
+    enable_description: 'Pozwól zaufać tej przeglądarce po ukończeniu odpowiedniego czynnika MFA.',
+    duration_title: 'Okres zaufania (dni)',
+    duration_error: 'Wprowadź liczbę całkowitą od {{min}} do {{max}}.',
+    duration_note: 'Zmiany okresu dotyczą tylko urządzeń uznanych za zaufane później.',
+    organization_allow_title: 'Zezwól na zaufane urządzenia',
+    organization_allow_tip:
+      'Organizacja może tylko ograniczyć zasadę tenanta i nie może jej włączyć, gdy jest globalnie wyłączona.',
+    organization_allow_description:
+      'Zezwól członkom tej organizacji na weryfikację za pomocą zaufanych urządzeń.',
+    organization_global_disabled: 'Najpierw włącz zaufane urządzenia w ustawieniach MFA tenanta.',
+    management_description:
+      'Zarządzaj przeglądarkami, którym ten użytkownik zaufał po ukończeniu MFA. Po usunięciu przeglądarka ponownie zażąda MFA przy następnym logowaniu.',
+    management_hint: 'Ostatnia lokalizacja ma charakter wyłącznie informacyjny.',
+    management_empty: 'Ten użytkownik nie ma aktywnych zaufanych urządzeń.',
+    management_deletion_confirmation:
+      'Usunąć {{name}}? Ta przeglądarka ponownie zażąda MFA przy następnym logowaniu.',
+    management_removed: 'Zaufane urządzenie zostało usunięte.',
+  },
 };
 
 export default Object.freeze(mfa);

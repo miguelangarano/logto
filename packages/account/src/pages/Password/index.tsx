@@ -2,7 +2,7 @@ import usePasswordErrorMessage from '@experience/shared/hooks/use-password-error
 import { PasswordPolicyChecker, passwordPolicyGuard } from '@logto/core-kit';
 import { AccountCenterControlValue } from '@logto/schemas';
 import { condArray } from '@silverhand/essentials';
-import { useCallback, useContext, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -16,6 +16,11 @@ import { passwordSuccessRoute } from '@ac/constants/routes';
 import useApi from '@ac/hooks/use-api';
 import useErrorHandler from '@ac/hooks/use-error-handler';
 import SecondaryPageLayout from '@ac/layouts/SecondaryPageLayout';
+import {
+  canSetInitialPasswordWithoutVerification,
+  hasAvailableSecurityVerificationMethod,
+} from '@ac/utils/security-page';
+import { sessionStorage } from '@ac/utils/session-storage';
 
 import styles from '../CodeFlow/index.module.scss';
 
@@ -29,7 +34,8 @@ const Password = () => {
     setVerificationId,
     setToast,
     experienceSettings,
-    setUserInfo,
+    userInfo,
+    refreshUserInfo,
   } = useContext(PageContext);
   const updatePasswordRequest = useApi(updatePassword);
   const handleError = useErrorHandler();
@@ -62,6 +68,12 @@ const Password = () => {
     return items.length === 0 ? undefined : t('description.password_requirements', { items, max });
   }, [passwordPolicy, t]);
 
+  useEffect(() => {
+    if (verificationId) {
+      sessionStorage.clearRouteRestore();
+    }
+  }, [verificationId]);
+
   if (
     !accountCenterSettings?.enabled ||
     accountCenterSettings.fields.password !== AccountCenterControlValue.Edit
@@ -71,8 +83,23 @@ const Password = () => {
     );
   }
 
-  if (!verificationId) {
+  const hasAvailableVerificationMethod = hasAvailableSecurityVerificationMethod(userInfo);
+  const canSkipVerification = canSetInitialPasswordWithoutVerification(
+    userInfo,
+    accountCenterSettings.fields
+  );
+
+  if (!verificationId && hasAvailableVerificationMethod) {
     return <VerificationMethodList />;
+  }
+
+  if (!verificationId && !canSkipVerification) {
+    return (
+      <ErrorPage
+        titleKey="account_center.verification.no_available_methods_title"
+        messageKey="account_center.verification.no_available_methods_description"
+      />
+    );
   }
 
   const handleSubmit = async (password: string) => {
@@ -86,7 +113,7 @@ const Password = () => {
       return;
     }
 
-    if (!verificationId || loading) {
+    if ((!verificationId && !canSkipVerification) || loading) {
       return;
     }
 
@@ -108,7 +135,7 @@ const Password = () => {
       return;
     }
 
-    setUserInfo((current) => ({ ...current, hasPassword: true }));
+    await refreshUserInfo();
     navigate(passwordSuccessRoute, { replace: true });
   };
 

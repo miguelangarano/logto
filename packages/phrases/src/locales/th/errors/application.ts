@@ -9,6 +9,8 @@ const application = {
     'แอปพลิเคชันของบุคคลที่สามไม่สามารถเปิดใช้งานการแลกเปลี่ยนโทเคนได้',
   user_consent_scopes_not_found: 'พบขอบเขตการยินยอมของผู้ใช้ไม่ถูกต้อง',
   consent_management_api_scopes_not_allowed: 'ไม่อนุญาตให้ใช้ขอบเขต Management API',
+  device_flow_native_only: 'ขั้นตอนอุปกรณ์ใช้ได้เฉพาะแอปพลิเคชันเนทีฟเท่านั้น',
+  device_flow_not_changeable: 'ไม่สามารถเปลี่ยนขั้นตอนอุปกรณ์หลังจากสร้างแอปพลิเคชันแล้ว',
   protected_app_metadata_is_required: 'ต้องระบุข้อมูล metadata ของแอปที่ได้รับการป้องกัน',
   protected_app_not_configured:
     'ยังไม่ได้ตั้งค่าผู้ให้บริการแอปที่ได้รับการป้องกัน ฟีเจอร์นี้ไม่พร้อมใช้งานสำหรับเวอร์ชันโอเพนซอร์ซ',
@@ -21,12 +23,15 @@ const application = {
   should_delete_custom_domains_first: 'โปรดลบโดเมนแบบกำหนดเองออกก่อน',
   no_legacy_secret_found: 'แอปพลิเคชันนี้ไม่มี secret แบบเดิม',
   secret_name_exists: 'ชื่อ secret นี้มีอยู่แล้ว',
+  sync_application_secret_failed: 'ซิงค์ application secret ล้มเหลว',
   saml: {
     use_saml_app_api: 'ใช้ `[METHOD] /saml-applications(/.*)?` API เพื่อใช้งาน SAML app',
     saml_application_only: 'API นี้ใช้ได้กับแอป SAML เท่านั้น',
     reach_oss_limit: 'คุณไม่สามารถสร้าง SAML แอปเพิ่มเติมได้ เนื่องจากถึงขีดจำกัด {{limit}} แล้ว',
     acs_url_binding_not_supported:
       'รองรับเฉพาะ HTTP-POST binding สำหรับรับ SAML assertion เท่านั้น',
+    acs_url_scheme_not_supported:
+      'รองรับเฉพาะรูปแบบ HTTP และ HTTPS สำหรับ URL ของ Assertion Consumer Service เท่านั้น',
     can_not_delete_active_secret: 'ไม่สามารถลบ secret ที่ถูกใช้งานอยู่ได้',
     no_active_secret: 'ไม่พบ secret ที่ถูกใช้งานอยู่',
     entity_id_required: 'ต้องระบุ Entity ID เพื่อสร้าง metadata',

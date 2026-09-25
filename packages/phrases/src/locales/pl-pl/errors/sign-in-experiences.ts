@@ -28,12 +28,24 @@ const sign_in_experiences = {
   phone_verification_code_cannot_be_used_for_sign_in:
     'Kod weryfikacyjny SMS nie może być używany do logowania, gdy jest włączony dla MFA.',
   adaptive_mfa_requires_mfa: 'Przed włączeniem Adaptive MFA należy włączyć MFA.',
+  adaptive_mfa_requires_non_skippable_policy:
+    'Adaptive MFA wymaga polityki pytań MFA, której nie można pominąć. Użyj PromptOnlyAtSignInMandatory lub PromptAtSignInAndSignUpMandatory.',
+  non_adaptive_mfa_requires_skippable_policy:
+    'Gdy adaptive MFA jest wyłączone, polityka pytań MFA musi być możliwa do pominięcia. Nie używaj PromptOnlyAtSignInMandatory lub PromptAtSignInAndSignUpMandatory.',
   duplicated_sign_up_identifiers: 'Wykryto zduplikowane identyfikatory rejestracji.',
   missing_sign_up_identifiers: 'Podstawowy identyfikator rejestracji nie może być pusty.',
   invalid_custom_email_blocklist_format:
     'Nieprawidłowe elementy niestandardowej listy blokowanych adresów e-mail: {{items, list(type:conjunction)}}. Każdy element musi być prawidłowym adresem e-mail lub domeną, np. foo@example.com lub @example.com.',
   forgot_password_method_requires_connector:
     'Metoda "Zapomniałem hasła" wymaga skonfigurowania odpowiedniego łącznika {{method}}.',
+  password_expiration_requires_forgot_password:
+    'Wygasanie hasła wymaga co najmniej jednej metody odzyskiwania hasła z poprawnym konektorem.',
+  password_expiration_not_enabled:
+    'Polityka wygasania haseł nie jest włączona. Włącz ją w ustawieniach logowania przed wygaszeniem haseł.',
+  password_expiration_invalid_period_days:
+    'Liczba dni okresu ważności musi być dodatnią liczbą całkowitą, gdy wygaśnięcie hasła jest włączone.',
+  username_policy_case_conflicts_exist:
+    'Nie można zmienić na nazwy użytkowników nie uwzględniające wielkości liter, gdy istnieją nazwy różniące się wyłącznie wielkością liter. Rozwiąż konflikty i spróbuj ponownie.',
 };
 
 export default Object.freeze(sign_in_experiences);

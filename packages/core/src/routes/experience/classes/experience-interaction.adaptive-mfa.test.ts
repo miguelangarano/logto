@@ -1,4 +1,13 @@
-import { InteractionEvent, MfaFactor, MfaPolicy, type User } from '@logto/schemas';
+/* eslint-disable max-lines */
+import {
+  InteractionEvent,
+  InteractionHookEvent,
+  MfaFactor,
+  MfaPolicy,
+  type User,
+  userMfaDataKey,
+  VerificationType,
+} from '@logto/schemas';
 import { createMockUtils, pickDefault } from '@logto/shared/esm';
 import { type Optional } from '@silverhand/essentials';
 
@@ -6,6 +15,7 @@ import { mockSignInExperience } from '#src/__mocks__/sign-in-experience.js';
 import { mockUserWithMfaVerifications } from '#src/__mocks__/user.js';
 import RequestError from '#src/errors/RequestError/index.js';
 import { createMockLogContext } from '#src/test-utils/koa-audit-log.js';
+import { createMockProvider } from '#src/test-utils/oidc-provider.js';
 import { MockTenant } from '#src/test-utils/tenant.js';
 import { createContextWithRouteParameters } from '#src/utils/test-utils.js';
 
@@ -32,7 +42,7 @@ const signInExperiences = {
     ...mockSignInExperience,
     adaptiveMfa: { enabled: true },
     mfa: {
-      policy: MfaPolicy.PromptAtSignInAndSignUp,
+      policy: MfaPolicy.PromptAtSignInAndSignUpMandatory,
       factors: [MfaFactor.TOTP],
     },
   }),
@@ -40,15 +50,35 @@ const signInExperiences = {
 
 const users = {
   findUserById: jest.fn(),
+  updateUserById: jest.fn(),
+  hasUser: jest.fn().mockResolvedValue(false),
+  hasUserWithEmail: jest.fn().mockResolvedValue(false),
+  hasUserWithNormalizedPhone: jest.fn().mockResolvedValue(false),
+  hasUserWithIdentity: jest.fn().mockResolvedValue(false),
 };
 
-const tenant = new MockTenant(undefined, { signInExperiences, users });
+const getEffectivePolicy = jest.fn().mockResolvedValue({ enabled: false, durationDays: 30 });
+const tenant = new MockTenant(createMockProvider(), { signInExperiences, users }, undefined, {
+  trustedDevicePolicy: { getEffectivePolicy },
+});
+const mockInteractionDetails = {
+  jti: 'session-id',
+  params: { client_id: 'application-id' },
+} as unknown as WithHooksAndLogsContext['interactionDetails'];
 
 const ExperienceInteraction = await pickDefault(import('./experience-interaction.js'));
 
 describe('ExperienceInteraction adaptive MFA', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    signInExperiences.findDefaultSignInExperience.mockReset().mockResolvedValue({
+      ...mockSignInExperience,
+      adaptiveMfa: { enabled: true },
+      mfa: {
+        policy: MfaPolicy.PromptAtSignInAndSignUpMandatory,
+        factors: [MfaFactor.TOTP],
+      },
+    });
     // eslint-disable-next-line @silverhand/fp/no-mutation
     mockEnvSetValues.isDevFeaturesEnabled = true;
   });
@@ -147,7 +177,104 @@ describe('ExperienceInteraction adaptive MFA', () => {
 
     // @ts-expect-error -- mock test context
     const ctx: WithHooksAndLogsContext = {
-      assignInteractionHookResult: jest.fn(),
+      assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+      assignReleaseAnywayInteractionHookResult: jest.fn(),
+      appendDataHookContext: jest.fn(),
+      ...createContextWithRouteParameters({
+        headers: {
+          'x-logto-cf-bot-score': '10',
+        },
+      }),
+      ...createMockLogContext(),
+    };
+
+    const interactionDetails = {
+      result: {
+        interactionEvent: InteractionEvent.SignIn,
+        userId: user.id,
+      },
+    } as unknown as ConstructorParameters<typeof ExperienceInteraction>[2];
+    const experienceInteraction = new ExperienceInteraction(ctx, tenant, interactionDetails);
+    const { createLog } = createMockLogContext();
+    const log = createLog('Interaction.SignIn.Submit');
+
+    await expect(experienceInteraction.guardMfaVerificationStatus(log)).rejects.toMatchError(
+      new RequestError(
+        { code: 'session.mfa.require_mfa_verification', status: 403 },
+        {
+          availableFactors: [MfaFactor.TOTP],
+          maskedIdentifiers: {},
+        }
+      )
+    );
+
+    expect(ctx.assignReleaseAnywayInteractionHookResult).toHaveBeenCalledWith({
+      event: InteractionHookEvent.PostSignInAdaptiveMfaTriggered,
+      payload: {
+        adaptiveMfaResult: expect.objectContaining({
+          requiresMfa: true,
+          triggeredRules: expect.arrayContaining([
+            expect.objectContaining({ rule: 'untrusted_ip' }),
+          ]) as unknown,
+        }) as unknown,
+      },
+      userId: user.id,
+    });
+  });
+
+  it('does not require MFA verification when adaptive MFA triggers and user has no factors', async () => {
+    const user: User = {
+      ...mockUserWithMfaVerifications,
+      mfaVerifications: [],
+      logtoConfig: {},
+    };
+
+    users.findUserById.mockResolvedValueOnce(user);
+
+    // @ts-expect-error -- mock test context
+    const ctx: WithHooksAndLogsContext = {
+      assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+      assignReleaseAnywayInteractionHookResult: jest.fn(),
+      appendDataHookContext: jest.fn(),
+      ...createContextWithRouteParameters({
+        headers: {
+          'x-logto-cf-bot-score': '10',
+        },
+      }),
+      ...createMockLogContext(),
+    };
+
+    const interactionDetails = {
+      result: {
+        interactionEvent: InteractionEvent.SignIn,
+        userId: user.id,
+      },
+    } as unknown as ConstructorParameters<typeof ExperienceInteraction>[2];
+    const experienceInteraction = new ExperienceInteraction(ctx, tenant, interactionDetails);
+    const { createLog } = createMockLogContext();
+    const log = createLog('Interaction.SignIn.Submit');
+
+    await expect(experienceInteraction.guardMfaVerificationStatus(log)).resolves.toBeUndefined();
+
+    expect(ctx.assignReleaseAnywayInteractionHookResult).not.toHaveBeenCalled();
+  });
+
+  it('assigns adaptive MFA hook result from guardMfaVerificationStatus even when log is not provided', async () => {
+    const user: User = {
+      ...mockUserWithMfaVerifications,
+      logtoConfig: {
+        mfa: {
+          skipMfaOnSignIn: true,
+        },
+      },
+    };
+
+    users.findUserById.mockResolvedValueOnce(user);
+
+    // @ts-expect-error -- mock test context
+    const ctx: WithHooksAndLogsContext = {
+      assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+      assignReleaseAnywayInteractionHookResult: jest.fn(),
       appendDataHookContext: jest.fn(),
       ...createContextWithRouteParameters({
         headers: {
@@ -174,6 +301,13 @@ describe('ExperienceInteraction adaptive MFA', () => {
         }
       )
     );
+
+    expect(ctx.assignReleaseAnywayInteractionHookResult).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: InteractionHookEvent.PostSignInAdaptiveMfaTriggered,
+        userId: user.id,
+      })
+    );
   });
 
   it('allows sign-in when adaptive MFA does not trigger and skipMfaOnSignIn is true', async () => {
@@ -191,7 +325,8 @@ describe('ExperienceInteraction adaptive MFA', () => {
 
     // @ts-expect-error -- mock test context
     const ctx: WithHooksAndLogsContext = {
-      assignInteractionHookResult: jest.fn(),
+      assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+      assignReleaseAnywayInteractionHookResult: jest.fn(),
       appendDataHookContext: jest.fn(),
       ...createContextWithRouteParameters({
         headers: {
@@ -210,6 +345,153 @@ describe('ExperienceInteraction adaptive MFA', () => {
     const experienceInteraction = new ExperienceInteraction(ctx, tenant, interactionDetails);
 
     await expect(experienceInteraction.guardMfaVerificationStatus()).resolves.toBeUndefined();
+    expect(ctx.assignReleaseAnywayInteractionHookResult).not.toHaveBeenCalled();
+  });
+
+  it('does not assign adaptive MFA hook result when current interaction already satisfies MFA verification', async () => {
+    const user: User = {
+      ...mockUserWithMfaVerifications,
+      logtoConfig: {
+        mfa: {
+          skipped: true,
+        },
+      },
+    };
+
+    users.findUserById.mockResolvedValueOnce(user);
+
+    // @ts-expect-error -- mock test context
+    const ctx: WithHooksAndLogsContext = {
+      assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+      assignReleaseAnywayInteractionHookResult: jest.fn(),
+      appendDataHookContext: jest.fn(),
+      ...createContextWithRouteParameters({
+        headers: {
+          'x-logto-cf-bot-score': '10',
+        },
+      }),
+      ...createMockLogContext(),
+    };
+
+    const interactionDetails = {
+      result: {
+        interactionEvent: InteractionEvent.SignIn,
+        userId: user.id,
+        verificationRecords: [
+          {
+            id: 'verified-totp',
+            type: VerificationType.TOTP,
+            userId: user.id,
+            verified: true,
+          },
+        ],
+      },
+    } as unknown as ConstructorParameters<typeof ExperienceInteraction>[2];
+    const experienceInteraction = new ExperienceInteraction(ctx, tenant, interactionDetails);
+
+    await expect(experienceInteraction.guardMfaVerificationStatus()).resolves.toBeUndefined();
+    expect(ctx.assignReleaseAnywayInteractionHookResult).not.toHaveBeenCalled();
+  });
+
+  it('assigns adaptive MFA hook result only on the failed submit before MFA verification', async () => {
+    const user: User = {
+      ...mockUserWithMfaVerifications,
+      logtoConfig: {
+        mfa: {
+          skipped: true,
+        },
+      },
+    };
+
+    users.findUserById.mockResolvedValue(user);
+
+    // @ts-expect-error -- mock test context
+    const firstSubmitContext: WithHooksAndLogsContext = {
+      assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+      assignReleaseAnywayInteractionHookResult: jest.fn(),
+      appendDataHookContext: jest.fn(),
+      ...createContextWithRouteParameters({
+        headers: {
+          'x-logto-cf-bot-score': '10',
+        },
+      }),
+      ...createMockLogContext(),
+    };
+
+    const interactionDetails = {
+      result: {
+        interactionEvent: InteractionEvent.SignIn,
+        userId: user.id,
+      },
+    } as unknown as ConstructorParameters<typeof ExperienceInteraction>[2];
+    const firstSubmitInteraction = new ExperienceInteraction(
+      firstSubmitContext,
+      tenant,
+      interactionDetails
+    );
+
+    await expect(firstSubmitInteraction.submit()).rejects.toMatchObject({
+      code: 'session.mfa.require_mfa_verification',
+      status: 403,
+    });
+
+    expect(firstSubmitContext.assignReleaseAnywayInteractionHookResult).toHaveBeenCalledWith({
+      event: InteractionHookEvent.PostSignInAdaptiveMfaTriggered,
+      payload: {
+        adaptiveMfaResult: expect.objectContaining({
+          requiresMfa: true,
+          triggeredRules: expect.arrayContaining([
+            expect.objectContaining({ rule: 'untrusted_ip' }),
+          ]) as unknown,
+        }) as unknown,
+      },
+      userId: user.id,
+    });
+
+    // @ts-expect-error -- mock test context
+    const secondSubmitContext: WithHooksAndLogsContext = {
+      assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+      assignReleaseAnywayInteractionHookResult: jest.fn(),
+      appendDataHookContext: jest.fn(),
+      interactionDetails: mockInteractionDetails,
+      ...createContextWithRouteParameters({
+        headers: {
+          'x-logto-cf-bot-score': '10',
+        },
+      }),
+      ...createMockLogContext(),
+    };
+
+    const secondInteractionDetails = {
+      result: {
+        interactionEvent: InteractionEvent.SignIn,
+        userId: user.id,
+        verificationRecords: [
+          {
+            id: 'verified-totp',
+            type: VerificationType.TOTP,
+            userId: user.id,
+            verified: true,
+          },
+        ],
+      },
+    } as unknown as ConstructorParameters<typeof ExperienceInteraction>[2];
+    const secondSubmitInteraction = new ExperienceInteraction(
+      secondSubmitContext,
+      tenant,
+      secondInteractionDetails
+    );
+
+    await expect(secondSubmitInteraction.submit()).resolves.toBeUndefined();
+
+    expect(secondSubmitContext.assignReleaseOnSuccessInteractionHookResult).toHaveBeenCalledWith({
+      userId: user.id,
+    });
+    expect(secondSubmitContext.assignReleaseAnywayInteractionHookResult).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: InteractionHookEvent.PostSignInAdaptiveMfaTriggered,
+      })
+    );
   });
 
   it('allows sign-in when adaptive MFA does not trigger even if skipMfaOnSignIn is false', async () => {
@@ -223,7 +505,8 @@ describe('ExperienceInteraction adaptive MFA', () => {
 
     // @ts-expect-error -- mock test context
     const ctx: WithHooksAndLogsContext = {
-      assignInteractionHookResult: jest.fn(),
+      assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+      assignReleaseAnywayInteractionHookResult: jest.fn(),
       appendDataHookContext: jest.fn(),
       ...createContextWithRouteParameters({
         headers: {
@@ -244,10 +527,17 @@ describe('ExperienceInteraction adaptive MFA', () => {
     await expect(experienceInteraction.guardMfaVerificationStatus()).resolves.toBeUndefined();
   });
 
-  it('allows sign-in when adaptive MFA triggers but user has no supported factors', async () => {
+  it('does not require MFA verification when adaptive MFA triggers but user has no supported factors', async () => {
     const user: User = {
       ...mockUserWithMfaVerifications,
-      mfaVerifications: [],
+      mfaVerifications: [
+        {
+          id: 'backup-code-id',
+          type: MfaFactor.BackupCode,
+          createdAt: new Date().toISOString(),
+          codes: [{ code: 'mock-backup-code' }],
+        },
+      ],
       logtoConfig: {},
     };
 
@@ -255,7 +545,8 @@ describe('ExperienceInteraction adaptive MFA', () => {
 
     // @ts-expect-error -- mock test context
     const ctx: WithHooksAndLogsContext = {
-      assignInteractionHookResult: jest.fn(),
+      assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+      assignReleaseAnywayInteractionHookResult: jest.fn(),
       appendDataHookContext: jest.fn(),
       ...createContextWithRouteParameters({
         headers: {
@@ -274,6 +565,313 @@ describe('ExperienceInteraction adaptive MFA', () => {
     const experienceInteraction = new ExperienceInteraction(ctx, tenant, interactionDetails);
 
     await expect(experienceInteraction.guardMfaVerificationStatus()).resolves.toBeUndefined();
+    expect(ctx.assignReleaseAnywayInteractionHookResult).not.toHaveBeenCalled();
+  });
+
+  it('requires MFA binding on submit when adaptive MFA triggers and user has no factors', async () => {
+    const user: User = {
+      ...mockUserWithMfaVerifications,
+      mfaVerifications: [],
+      logtoConfig: {
+        [userMfaDataKey]: {
+          skipped: true,
+        },
+      },
+    };
+
+    users.findUserById.mockResolvedValueOnce(user);
+
+    // @ts-expect-error -- mock test context
+    const ctx: WithHooksAndLogsContext = {
+      assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+      assignReleaseAnywayInteractionHookResult: jest.fn(),
+      appendDataHookContext: jest.fn(),
+      ...createContextWithRouteParameters({
+        headers: {
+          'x-logto-cf-bot-score': '10',
+        },
+      }),
+      ...createMockLogContext(),
+    };
+
+    const interactionDetails = {
+      result: {
+        interactionEvent: InteractionEvent.SignIn,
+        userId: user.id,
+      },
+    } as unknown as ConstructorParameters<typeof ExperienceInteraction>[2];
+    const experienceInteraction = new ExperienceInteraction(ctx, tenant, interactionDetails);
+
+    await expect(experienceInteraction.submit()).rejects.toMatchObject({
+      code: 'user.missing_mfa',
+      status: 422,
+    });
+  });
+
+  it('requires MFA binding on submit when adaptive MFA triggers but user only has disabled factors', async () => {
+    const user: User = {
+      ...mockUserWithMfaVerifications,
+      mfaVerifications: [
+        {
+          id: 'backup-code-id',
+          type: MfaFactor.BackupCode,
+          createdAt: new Date().toISOString(),
+          codes: [{ code: 'mock-backup-code' }],
+        },
+      ],
+      logtoConfig: {
+        [userMfaDataKey]: {
+          skipped: true,
+        },
+      },
+    };
+
+    users.findUserById.mockResolvedValueOnce(user);
+    users.updateUserById.mockResolvedValueOnce(user);
+
+    // @ts-expect-error -- mock test context
+    const ctx: WithHooksAndLogsContext = {
+      assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+      assignReleaseAnywayInteractionHookResult: jest.fn(),
+      appendDataHookContext: jest.fn(),
+      ...createContextWithRouteParameters({
+        headers: {
+          'x-logto-cf-bot-score': '10',
+        },
+      }),
+      ...createMockLogContext(),
+    };
+
+    const interactionDetails = {
+      result: {
+        interactionEvent: InteractionEvent.SignIn,
+        userId: user.id,
+      },
+    } as unknown as ConstructorParameters<typeof ExperienceInteraction>[2];
+    const experienceInteraction = new ExperienceInteraction(ctx, tenant, interactionDetails);
+
+    await expect(experienceInteraction.submit()).rejects.toMatchObject({
+      code: 'user.missing_mfa',
+      status: 422,
+    });
+  });
+
+  it('allows submit after binding TOTP in current interaction when adaptive MFA triggers', async () => {
+    const user: User = {
+      ...mockUserWithMfaVerifications,
+      mfaVerifications: [],
+      logtoConfig: {
+        [userMfaDataKey]: {
+          skipped: true,
+        },
+      },
+    };
+
+    users.findUserById.mockResolvedValueOnce(user);
+    users.updateUserById.mockResolvedValueOnce(user);
+
+    // @ts-expect-error -- mock test context
+    const ctx: WithHooksAndLogsContext = {
+      assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+      assignReleaseAnywayInteractionHookResult: jest.fn(),
+      appendDataHookContext: jest.fn(),
+      interactionDetails: mockInteractionDetails,
+      ...createContextWithRouteParameters({
+        headers: {
+          'x-logto-cf-bot-score': '10',
+        },
+      }),
+      ...createMockLogContext(),
+    };
+
+    const interactionDetails = {
+      result: {
+        interactionEvent: InteractionEvent.SignIn,
+        userId: user.id,
+        mfa: {
+          totp: {
+            type: MfaFactor.TOTP,
+            secret: 'mock-secret',
+          },
+        },
+      },
+    } as unknown as ConstructorParameters<typeof ExperienceInteraction>[2];
+    const experienceInteraction = new ExperienceInteraction(ctx, tenant, interactionDetails);
+
+    await expect(experienceInteraction.submit()).resolves.toBeUndefined();
+  });
+
+  it.each([
+    {
+      name: 'email',
+      factor: MfaFactor.EmailVerificationCode,
+      profile: { primaryEmail: 'bound@logto.dev', primaryPhone: null },
+    },
+    {
+      name: 'phone',
+      factor: MfaFactor.PhoneVerificationCode,
+      profile: { primaryEmail: null, primaryPhone: '13100000000' },
+    },
+  ])(
+    'does not enforce adaptive MFA binding after binding $name MFA factor in current interaction',
+    async ({ factor, profile }) => {
+      const signInExperienceWithFactor = {
+        ...mockSignInExperience,
+        adaptiveMfa: { enabled: true },
+        mfa: {
+          policy: MfaPolicy.PromptAtSignInAndSignUpMandatory,
+          factors: [factor],
+        },
+      };
+
+      signInExperiences.findDefaultSignInExperience
+        .mockResolvedValueOnce(signInExperienceWithFactor)
+        .mockResolvedValueOnce(signInExperienceWithFactor)
+        .mockResolvedValueOnce(signInExperienceWithFactor)
+        .mockResolvedValueOnce(signInExperienceWithFactor);
+
+      const user: User = {
+        ...mockUserWithMfaVerifications,
+        mfaVerifications: [],
+        primaryEmail: null,
+        primaryPhone: null,
+        logtoConfig: {
+          [userMfaDataKey]: {
+            skipped: true,
+          },
+        },
+      };
+
+      users.findUserById.mockResolvedValueOnce(user);
+      users.updateUserById.mockResolvedValueOnce(user);
+
+      // @ts-expect-error -- mock test context
+      const ctx: WithHooksAndLogsContext = {
+        assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+        assignReleaseAnywayInteractionHookResult: jest.fn(),
+        appendDataHookContext: jest.fn(),
+        interactionDetails: mockInteractionDetails,
+        ...createContextWithRouteParameters({
+          headers: {
+            'x-logto-cf-bot-score': '10',
+          },
+        }),
+        ...createMockLogContext(),
+      };
+
+      const interactionDetails = {
+        result: {
+          interactionEvent: InteractionEvent.SignIn,
+          userId: user.id,
+          profile,
+        },
+      } as unknown as ConstructorParameters<typeof ExperienceInteraction>[2];
+      const experienceInteraction = new ExperienceInteraction(ctx, tenant, interactionDetails);
+
+      await expect(experienceInteraction.submit()).resolves.toBeUndefined();
+    }
+  );
+
+  it('allows submit when adaptive MFA triggers and no MFA factors are enabled in SIE', async () => {
+    signInExperiences.findDefaultSignInExperience.mockResolvedValue({
+      ...mockSignInExperience,
+      adaptiveMfa: { enabled: true },
+      mfa: {
+        policy: MfaPolicy.PromptAtSignInAndSignUpMandatory,
+        factors: [],
+      },
+    });
+
+    const user: User = {
+      ...mockUserWithMfaVerifications,
+      mfaVerifications: [],
+      primaryEmail: null,
+      primaryPhone: null,
+      logtoConfig: {
+        [userMfaDataKey]: {
+          skipped: true,
+        },
+      },
+    };
+
+    users.findUserById.mockResolvedValueOnce(user);
+    users.updateUserById.mockResolvedValueOnce(user);
+
+    // @ts-expect-error -- mock test context
+    const ctx: WithHooksAndLogsContext = {
+      assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+      assignReleaseAnywayInteractionHookResult: jest.fn(),
+      appendDataHookContext: jest.fn(),
+      interactionDetails: mockInteractionDetails,
+      ...createContextWithRouteParameters({
+        headers: {
+          'x-logto-cf-bot-score': '10',
+        },
+      }),
+      ...createMockLogContext(),
+    };
+
+    const interactionDetails = {
+      result: {
+        interactionEvent: InteractionEvent.SignIn,
+        userId: user.id,
+      },
+    } as unknown as ConstructorParameters<typeof ExperienceInteraction>[2];
+    const experienceInteraction = new ExperienceInteraction(ctx, tenant, interactionDetails);
+
+    await expect(experienceInteraction.submit()).resolves.toBeUndefined();
+  });
+
+  it('does not force adaptive MFA binding on submit when dev features are disabled', async () => {
+    // eslint-disable-next-line @silverhand/fp/no-mutation
+    mockEnvSetValues.isDevFeaturesEnabled = false;
+    signInExperiences.findDefaultSignInExperience.mockResolvedValue({
+      ...mockSignInExperience,
+      adaptiveMfa: { enabled: true },
+      mfa: {
+        policy: MfaPolicy.PromptAtSignInAndSignUp,
+        factors: [MfaFactor.TOTP],
+      },
+    });
+
+    const user: User = {
+      ...mockUserWithMfaVerifications,
+      mfaVerifications: [],
+      primaryEmail: null,
+      primaryPhone: null,
+      logtoConfig: {
+        [userMfaDataKey]: {
+          skipped: true,
+        },
+      },
+    };
+
+    users.findUserById.mockResolvedValueOnce(user);
+    users.updateUserById.mockResolvedValueOnce(user);
+
+    // @ts-expect-error -- mock test context
+    const ctx: WithHooksAndLogsContext = {
+      assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+      assignReleaseAnywayInteractionHookResult: jest.fn(),
+      appendDataHookContext: jest.fn(),
+      interactionDetails: mockInteractionDetails,
+      ...createContextWithRouteParameters({
+        headers: {
+          'x-logto-cf-bot-score': '10',
+        },
+      }),
+      ...createMockLogContext(),
+    };
+
+    const interactionDetails = {
+      result: {
+        interactionEvent: InteractionEvent.SignIn,
+        userId: user.id,
+      },
+    } as unknown as ConstructorParameters<typeof ExperienceInteraction>[2];
+    const experienceInteraction = new ExperienceInteraction(ctx, tenant, interactionDetails);
+
+    await expect(experienceInteraction.submit()).resolves.toBeUndefined();
   });
 
   it('keeps skipMfaOnSignIn behavior when adaptive MFA is disabled', async () => {
@@ -299,7 +897,8 @@ describe('ExperienceInteraction adaptive MFA', () => {
 
     // @ts-expect-error -- mock test context
     const ctx: WithHooksAndLogsContext = {
-      assignInteractionHookResult: jest.fn(),
+      assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+      assignReleaseAnywayInteractionHookResult: jest.fn(),
       appendDataHookContext: jest.fn(),
       ...createContextWithRouteParameters({
         headers: {
@@ -339,7 +938,8 @@ describe('ExperienceInteraction adaptive MFA', () => {
 
     // @ts-expect-error -- mock test context
     const ctx: WithHooksAndLogsContext = {
-      assignInteractionHookResult: jest.fn(),
+      assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+      assignReleaseAnywayInteractionHookResult: jest.fn(),
       appendDataHookContext: jest.fn(),
       ...createContextWithRouteParameters({
         headers: {
@@ -368,7 +968,7 @@ describe('ExperienceInteraction adaptive MFA', () => {
     );
   });
 
-  it('falls back to policy when dev features are disabled', async () => {
+  it('still triggers adaptive MFA hook result when dev features are disabled', async () => {
     // eslint-disable-next-line @silverhand/fp/no-mutation
     mockEnvSetValues.isDevFeaturesEnabled = false;
     signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce({
@@ -389,7 +989,81 @@ describe('ExperienceInteraction adaptive MFA', () => {
 
     // @ts-expect-error -- mock test context
     const ctx: WithHooksAndLogsContext = {
-      assignInteractionHookResult: jest.fn(),
+      assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+      assignReleaseAnywayInteractionHookResult: jest.fn(),
+      appendDataHookContext: jest.fn(),
+      ...createContextWithRouteParameters({
+        headers: {
+          'x-logto-cf-bot-score': '10',
+        },
+      }),
+      ...createMockLogContext(),
+    };
+
+    const interactionDetails = {
+      result: {
+        interactionEvent: InteractionEvent.SignIn,
+        userId: user.id,
+      },
+    } as unknown as ConstructorParameters<typeof ExperienceInteraction>[2];
+    const experienceInteraction = new ExperienceInteraction(ctx, tenant, interactionDetails);
+
+    await expect(experienceInteraction.guardMfaVerificationStatus()).rejects.toMatchError(
+      new RequestError(
+        { code: 'session.mfa.require_mfa_verification', status: 403 },
+        {
+          availableFactors: [MfaFactor.TOTP],
+          maskedIdentifiers: {},
+        }
+      )
+    );
+
+    expect(ctx.assignReleaseAnywayInteractionHookResult).toHaveBeenCalledTimes(1);
+
+    const [hookResult] = (
+      ctx.assignReleaseAnywayInteractionHookResult as jest.MockedFunction<
+        WithHooksAndLogsContext['assignReleaseAnywayInteractionHookResult']
+      >
+    ).mock.calls[0] as [
+      {
+        event: InteractionHookEvent;
+        payload: { adaptiveMfaResult?: { requiresMfa: boolean } };
+        userId: string;
+      },
+    ];
+
+    expect(hookResult.event).toBe(InteractionHookEvent.PostSignInAdaptiveMfaTriggered);
+    expect(hookResult.payload.adaptiveMfaResult?.requiresMfa).toBe(true);
+    expect(hookResult.userId).toBe(user.id);
+  });
+
+  it('does not allow skipMfaOnSignIn when adaptive MFA triggers and dev features are disabled', async () => {
+    // eslint-disable-next-line @silverhand/fp/no-mutation
+    mockEnvSetValues.isDevFeaturesEnabled = false;
+    signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce({
+      ...mockSignInExperience,
+      adaptiveMfa: { enabled: true },
+      mfa: {
+        policy: MfaPolicy.PromptAtSignInAndSignUp,
+        factors: [MfaFactor.TOTP],
+      },
+    });
+
+    const user: User = {
+      ...mockUserWithMfaVerifications,
+      logtoConfig: {
+        mfa: {
+          skipMfaOnSignIn: true,
+        },
+      },
+    };
+
+    users.findUserById.mockResolvedValueOnce(user);
+
+    // @ts-expect-error -- mock test context
+    const ctx: WithHooksAndLogsContext = {
+      assignReleaseOnSuccessInteractionHookResult: jest.fn(),
+      assignReleaseAnywayInteractionHookResult: jest.fn(),
       appendDataHookContext: jest.fn(),
       ...createContextWithRouteParameters({
         headers: {
@@ -417,50 +1091,6 @@ describe('ExperienceInteraction adaptive MFA', () => {
       )
     );
   });
-
-  it('allows skipMfaOnSignIn when dev features are disabled', async () => {
-    // eslint-disable-next-line @silverhand/fp/no-mutation
-    mockEnvSetValues.isDevFeaturesEnabled = false;
-    signInExperiences.findDefaultSignInExperience.mockResolvedValueOnce({
-      ...mockSignInExperience,
-      adaptiveMfa: { enabled: true },
-      mfa: {
-        policy: MfaPolicy.PromptAtSignInAndSignUp,
-        factors: [MfaFactor.TOTP],
-      },
-    });
-
-    const user: User = {
-      ...mockUserWithMfaVerifications,
-      logtoConfig: {
-        mfa: {
-          skipMfaOnSignIn: true,
-        },
-      },
-    };
-
-    users.findUserById.mockResolvedValueOnce(user);
-
-    // @ts-expect-error -- mock test context
-    const ctx: WithHooksAndLogsContext = {
-      assignInteractionHookResult: jest.fn(),
-      appendDataHookContext: jest.fn(),
-      ...createContextWithRouteParameters({
-        headers: {
-          'x-logto-cf-bot-score': '10',
-        },
-      }),
-      ...createMockLogContext(),
-    };
-
-    const interactionDetails = {
-      result: {
-        interactionEvent: InteractionEvent.SignIn,
-        userId: user.id,
-      },
-    } as unknown as ConstructorParameters<typeof ExperienceInteraction>[2];
-    const experienceInteraction = new ExperienceInteraction(ctx, tenant, interactionDetails);
-
-    await expect(experienceInteraction.guardMfaVerificationStatus()).resolves.toBeUndefined();
-  });
 });
+
+/* eslint-enable max-lines */

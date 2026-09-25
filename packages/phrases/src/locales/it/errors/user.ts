@@ -1,5 +1,14 @@
 const user = {
+  id_already_in_use: 'Questo ID utente è già in uso.',
   username_already_in_use: 'Questo nome utente è già in uso.',
+  username_starts_with_number: 'Il nome utente non può iniziare con un numero.',
+  username_invalid_charset_hard: 'Il nome utente può contenere solo lettere, numeri e underscore.',
+  username_too_short: 'Il nome utente è troppo corto.',
+  username_too_long: 'Il nome utente è troppo lungo.',
+  username_uppercase_not_allowed: 'Il nome utente non può contenere lettere maiuscole.',
+  username_lowercase_not_allowed: 'Il nome utente non può contenere lettere minuscole.',
+  username_numbers_not_allowed: 'Il nome utente non può contenere numeri.',
+  username_underscore_not_allowed: 'Il nome utente non può contenere underscore.',
   email_already_in_use: 'Questa email è associata ad un account esistente.',
   phone_already_in_use: 'Questo numero di telefono è associato ad un account esistente.',
   invalid_email: 'Indirizzo email non valido.',
@@ -31,6 +40,8 @@ const user = {
   role_exists: "L'ID ruolo {{roleId}} è già stato aggiunto a questo utente",
   invalid_role_type:
     'Tipo di ruolo non valido, non è possibile assegnare un ruolo da macchina a utente.',
+  suggest_mfa:
+    "Per una migliore sicurezza dell'account, ti consigliamo di collegare l'MFA al tuo account.",
   missing_mfa: "Devi legare un'ulteriore MFA prima di accedere.",
   totp_already_in_use: 'TOTP è già in uso.',
   backup_code_already_in_use: 'Il codice di backup è già in uso.',
@@ -42,6 +53,8 @@ const user = {
   username_required: 'Il nome utente è un identificatore richiesto, non puoi impostarlo su null.',
   email_or_phone_required:
     "L'indirizzo email o il numero di telefono è un identificatore richiesto, ne è richiesto almeno uno.",
+  last_sign_in_method_required:
+    'Devi mantenere almeno un metodo di accesso disponibile nel tuo account.',
   email_required: "L'indirizzo email è un identificatore richiesto, non puoi impostarlo su null.",
   phone_required:
     'Il numero di telefono è un identificatore richiesto, non puoi impostarlo su null.',

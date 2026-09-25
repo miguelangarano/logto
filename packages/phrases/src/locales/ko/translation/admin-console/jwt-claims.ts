@@ -34,6 +34,7 @@ const jwt_claims = {
   restore: '기본값으로 복원',
   restored: '복원됨',
   data_source_tab: '데이터 소스',
+  error_handling_tab: '오류 처리',
   test_tab: '테스트 컨텍스트',
   jwt_claims_description: '기본 클레임은 JWT에 자동으로 추가되며 재정의할 수 없습니다.',
   user_data: {
@@ -48,12 +49,17 @@ const jwt_claims = {
   interaction_data: {
     title: '사용자 상호작용 컨텍스트',
     subtitle:
-      '`context.interaction` 매개변수를 사용하여 현재 인증 세션에 대한 사용자의 상호작용 세부 정보에 접근합니다. 여기에는 `interactionEvent`, `userId`, `verificationRecords`가 포함됩니다.',
+      '`context.interaction` 매개변수를 사용하여 현재 인증 세션에 대한 사용자의 상호작용 세부 정보에 접근합니다.',
   },
   application_data: {
     title: '애플리케이션 컨텍스트',
     subtitle:
       '`context.application` 입력 매개변수를 사용하여 토큰과 관련된 애플리케이션 정보를 제공합니다.',
+  },
+  organization_data: {
+    title: '조직 컨텍스트',
+    subtitle:
+      '`context.organization` 입력 매개변수를 사용하여 대상 조직 정보를 제공합니다. 조직 토큰에서만 사용할 수 있습니다.',
   },
   token_data: {
     title: '토큰 데이터',
@@ -62,6 +68,18 @@ const jwt_claims = {
   api_context: {
     title: 'API 컨텍스트: 접근 제어',
     subtitle: '`api.denyAccess` 메소드를 사용하여 토큰 요청을 거절하세요.',
+  },
+  error_handling: {
+    title: '오류 처리',
+    subtitle: '스크립트 실행에 실패했을 때 토큰 발급을 차단할지 제어해요.',
+    input_field_title: '스크립트 오류 시 토큰 발급 동작',
+    block_issuance_switch: '스크립트 오류가 발생하면 토큰 발급 차단',
+    default_hint_create:
+      '새 커스텀 클레임 스크립트는 스크립트가 실패하면 기본적으로 토큰 발급을 차단합니다. API가 이미 값을 제공하면 저장된 값을 대신 사용합니다.',
+    default_hint_edit:
+      '이 설정이 없는 기존 커스텀 클레임 스크립트는 값을 명시적으로 저장하기 전까지 기존 기본값인 꺼짐 상태를 유지합니다.',
+    warning:
+      '활성화하면 스크립트 런타임 오류로 인해 토큰 요청이 `invalid_request` (400) 및 현지화된 `error_description` 와 함께 거부돼요. `api.denyAccess` 호출은 계속 `access_denied` 를 반환해요.',
   },
   fetch_external_data: {
     title: '외부 데이터 가져오기',
@@ -81,6 +99,11 @@ const jwt_claims = {
     subtitle: '테스트를 위해 모의 토큰 및 사용자 데이터 조정.',
     run_button: '테스트 실행',
     result_title: '테스트 결과',
+  },
+  sandbox_warning: {
+    title: '스크립트는 서버 권한으로 실행됩니다',
+    description:
+      '셀프 호스팅 Logto에서는 이 스크립트가 Logto 자체와 동일한 환경에서 실행됩니다. 서버 환경 변수를 읽고 내부 네트워크의 서비스에 접근할 수 있습니다. 샌드박스되지 않습니다. 서버 접근을 허용해도 되는 사람에게만 이 페이지 접근 권한을 부여하세요.',
   },
   form_error: {
     invalid_json: '잘못된 JSON 형식',

@@ -29,12 +29,24 @@ const sign_in_experiences = {
   phone_verification_code_cannot_be_used_for_sign_in:
     'El código de verificación de SMS no se puede usar para el inicio de sesión cuando está habilitado para MFA.',
   adaptive_mfa_requires_mfa: 'Debes habilitar MFA antes de habilitar Adaptive MFA.',
+  adaptive_mfa_requires_non_skippable_policy:
+    'Adaptive MFA requiere una política de aviso de MFA que no se pueda omitir. Usa PromptOnlyAtSignInMandatory o PromptAtSignInAndSignUpMandatory.',
+  non_adaptive_mfa_requires_skippable_policy:
+    'Cuando el MFA adaptativo está deshabilitado, la política de aviso de MFA debe ser opcional. No uses PromptOnlyAtSignInMandatory o PromptAtSignInAndSignUpMandatory.',
   duplicated_sign_up_identifiers: 'Identificadores de registro duplicados detectados.',
   missing_sign_up_identifiers: 'El identificador de registro principal no puede estar vacío.',
   invalid_custom_email_blocklist_format:
     'Elementos no válidos de la lista de bloqueo de correos electrónicos personalizados: {{items, list(type:conjunction)}}. Cada elemento debe ser una dirección de correo electrónico o dominio de correo electrónico válido, por ejemplo, foo@ejemplo.com o @ejemplo.com.',
   forgot_password_method_requires_connector:
     'El método de recuperación de contraseña requiere que se configure un conector {{method}} correspondiente.',
+  password_expiration_requires_forgot_password:
+    'La expiración de contraseña requiere al menos un método de recuperación de contraseña con un conector válido.',
+  password_expiration_not_enabled:
+    'La política de expiración de contraseña no está habilitada. Habilítela en la configuración de la experiencia de inicio de sesión antes de que las contraseñas expiren.',
+  password_expiration_invalid_period_days:
+    'Los días del período de validez deben ser un número entero positivo cuando la expiración de contraseña está habilitada.',
+  username_policy_case_conflicts_exist:
+    'No se puede cambiar a nombres de usuario no sensibles a mayúsculas mientras existan nombres de usuario que solo difieren en mayúsculas o minúsculas. Resuelve los conflictos e inténtalo de nuevo.',
 };
 
 export default Object.freeze(sign_in_experiences);

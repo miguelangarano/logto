@@ -1,6 +1,5 @@
 import {
   MfaFactor,
-  MfaPolicy,
   VerificationType,
   userMfaDataGuard,
   userMfaDataKey,
@@ -9,6 +8,9 @@ import {
 } from '@logto/schemas';
 import { type Optional } from '@silverhand/essentials';
 
+import { isNoSkipMfaPolicy } from '#src/libraries/sign-in-experience/mfa-policy.js';
+
+import { type InteractionProfile } from '../../types.js';
 import { getAllUserEnabledMfaVerifications } from '../helpers.js';
 import { type BackupCodeVerification } from '../verifications/backup-code-verification.js';
 import {
@@ -51,7 +53,7 @@ type MfaVerificationRecord =
   | MfaEmailCodeVerification
   | MfaPhoneCodeVerification;
 
-const isMfaVerificationRecord = (
+export const isMfaVerificationRecord = (
   verification: VerificationRecord
 ): verification is MfaVerificationRecord => {
   return mfaVerificationTypes.includes(verification.type);
@@ -112,17 +114,22 @@ export class MfaValidator {
     const hasUserFactors = this.userEnabledMfaVerifications.length > 0;
 
     if (this.adaptiveMfaResult !== undefined) {
-      // TODO: When adaptive MFA triggers (requiresMfa === true) but the user has no MFA factors
-      // enabled, we should still enforce MFA. Currently we return false and skip MFA in this case,
-      // which means the risk signal is silently ignored. Once the product decision is finalized,
-      // add handling here (e.g. prompt the user to set up MFA before proceeding).
+      // Verification guard only applies when the user already has MFA factors
+      // enabled in the current sign-in experience.
       return this.adaptiveMfaResult.requiresMfa && hasUserFactors;
     }
 
     const mfaData = userMfaDataGuard.safeParse(this.user.logtoConfig[userMfaDataKey]);
     const skipMfaOnSignIn = mfaData.success ? mfaData.data.skipMfaOnSignIn : undefined;
+    const isMfaEnabled = mfaData.success ? mfaData.data.enabled : undefined;
 
-    if (skipMfaOnSignIn && this.mfaSettings.policy !== MfaPolicy.Mandatory) {
+    // If `isMfaEnabled` is undefined, it means the user exists before the `enabled` flag is introduced,
+    // we should still enforce MFA for them if they have MFA factors. Only skip the check if mfa is explicitly
+    // disabled, or skipped on sign-in.
+    if (
+      (isMfaEnabled === false || skipMfaOnSignIn) &&
+      !isNoSkipMfaPolicy(this.mfaSettings.policy)
+    ) {
       return false;
     }
 
@@ -130,18 +137,36 @@ export class MfaValidator {
   }
 
   isMfaVerified(verificationRecords: VerificationRecord[]) {
-    const verifiedMfaVerificationRecords = verificationRecords.filter(
+    return this.getVerifiedMfaVerificationRecords(verificationRecords).length > 0;
+  }
+
+  hasEligibleTrustedDeviceVerification(
+    verificationRecords: VerificationRecord[],
+    currentProfile?: InteractionProfile
+  ) {
+    return this.getVerifiedMfaVerificationRecords(verificationRecords, currentProfile).some(
+      ({ type }) => type !== VerificationType.BackupCode
+    );
+  }
+
+  private getVerifiedMfaVerificationRecords(
+    verificationRecords: VerificationRecord[],
+    currentProfile?: InteractionProfile
+  ) {
+    const userEnabledMfaVerifications = getAllUserEnabledMfaVerifications(
+      this.mfaSettings,
+      this.user,
+      currentProfile
+    );
+
+    return verificationRecords.filter(
       (verification) =>
         isMfaVerificationRecord(verification) &&
         verification.isVerified &&
         // New bind MFA verification can not be used for verification
         !verification.isNewBindMfaVerification &&
         // Check if the verification type is enabled in the user's MFA settings
-        this.userEnabledMfaVerifications.includes(
-          mfaVerificationTypeToMfaFactorMap[verification.type]
-        )
+        userEnabledMfaVerifications.includes(mfaVerificationTypeToMfaFactorMap[verification.type])
     );
-
-    return verifiedMfaVerificationRecords.length > 0;
   }
 }

@@ -9,6 +9,8 @@ const application = {
     '서드파티 애플리케이션에서는 토큰 교환을 활성화할 수 없습니다.',
   user_consent_scopes_not_found: '유효하지 않은 사용자 동의 범위입니다.',
   consent_management_api_scopes_not_allowed: '管理 API 범위 허용되지 않습니다.',
+  device_flow_native_only: '디바이스 플로우는 네이티브 애플리케이션에서만 사용할 수 있습니다.',
+  device_flow_not_changeable: '디바이스 플로우는 애플리케이션 생성 후 변경할 수 없습니다.',
   protected_app_metadata_is_required: '보호된 응용 프로그램 메타데이터가 필요합니다.',
   protected_app_not_configured:
     '보호된 앱 제공자가 구성되지 않았습니다. 이 기능은 오픈 소스 버전에는 사용할 수 없습니다.',
@@ -22,12 +24,15 @@ const application = {
   should_delete_custom_domains_first: '먼저 사용자 정의 도메인을 삭제해야 합니다.',
   no_legacy_secret_found: '응용 프로그램에 레거시 비밀이 없습니다.',
   secret_name_exists: '비밀 이름이 이미 존재합니다.',
+  sync_application_secret_failed: '애플리케이션 비밀 동기화에 실패했습니다.',
   saml: {
     use_saml_app_api:
       'SAML 앱을 운영하려면 `[METHOD] /saml-applications(/.*)?` API 를 사용하십시오.',
     saml_application_only: '이 API 는 SAML 응용 프로그램에만 사용할 수 있습니다.',
     reach_oss_limit: '{{limit}} 개의 제한에 도달했기 때문에 더 이상 SAML 앱을 만들 수 없습니다.',
     acs_url_binding_not_supported: 'SAML 어설션을 받기 위해서는 HTTP-POST 바인딩만 지원됩니다.',
+    acs_url_scheme_not_supported:
+      'Assertion Consumer Service URL에는 HTTP 및 HTTPS 체계만 지원됩니다.',
     can_not_delete_active_secret: '활성 비밀을 삭제할 수 없습니다.',
     no_active_secret: '활성 비밀을 찾을 수 없습니다.',
     entity_id_required: '메타데이터 생성을 위해 엔터티 ID 가 필요합니다.',

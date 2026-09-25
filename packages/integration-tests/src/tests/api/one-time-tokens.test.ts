@@ -1,4 +1,4 @@
-import { OneTimeTokenStatus } from '@logto/schemas';
+import { InteractionEvent, OneTimeTokenStatus } from '@logto/schemas';
 import { generateStandardId } from '@logto/shared';
 
 import { authedAdminApi } from '#src/api/api.js';
@@ -16,18 +16,19 @@ import { waitFor } from '#src/utils.js';
 describe('one-time tokens API', () => {
   it('should create one-time token with default 10 mins expiration time', async () => {
     const email = `foo${generateStandardId()}@bar.com`;
+    const now = Date.now();
     const oneTimeToken = await createOneTimeToken({
       email,
     });
 
-    expect(oneTimeToken.expiresAt).toBeGreaterThan(Date.now());
-    expect(oneTimeToken.expiresAt).toBeLessThanOrEqual(Date.now() + 10 * 60 * 1000);
+    expect(oneTimeToken.expiresAt).toBeGreaterThan(now);
+    expect(oneTimeToken.expiresAt).toBeLessThanOrEqual(now + 10 * 60 * 1000 + 1000); // Add 1s tolerance for clock skew
     expect(oneTimeToken.status).toBe(OneTimeTokenStatus.Active);
     expect(oneTimeToken.context).toEqual({});
     expect(oneTimeToken.email).toBe(email);
     expect(oneTimeToken.token.length).toBe(32);
 
-    void deleteOneTimeTokenById(oneTimeToken.id);
+    await deleteOneTimeTokenById(oneTimeToken.id);
   });
 
   it('should create one-time token with custom expiration time', async () => {
@@ -37,21 +38,23 @@ describe('one-time tokens API', () => {
       expiresIn: 30,
     });
 
-    expect(oneTimeToken.expiresAt).toBeGreaterThan(Date.now());
-    expect(oneTimeToken.expiresAt).toBeLessThanOrEqual(Date.now() + 30 * 1000);
+    const now = Date.now();
+    expect(oneTimeToken.expiresAt).toBeGreaterThan(now);
+    expect(oneTimeToken.expiresAt).toBeLessThanOrEqual(now + 30 * 1000 + 1000); // Add 1s tolerance for clock skew
     expect(oneTimeToken.status).toBe(OneTimeTokenStatus.Active);
     expect(oneTimeToken.email).toBe(email);
     expect(oneTimeToken.token.length).toBe(32);
 
-    void deleteOneTimeTokenById(oneTimeToken.id);
+    await deleteOneTimeTokenById(oneTimeToken.id);
   });
 
-  it('should create one-time token with `applicationIds` and `jitOrganizationIds` configured', async () => {
+  it('should create one-time token with context configured', async () => {
     const email = `foo${generateStandardId()}@bar.com`;
     const oneTimeToken = await createOneTimeToken({
       email,
       context: {
         jitOrganizationIds: ['org-1'],
+        interactionEvent: InteractionEvent.ForgotPassword,
       },
     });
 
@@ -59,10 +62,11 @@ describe('one-time tokens API', () => {
     expect(oneTimeToken.email).toBe(email);
     expect(oneTimeToken.context).toEqual({
       jitOrganizationIds: ['org-1'],
+      interactionEvent: InteractionEvent.ForgotPassword,
     });
     expect(oneTimeToken.token.length).toBe(32);
 
-    void deleteOneTimeTokenById(oneTimeToken.id);
+    await deleteOneTimeTokenById(oneTimeToken.id);
   });
 
   it('should be able to get one-time token by its ID', async () => {
@@ -77,7 +81,7 @@ describe('one-time tokens API', () => {
     const token = await getOneTimeTokenById(oneTimeToken.id);
     expect(token).toEqual(oneTimeToken);
 
-    void deleteOneTimeTokenById(oneTimeToken.id);
+    await deleteOneTimeTokenById(oneTimeToken.id);
   });
 
   it('should throw when getting a non-existent one-time token', async () => {
@@ -115,8 +119,10 @@ describe('one-time tokens API', () => {
       ])
     );
 
-    void deleteOneTimeTokenById(oneTimeToken1.id);
-    void deleteOneTimeTokenById(oneTimeToken2.id);
+    await Promise.all([
+      deleteOneTimeTokenById(oneTimeToken1.id),
+      deleteOneTimeTokenById(oneTimeToken2.id),
+    ]);
   });
 
   it(`update expired tokens' status to expired when creating new one-time token`, async () => {
@@ -132,8 +138,10 @@ describe('one-time tokens API', () => {
     const reFetchedToken = await getOneTimeTokenById(oneTimeToken.id);
     expect(reFetchedToken.status).toBe(OneTimeTokenStatus.Expired);
 
-    void deleteOneTimeTokenById(oneTimeToken.id);
-    void deleteOneTimeTokenById(newOneTimeToken.id);
+    await Promise.all([
+      deleteOneTimeTokenById(oneTimeToken.id),
+      deleteOneTimeTokenById(newOneTimeToken.id),
+    ]);
   });
 
   it('should verify one-time token', async () => {
@@ -167,7 +175,7 @@ describe('one-time tokens API', () => {
       }
     );
 
-    void deleteOneTimeTokenById(oneTimeToken.id);
+    await deleteOneTimeTokenById(oneTimeToken.id);
   });
 
   it('should not succeed to verify one-time token with expired token', async () => {
@@ -194,7 +202,7 @@ describe('one-time tokens API', () => {
       }
     );
 
-    void deleteOneTimeTokenById(oneTimeToken.id);
+    await deleteOneTimeTokenById(oneTimeToken.id);
   });
 
   it('should not succeed to verify one-time token wrong email', async () => {
@@ -217,7 +225,7 @@ describe('one-time tokens API', () => {
       }
     );
 
-    void deleteOneTimeTokenById(oneTimeToken.id);
+    await deleteOneTimeTokenById(oneTimeToken.id);
   });
 
   it('should not succeed to verify one-time token wrong token', async () => {
@@ -239,7 +247,7 @@ describe('one-time tokens API', () => {
         status: 404,
       }
     );
-    void deleteOneTimeTokenById(oneTimeToken.id);
+    await deleteOneTimeTokenById(oneTimeToken.id);
   });
 
   it('should throw token_expired error and update token status to expired (token already expired but status is not updated)', async () => {
@@ -262,7 +270,7 @@ describe('one-time tokens API', () => {
     const updatedToken = await getOneTimeTokenById(oneTimeToken.id);
     expect(updatedToken.status).toBe(OneTimeTokenStatus.Expired);
 
-    void deleteOneTimeTokenById(oneTimeToken.id);
+    await deleteOneTimeTokenById(oneTimeToken.id);
   });
 
   it('should be able to revoke a token by updating the status', async () => {
@@ -274,7 +282,7 @@ describe('one-time tokens API', () => {
     const updatedToken = await getOneTimeTokenById(oneTimeToken.id);
     expect(updatedToken.status).toBe(OneTimeTokenStatus.Revoked);
 
-    void deleteOneTimeTokenById(oneTimeToken.id);
+    await deleteOneTimeTokenById(oneTimeToken.id);
   });
 
   it('should throw when trying to re-activate a token', async () => {
@@ -286,7 +294,7 @@ describe('one-time tokens API', () => {
       status: 400,
     });
 
-    void deleteOneTimeTokenById(oneTimeToken.id);
+    await deleteOneTimeTokenById(oneTimeToken.id);
   });
 
   it('should throw when verifying a revoked token', async () => {
@@ -306,7 +314,7 @@ describe('one-time tokens API', () => {
       }
     );
 
-    void deleteOneTimeTokenById(oneTimeToken.id);
+    await deleteOneTimeTokenById(oneTimeToken.id);
   });
 
   it('should throw when trying to delete a non-existent one-time token', async () => {
@@ -341,9 +349,11 @@ describe('one-time tokens API', () => {
     expect(response.headers.get('Total-Number')).toBe('3');
     expect(await response.json()).toEqual(expect.arrayContaining([oneTimeToken2, oneTimeToken3]));
 
-    void deleteOneTimeTokenById(oneTimeToken1.id);
-    void deleteOneTimeTokenById(oneTimeToken2.id);
-    void deleteOneTimeTokenById(oneTimeToken3.id);
+    await Promise.all([
+      deleteOneTimeTokenById(oneTimeToken1.id),
+      deleteOneTimeTokenById(oneTimeToken2.id),
+      deleteOneTimeTokenById(oneTimeToken3.id),
+    ]);
   });
 
   it('should be able fetch list of one-time tokens with query params', async () => {
@@ -373,8 +383,10 @@ describe('one-time tokens API', () => {
     });
     expect(activeBarTokens).toEqual([oneTimeToken3]);
 
-    void deleteOneTimeTokenById(oneTimeToken1.id);
-    void deleteOneTimeTokenById(oneTimeToken2.id);
-    void deleteOneTimeTokenById(oneTimeToken3.id);
+    await Promise.all([
+      deleteOneTimeTokenById(oneTimeToken1.id),
+      deleteOneTimeTokenById(oneTimeToken2.id),
+      deleteOneTimeTokenById(oneTimeToken3.id),
+    ]);
   });
 });

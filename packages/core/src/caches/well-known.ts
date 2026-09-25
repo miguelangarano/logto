@@ -6,7 +6,13 @@ import {
   type AccountCenter,
   AccountCenters,
   type IdTokenConfig,
+  type Resource,
+  Resources,
   idTokenConfigGuard,
+  type SigningKeyRotationState,
+  signingKeyRotationStateGuard,
+  type MessageRateLimitOverride,
+  messageRateLimitOverrideGuard,
 } from '@logto/schemas';
 import { type Nullable } from '@silverhand/essentials';
 import { type ZodType, z } from 'zod';
@@ -19,16 +25,35 @@ type WellKnownMap = {
   sie: SignInExperience;
   'connectors-well-known': ConnectorWellKnown[];
   'email-templates': Nullable<EmailTemplate>;
+  'resource-by-indicator': Nullable<Resource>;
   'custom-phrases': Record<string, unknown>;
   'custom-phrases-tags': string[];
+  /** @deprecated Temporary rollout compatibility key for pre-blob tenant invalidation readers. */
   'tenant-cache-expires-at': number;
+  'signing-key-rotation-state': Nullable<SigningKeyRotationState>;
   // Currently, tenant type cannot be updated once created. So it's safe to cache.
   'is-development-tenant': boolean;
   'account-center': AccountCenter;
   'id-token-config': Nullable<IdTokenConfig>;
+  'message-rate-limit-override': Nullable<MessageRateLimitOverride>;
 };
 
 type WellKnownCacheType = keyof WellKnownMap;
+
+const valueGuards: { [Key in WellKnownCacheType]: ZodType<WellKnownMap[Key]> } = {
+  sie: SignInExperiences.guard,
+  'connectors-well-known': connectorWellKnownGuard.array(),
+  'email-templates': EmailTemplates.guard.nullable(),
+  'resource-by-indicator': Resources.guard.nullable(),
+  'custom-phrases': z.record(z.unknown()),
+  'custom-phrases-tags': z.string().array(),
+  'tenant-cache-expires-at': z.number(),
+  'signing-key-rotation-state': signingKeyRotationStateGuard.nullable(),
+  'is-development-tenant': z.boolean(),
+  'account-center': AccountCenters.guard,
+  'id-token-config': idTokenConfigGuard.nullable(),
+  'message-rate-limit-override': messageRateLimitOverrideGuard.nullable(),
+};
 
 // Cannot use generic type here, but direct type works.
 // See [this issue](https://github.com/microsoft/TypeScript/issues/27808#issuecomment-1207161877) for details.
@@ -36,35 +61,7 @@ type WellKnownCacheType = keyof WellKnownMap;
 function getValueGuard<Type extends WellKnownCacheType>(type: Type): ZodType<WellKnownMap[Type]>;
 
 function getValueGuard(type: WellKnownCacheType): ZodType<WellKnownMap[typeof type]> {
-  switch (type) {
-    case 'sie': {
-      return SignInExperiences.guard;
-    }
-    case 'connectors-well-known': {
-      return connectorWellKnownGuard.array();
-    }
-    case 'custom-phrases-tags': {
-      return z.string().array();
-    }
-    case 'custom-phrases': {
-      return z.record(z.unknown());
-    }
-    case 'tenant-cache-expires-at': {
-      return z.number();
-    }
-    case 'is-development-tenant': {
-      return z.boolean();
-    }
-    case 'email-templates': {
-      return EmailTemplates.guard.nullable();
-    }
-    case 'account-center': {
-      return AccountCenters.guard;
-    }
-    case 'id-token-config': {
-      return idTokenConfigGuard.nullable();
-    }
-  }
+  return valueGuards[type];
 }
 
 /**

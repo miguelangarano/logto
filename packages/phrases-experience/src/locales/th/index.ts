@@ -1,3 +1,7 @@
+import { type DeepPartial } from '@silverhand/essentials';
+
+import type { LocalePhrase } from '../../types.js';
+
 import account_center from './account-center.js';
 import action from './action.js';
 import description from './description.js';
@@ -9,9 +13,10 @@ import mfa from './mfa.js';
 import passkey_sign_in from './passkey-sign-in.js';
 import profile from './profile.js';
 import secondary from './secondary.js';
+import step_up from './step-up.js';
 import user_scopes from './user-scopes.js';
 
-const en = {
+const th = {
   translation: {
     input,
     secondary,
@@ -25,7 +30,8 @@ const en = {
     profile,
     account_center,
     passkey_sign_in,
+    step_up,
   },
-};
+} satisfies DeepPartial<LocalePhrase>;
 
-export default Object.freeze(en);
+export default Object.freeze(th);

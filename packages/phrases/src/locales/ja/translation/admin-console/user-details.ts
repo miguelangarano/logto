@@ -19,6 +19,14 @@ const user_details = {
     new_password: '新しいパスワード：',
     password: 'パスワード：',
   },
+  expire_password: {
+    button: '期限切れにする',
+    title: 'このパスワードを期限切れにしてもよろしいですか？',
+    content:
+      'ユーザーは次回のサインイン時にパスワードのリセットを要求されます。この操作は取り消せません。',
+    success: 'ユーザーのパスワードが期限切れとしてマークされました。',
+    not_enabled_tooltip: 'パスワードの有効期限ポリシーが有効になっていません。',
+  },
   tab_settings: '設定',
   tab_roles: 'ユーザー役割',
   tab_logs: 'ユーザーログ',
@@ -68,6 +76,12 @@ const user_details = {
     name_column: '多要素認証',
     field_description_empty: 'このユーザーは2段階認証の要因を有効にしていません。',
     deletion_confirmation: '2段階認証の既存の<name/>を削除しています。本当に続行しますか？',
+  },
+  passkey: {
+    field_name: 'パスキー',
+    field_description_empty: 'このユーザーはパスキーサインインを有効にしていません。',
+    deletion_confirmation:
+      'パスキーサインインのために既存の<name/>を削除しています。本当に続行しますか？',
   },
   suspended: '停止中',
   suspend_user: 'ユーザーを一時停止',
@@ -129,6 +143,42 @@ const user_details = {
       title: '個人用アクセス トークンを編集',
       edited: 'トークン {{name}} が正常に編集されました。',
     },
+  },
+  sessions: {
+    title: 'セッション',
+    description:
+      'Logto 認可サーバーによって維持されるセッションを管理します。ここで Logto セッションを取り消すと、今後の認可リクエストでの自動同意が防止されます。',
+    field_name: 'セッション',
+    multiple_signed_in: 'このユーザーは複数のデバイスまたはブラウザにサインインしています。',
+    not_found:
+      'アクティブな Logto セッションが見つかりません。ユーザーは現在どのデバイスにもサインインしていません。',
+    name_column: '名前',
+    session_id_column: 'セッション ID',
+    location_column: '場所',
+    browser_on_os: '{{os}} 上の {{browser}}',
+    user: 'ユーザー',
+    applications: 'アプリケーション',
+    signed_in_at: '最終サインイン',
+    ip: 'IP',
+    browser_name: 'ブラウザー名',
+    os_name: 'OS 名',
+    device_model: 'デバイスモデル',
+    revoke_session: 'セッションを失効',
+    revoke_session_confirmation: 'このセッションを削除すると、ユーザーは再認証が必要になります。',
+  },
+  third_party_apps: {
+    title: 'サードパーティアプリ',
+    description:
+      'Logto を ID プロバイダーとして利用し、サードパーティアプリを認可します。このユーザーがアクセスを許可したアプリを表示して管理します。',
+    field_name: '許可済みのサードパーティアプリ',
+    multiple_authorized: 'このユーザーは複数のサードパーティアプリとサービスを許可しています。',
+    not_authorized: 'このユーザーはまだサードパーティアプリやサービスを許可していません。',
+    name_column: '名前',
+    app_id_column: 'アプリ ID',
+    access_created_at_column: 'アクセス作成日時',
+    revoke_access_title: 'アクセスを取り消しますか？',
+    revoke_access_description:
+      'この操作により、すべてのデバイスでこのユーザーのアカウントに対するアプリのアクセスが取り消されます。アクセスを復元するには、ユーザーによる再認可が必要です。すでに発行されたアクセストークンは、有効期限が切れるまで有効なままの場合があります。',
   },
   connections: {
     title: '接続',

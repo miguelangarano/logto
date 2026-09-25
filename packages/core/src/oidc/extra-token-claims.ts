@@ -11,6 +11,7 @@ import {
 } from '@logto/schemas';
 import { conditional, trySafe } from '@silverhand/essentials';
 import { ResponseError } from '@withtyped/client';
+import type { i18n } from 'i18next';
 import {
   type AccessToken,
   errors,
@@ -26,9 +27,31 @@ import { type LogEntry, type WithLogContext } from '#src/middleware/koa-audit-lo
 import type Libraries from '#src/tenants/Libraries.js';
 import type Queries from '#src/tenants/Queries.js';
 import { isAccessDeniedError, parseCustomJwtResponseError } from '#src/utils/custom-jwt/index.js';
+import { i18next } from '#src/utils/i18n.js';
 import { buildAppInsightsTelemetry } from '#src/utils/request.js';
 
+import { getClientIdentifierPayload, isCimdClient } from './cimd/index.js';
 import { tokenExchangeActGuard } from './grants/token-exchange/types.js';
+
+const hasI18n = (ctx: KoaContextWithOIDC): ctx is KoaContextWithOIDC & { i18n: i18n } =>
+  'i18n' in ctx;
+
+const formatJwtCustomizerInvalidRequestDescription = (ctx: KoaContextWithOIDC, message: string) => {
+  const requestI18n = hasI18n(ctx) ? ctx.i18n : i18next;
+
+  return String(
+    requestI18n.t('errors:oidc.custom_claims_script_error', {
+      error_description: message,
+      interpolation: {
+        escapeValue: false,
+      },
+    })
+  );
+};
+
+const throwJwtCustomizerInvalidRequest = (ctx: KoaContextWithOIDC, message: string): never => {
+  throw new errors.InvalidRequest(formatJwtCustomizerInvalidRequestDescription(ctx, message));
+};
 
 /**
  * For organization API resource feature, add extra token claim `organization_id` to the
@@ -172,26 +195,27 @@ export const getExtraTokenClaimsForJwtCustomization = async (
   const isClientCredentialsToken = token instanceof ctx.oidc.provider.ClientCredentials;
 
   const customTokenClaimsLogEntries = new Set<LogEntry>();
+  /**
+   * It is by design to use `trySafe` here to catch the error but not log it since we do not
+   * want to insert an error log every time the OIDC provider issues a token when the JWT
+   * customizer is not configured.
+   */
+  const { script, environmentVariables, blockIssuanceOnError } =
+    (await trySafe(
+      logtoConfigs.getJwtCustomizer(
+        isClientCredentialsToken ? LogtoJwtTokenKey.ClientCredentials : LogtoJwtTokenKey.AccessToken
+      )
+    )) ?? {};
+
+  if (!script) {
+    return;
+  }
+
+  const shouldBlockIssuanceOnError =
+    EnvSet.values.isDevFeaturesEnabled && Boolean(blockIssuanceOnError);
+  const defaultJwtCustomizerErrorMessage = 'Failed to customize token claims';
 
   try {
-    /**
-     * It is by design to use `trySafe` here to catch the error but not log it since we do not
-     * want to insert an error log every time the OIDC provider issues a token when the JWT
-     * customizer is not configured.
-     */
-    const { script, environmentVariables } =
-      (await trySafe(
-        logtoConfigs.getJwtCustomizer(
-          isClientCredentialsToken
-            ? LogtoJwtTokenKey.ClientCredentials
-            : LogtoJwtTokenKey.AccessToken
-        )
-      )) ?? {};
-
-    if (!script) {
-      return;
-    }
-
     // Pick only the fields that will be included in the token payload based on the token type.
     const pickedFields = isClientCredentialsToken
       ? ctx.oidc.provider.ClientCredentials.IN_PAYLOAD
@@ -220,12 +244,28 @@ export const getExtraTokenClaimsForJwtCustomization = async (
       !isClientCredentialsToken && (await getAssociatedSubjectToken(queries, token))
     );
 
-    // DEV: application context in JWT customizer
     const clientId = token.clientId ?? ctx.oidc.client?.clientId;
+    /**
+     * CIMD clients are unregistered, so there is no application context to expose and the
+     * identifier URL must never be used to query the applications table.
+     */
     const applicationContext = conditional(
-      EnvSet.values.isDevFeaturesEnabled &&
-        clientId &&
+      clientId &&
+        !isCimdClient(envSet, clientId) &&
         (await libraries.jwtCustomizers.getApplicationContext(envSet.tenantId, clientId))
+    );
+
+    // For organization (API resource) tokens, expose the target organization so the customizer
+    // can attach per-org claims. The `organization_id` claim itself is added afterwards in
+    // `getExtraTokenClaimsForOrganizationApiResource`, so it is not visible on `token` here.
+    const organizationId =
+      typeof ctx.oidc.params?.organization_id === 'string'
+        ? ctx.oidc.params.organization_id
+        : undefined;
+    const organizationContext = conditional(
+      !isClientCredentialsToken &&
+        organizationId &&
+        (await libraries.jwtCustomizers.getOrganizationContext(organizationId))
     );
 
     const logEntry = ctx.createLog(
@@ -240,7 +280,7 @@ export const getExtraTokenClaimsForJwtCustomization = async (
 
     logEntry.append({
       sessionId: ctx.oidc.session?.uid,
-      applicationId: ctx.oidc.client?.clientId,
+      ...getClientIdentifierPayload(ctx.oidc.client?.clientId),
       ...conditional(logtoUserInfo && { userId: logtoUserInfo.id }),
       tenantId: envSet.tenantId,
     });
@@ -284,6 +324,11 @@ export const getExtraTokenClaimsForJwtCustomization = async (
                   application: applicationContext,
                 }
               ),
+              ...conditional(
+                organizationContext && {
+                  organization: organizationContext,
+                }
+              ),
             },
           }),
     };
@@ -296,7 +341,7 @@ export const getExtraTokenClaimsForJwtCustomization = async (
 
     const result = EnvSet.values.isCloud
       ? await libraries.jwtCustomizers.runScriptRemotely(payload)
-      : await JwtCustomizerLibrary.runScriptInLocalVm(payload);
+      : await JwtCustomizerLibrary.runScriptLocally(payload, envSet.tenantId);
 
     ctx.prependAllLogEntries({ customTokenClaims: result });
 
@@ -318,8 +363,27 @@ export const getExtraTokenClaimsForJwtCustomization = async (
       if (errorResponse && isAccessDeniedError(errorResponse.error)) {
         throw new errors.AccessDenied(errorResponse.message);
       }
-    } else {
-      ctx.prependAllLogEntries({ customJwtError: String(error) });
+
+      if (shouldBlockIssuanceOnError) {
+        throwJwtCustomizerInvalidRequest(
+          ctx,
+          typeof errorResponse?.message === 'string'
+            ? errorResponse.message
+            : defaultJwtCustomizerErrorMessage
+        );
+      }
+
+      return;
+    }
+
+    const stringifiedError = String(error);
+    ctx.prependAllLogEntries({ customJwtError: stringifiedError });
+
+    if (shouldBlockIssuanceOnError) {
+      throwJwtCustomizerInvalidRequest(
+        ctx,
+        error instanceof Error && error.message ? error.message : defaultJwtCustomizerErrorMessage
+      );
     }
   }
 };

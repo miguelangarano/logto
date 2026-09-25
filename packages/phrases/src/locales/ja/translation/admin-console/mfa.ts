@@ -11,7 +11,6 @@ const mfa = {
   webauthn: 'Passkeys',
   webauthn_description:
     'ブラウザでサポートされている方法を使用して検証します：生体認証、電話のスキャン、またはセキュリティキーなど。',
-  webauthn_native_tip: 'WebAuthnはネイティブアプリケーションではサポートされていません。',
   webauthn_domain_tip:
     'WebAuthnは公開鍵を特定のドメインにバインドします。サービスのドメインを変更すると、既存のパスキーを使用したユーザーの認証がブロックされます。',
   backup_code: 'バックアップコード',
@@ -41,7 +40,7 @@ const mfa = {
   require_mfa_optional:
     '任意の MFA: ユーザー自身のアカウントセキュリティのために MFA を有効にするかどうかを選択できるようにします',
   require_mfa_adaptive:
-    'アダプティブ MFA: サインインがリスクの高い状況(新しいデバイスや場所など)の場合にのみ MFA を求めます',
+    'アダプティブ MFA: サインインがリスクの高い状況(新しい国 / 長期間の非アクティブなど)の場合にのみ MFA を求めます',
   require_mfa_mandatory:
     '必須の MFA: すべてのユーザーに、サインインのたびに MFA を完了することを求めます',
   set_up_prompt: 'MFA の設定プロンプト',
@@ -50,9 +49,14 @@ const mfa = {
     '登録時にユーザーに MFA の設定を依頼します（スキップ可能、1 回限りのプロンプト）',
   prompt_only_at_sign_in:
     '登録後の次回サインイン時にユーザーに MFA の設定を依頼します（スキップ可能、1 回限りのプロンプト）',
+  prompt_at_sign_in_and_sign_up_mandatory:
+    '登録時にユーザーに MFA の設定を依頼します。（スキップ不可）',
+  prompt_only_at_sign_in_mandatory:
+    '登録後の次回サインイン試行時にユーザーに MFA の設定を依頼します。（スキップ不可）',
   set_up_organization_required_mfa_prompt:
     '組織が MFA を有効にした後のユーザーの MFA 設定プロンプト',
-  prompt_at_sign_in_no_skip: '次回サインイン時にユーザーに MFA の設定を依頼します（スキップ不可）',
+  prompt_at_sign_in_non_skippable:
+    '次回サインイン時にユーザーに MFA の設定を依頼します（スキップ不可）',
   email_primary_method_tip:
     'メール認証コードは既にあなたの主要なサインイン方法です。セキュリティを維持するため、それを MFA に再利用することはできません。',
   phone_primary_method_tip:
@@ -66,6 +70,28 @@ const mfa = {
   no_sms_connector_error:
     'SMSコネクターがないとSMS認証コードMFAを有効にできません。まずSMSコネクターを設定してください。',
   setup_link: '設定',
+  trusted_device: {
+    title: '信頼済みデバイス',
+    description:
+      '現在の MFA フローで検証が必要な場合、信頼済みブラウザーが MFA 検証を自動的に完了できるようにします。',
+    enable_title: '信頼済みデバイスを有効にする',
+    enable_description: '対象の MFA 要素を完了した後、このブラウザーを信頼できるようにします。',
+    duration_title: '信頼期間（日）',
+    duration_error: '{{min}} から {{max}} までの整数を入力してください。',
+    duration_note: '信頼期間の変更は、その後に信頼されたデバイスにのみ適用されます。',
+    organization_allow_title: '信頼済みデバイスを許可',
+    organization_allow_tip:
+      '組織はテナントのポリシーを制限することだけができ、テナントで無効な機能を有効にはできません。',
+    organization_allow_description: 'この組織のメンバーに信頼済みデバイスの検証を許可します。',
+    organization_global_disabled: '先にテナントの MFA 設定で信頼済みデバイスを有効にしてください。',
+    management_description:
+      'このユーザーが MFA 完了後に信頼したブラウザーを管理します。削除すると、そのブラウザーでは次回のサインイン時に再度 MFA が必要になります。',
+    management_hint: '最新の位置情報は参考情報です。',
+    management_empty: 'このユーザーに有効な信頼済みデバイスはありません。',
+    management_deletion_confirmation:
+      '{{name}} を削除しますか？このブラウザーでは次回のサインイン時に再度 MFA が必要になります。',
+    management_removed: '信頼済みデバイスを削除しました。',
+  },
 };
 
 export default Object.freeze(mfa);

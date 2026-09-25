@@ -1,12 +1,49 @@
 const tenants = {
   title: 'Definições',
   description: 'Gerir eficientemente as configurações do inquilino e personalizar o seu domínio.',
+  oss_description:
+    'Altere as definições da sua conta e faça a gestão das suas informações pessoais aqui para garantir a segurança da sua conta.',
   tabs: {
     settings: 'Definições',
     members: 'Membros',
     domains: 'Domínios',
+    oidc_configs: 'Configurações de OIDC',
     subscription: 'Plano e faturação',
     billing_history: 'Histórico de faturação',
+    license: 'Licença',
+  },
+  license: {
+    purchase_title: 'PLANOS SELF-HOSTED',
+    purchase_description:
+      'Os planos Pro e Empresa self-hosted desbloqueiam funcionalidades pagas na sua própria instância, como ocultar a marca Logto, usar a sua própria interface, SSO iniciado pelo IdP, colaboração na consola e aplicações SAML ilimitadas. Compre um plano para obter a sua chave de licença.',
+    purchase_button: 'Ver planos self-hosted',
+    install_title: 'INSTALAR LICENÇA',
+    install_description: 'Cole a chave de licença que recebeu ao comprar um plano self-hosted.',
+    install_button: 'Instalar licença',
+    key_field: 'Chave de licença',
+    key_field_description:
+      'A chave é verificada na sua instância e nunca sai dela. Obtenha uma chave nova na sua conta Logto se a que tem expirou.',
+    key_placeholder: 'Cole aqui a sua chave de licença',
+    installed_toast: 'Licença instalada com sucesso.',
+    details_title: 'LICENÇA',
+    details_description: 'A licença instalada nesta instância e o que concede.',
+    plan_field: 'Plano',
+    environment_field: 'Ambiente',
+    environment_production: 'Produção',
+    environment_non_production: 'Não produção',
+    expires_at_field: 'Expira em',
+    installed_at_field: 'Instalada em',
+    replace_button: 'Substituir licença',
+  },
+  members: {
+    card_title: 'Gira inquilinos com mais segurança com o Logto Cloud',
+    card_description:
+      'Adicione administradores ou colaboradores ao seu inquilino sem partilhar uma única conta de administrador.',
+    card_action: 'Explorar o Logto Cloud',
+    self_hosted_card_title: 'Gira inquilinos com mais segurança com os planos self-hosted',
+    self_hosted_card_description:
+      'Adicione administradores ou colaboradores ao seu inquilino sem partilhar uma única conta de administrador.',
+    self_hosted_card_action: 'Explorar os planos self-hosted',
   },
   settings: {
     title: 'DEFINIÇÕES',

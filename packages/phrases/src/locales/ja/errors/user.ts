@@ -1,5 +1,15 @@
 const user = {
+  id_already_in_use: 'このユーザー ID はすでに使用されています。',
   username_already_in_use: 'このユーザー名はすでに使用されています。',
+  username_starts_with_number: 'ユーザー名は数字で始めることはできません。',
+  username_invalid_charset_hard:
+    'ユーザー名には文字、数字、アンダースコアのみを含めることができます。',
+  username_too_short: 'ユーザー名が短すぎます。',
+  username_too_long: 'ユーザー名が長すぎます。',
+  username_uppercase_not_allowed: 'ユーザー名に大文字を含めることはできません。',
+  username_lowercase_not_allowed: 'ユーザー名に小文字を含めることはできません。',
+  username_numbers_not_allowed: 'ユーザー名に数字を含めることはできません。',
+  username_underscore_not_allowed: 'ユーザー名にアンダースコアを含めることはできません。',
   email_already_in_use: 'このメールアドレスは既に別のアカウントに関連付けされています。',
   phone_already_in_use: 'この電話番号は既に別のアカウントに関連付けされています。',
   invalid_email: '無効なメールアドレスです。',
@@ -31,6 +41,8 @@ const user = {
   role_exists: 'このユーザーには既に役割ID {{roleId}}が追加されています。',
   invalid_role_type:
     '役割タイプが無効です。ユーザーにはマシン対マシンの役割を割り当てることはできません。',
+  suggest_mfa:
+    'アカウントのセキュリティ向上のため、MFAをアカウントに連携することをおすすめします。',
   missing_mfa: 'MFAを追加してからサインインしてください。',
   totp_already_in_use: 'TOTPはすでに使用されています。',
   backup_code_already_in_use: 'バックアップコードはすでに使用されています。',
@@ -42,6 +54,8 @@ const user = {
   username_required: 'ユーザー名は必須の識別子ですので、null に設定することはできません。',
   email_or_phone_required:
     'メールアドレスまたは電話番号は必須の識別子であり、少なくとも1つが必要です。',
+  last_sign_in_method_required:
+    'アカウントには少なくとも1つの利用可能なサインイン方法を残す必要があります。',
   email_required: 'メールアドレスは必須の識別子ですので、null に設定することはできません。',
   phone_required: '電話番号は必須の識別子ですので、null に設定することはできません。',
   enterprise_sso_identity_not_exists:

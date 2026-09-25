@@ -3,10 +3,14 @@ import {
   hookEvents,
   InteractionEvent,
   InteractionHookEvent,
+  MfaFactor,
+  MfaPolicy,
   SignInIdentifier,
 } from '@logto/schemas';
+import { authenticator } from 'otplib';
 
-import { deleteUser } from '#src/api/admin-user.js';
+import { createUserMfaVerification, deleteUser } from '#src/api/admin-user.js';
+import { getWebhookRecentLogs } from '#src/api/logs.js';
 import { updateSignInExperience } from '#src/api/sign-in-experience.js';
 import { SsoConnectorApi } from '#src/api/sso-connector.js';
 import { initExperienceClient, processSession, logoutClient } from '#src/helpers/client.js';
@@ -20,14 +24,16 @@ import {
   signInWithEnterpriseSso,
   signInWithPassword,
 } from '#src/helpers/experience/index.js';
-import { WebHookApiTest } from '#src/helpers/hook.js';
+import { successfullyVerifyTotp } from '#src/helpers/experience/totp-verification.js';
+import { getSupportedHookEvents, WebHookApiTest } from '#src/helpers/hook.js';
+import { expectRejects } from '#src/helpers/index.js';
 import { OrganizationApiTest } from '#src/helpers/organization.js';
 import {
   enableAllPasswordSignInMethods,
   enableAllVerificationCodeSignInMethods,
 } from '#src/helpers/sign-in-experience.js';
 import { generateNewUserProfile, UserApiTest } from '#src/helpers/user.js';
-import { generateEmail, generatePassword, randomString } from '#src/utils.js';
+import { generateEmail, generatePassword, randomString, waitFor } from '#src/utils.js';
 
 import WebhookMockServer from './WebhookMockServer.js';
 import { assertHookLogResult } from './utils.js';
@@ -36,13 +42,21 @@ const webHookMockServer = new WebhookMockServer(9999);
 const userNamePrefix = 'experienceApiHookTriggerTestUser';
 const username = `${userNamePrefix}_0`;
 const password = generatePassword();
-// For email fulfilling and reset password use
 const email = generateEmail();
 
 const userApi = new UserApiTest();
 const webHookApi = new WebHookApiTest();
 const organizationApi = new OrganizationApiTest();
 const ssoConnectorApi = new SsoConnectorApi();
+
+const getHookLogs = async (hookId: string, event: InteractionHookEvent) => {
+  await waitFor(100);
+
+  return getWebhookRecentLogs(
+    hookId,
+    new URLSearchParams({ logKey: `TriggerHook.${event}`, page_size: '10' })
+  );
+};
 
 beforeAll(async () => {
   await Promise.all([
@@ -66,11 +80,9 @@ beforeAll(async () => {
 afterAll(async () => {
   await Promise.all([userApi.cleanUp(), webHookMockServer.close()]);
 });
-
 afterEach(async () => {
   await Promise.all([organizationApi.cleanUp(), ssoConnectorApi.cleanUp()]);
 });
-
 describe('trigger invalid hook', () => {
   beforeAll(async () => {
     await webHookApi.create({
@@ -90,29 +102,28 @@ describe('trigger invalid hook', () => {
     });
 
     const hook = webHookApi.hooks.get('invalidHookEventListener')!;
-
     await assertHookLogResult(hook, InteractionHookEvent.PostSignIn, {
       errorMessage: 'Failed to parse URL from not_work_url',
     });
   });
-
   afterAll(async () => {
     await webHookApi.cleanUp();
   });
 });
 
 describe('experience api hook trigger', () => {
-  // Use new hooks for each test to ensure test isolation
   beforeEach(async () => {
     await Promise.all([
       webHookApi.create({
         name: 'interactionHookEventListener',
-        events: Object.values(InteractionHookEvent),
+        events: getSupportedHookEvents(Object.values(InteractionHookEvent)),
         config: { url: webHookMockServer.endpoint },
       }),
       webHookApi.create({
         name: 'dataHookEventListener',
-        events: hookEvents.filter((event) => !(event in InteractionHookEvent)),
+        events: getSupportedHookEvents(
+          hookEvents.filter((event) => !(event in InteractionHookEvent))
+        ),
         config: { url: webHookMockServer.endpoint },
       }),
       webHookApi.create({
@@ -202,6 +213,71 @@ describe('experience api hook trigger', () => {
     await assertHookLogResult(dataHook, 'User.Data.Updated', {
       toBeUndefined: true,
     });
+  });
+
+  it('user sign in interaction API only emits PostSignIn after MFA challenge succeeds', async () => {
+    const interactionHook = webHookApi.hooks.get('interactionHookEventListener')!;
+    const { username, password } = generateNewUserProfile({ username: true, password: true });
+    const user = await userApi.create({ username, password });
+    const totpVerification = await createUserMfaVerification(user.id, MfaFactor.TOTP);
+
+    if (totpVerification.type !== MfaFactor.TOTP) {
+      throw new Error('unexpected mfa type');
+    }
+
+    try {
+      await updateSignInExperience({
+        mfa: {
+          factors: [MfaFactor.TOTP],
+          policy: MfaPolicy.Mandatory,
+        },
+      });
+
+      const client = await initExperienceClient();
+      await identifyUserWithUsernamePassword(client, username, password);
+
+      await expectRejects(client.submitInteraction(), {
+        code: 'session.mfa.require_mfa_verification',
+        status: 403,
+        expectData: (data: { availableFactors: string[] }) => {
+          expect(data.availableFactors).toEqual([MfaFactor.TOTP]);
+        },
+      });
+
+      expect(await getHookLogs(interactionHook.id, InteractionHookEvent.PostSignIn)).toHaveLength(
+        0
+      );
+
+      await successfullyVerifyTotp(client, {
+        code: authenticator.generate(totpVerification.secret),
+      });
+
+      const { redirectTo } = await client.submitInteraction();
+      await processSession(client, redirectTo);
+      await logoutClient(client);
+
+      expect(await getHookLogs(interactionHook.id, InteractionHookEvent.PostSignIn)).toHaveLength(
+        1
+      );
+
+      await assertHookLogResult(interactionHook, InteractionHookEvent.PostSignIn, {
+        hookPayload: {
+          event: InteractionHookEvent.PostSignIn,
+          interactionEvent: InteractionEvent.SignIn,
+          sessionId: expect.any(String),
+          user: expect.objectContaining({ id: user.id, username }),
+        },
+      });
+    } finally {
+      await updateSignInExperience({
+        mfa: {
+          factors: [],
+          policy: MfaPolicy.PromptAtSignInAndSignUp,
+        },
+      });
+
+      await deleteUser(user.id);
+    }
   });
 
   it('user sign in interaction API with profile update', async () => {
@@ -377,6 +453,9 @@ describe('should trigger `Identifier.Lockout` event when user repeatedly fails t
 
   afterAll(async () => {
     await deleteUser(userId);
+    // `sentinelPolicy` is tenant-wide, so leaving it tightened makes unrelated suites fail with
+    // spurious lockouts on a reused database. `{}` is the suite baseline.
+    await updateSignInExperience({ sentinelPolicy: {} });
   });
 
   it('should log lockout hook after max failed attempts', async () => {

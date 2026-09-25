@@ -1,5 +1,6 @@
 import { adminTenantId, experience } from '@logto/schemas';
 import { ConsoleLog } from '@logto/shared';
+import { once } from '@silverhand/essentials';
 import type { MiddlewareType } from 'koa';
 import Koa from 'koa';
 import compose from 'koa-compose';
@@ -13,14 +14,20 @@ import { AdminApps, EnvSet, UserApps } from '#src/env-set/index.js';
 import { createCloudConnectionLibrary } from '#src/libraries/cloud-connection.js';
 import { createConnectorLibrary } from '#src/libraries/connector.js';
 import { createLogtoConfigLibrary } from '#src/libraries/logto-config.js';
+import koaAccountCenterSsr from '#src/middleware/koa-account-center-ssr.js';
 import koaAutoConsent from '#src/middleware/koa-auto-consent.js';
 import koaConnectorErrorHandler from '#src/middleware/koa-connector-error-handler.js';
 import koaConsoleRedirectProxy from '#src/middleware/koa-console-redirect-proxy.js';
+import koaDeviceFlowShortcut from '#src/middleware/koa-device-flow-shortcut.js';
 import koaErrorHandler from '#src/middleware/koa-error-handler.js';
 import koaExperienceSsr from '#src/middleware/koa-experience-ssr.js';
 import koaI18next from '#src/middleware/koa-i18next.js';
+import koaInteractionDetails from '#src/middleware/koa-interaction-details.js';
 import koaOidcErrorHandler from '#src/middleware/koa-oidc-error-handler.js';
-import koaSecurityHeaders from '#src/middleware/koa-security-headers.js';
+import koaSecurityHeaders, {
+  koaExperienceSecurityHeaders,
+} from '#src/middleware/koa-security-headers.js';
+import koaServeDomainVerificationFiles from '#src/middleware/koa-serve-domain-verification-files.js';
 import koaSlonikErrorHandler from '#src/middleware/koa-slonik-error-handler.js';
 import koaSpaProxy from '#src/middleware/koa-spa-proxy.js';
 import koaSpaSessionGuard from '#src/middleware/koa-spa-session-guard.js';
@@ -37,9 +44,17 @@ import koaConsentGuard from '../middleware/koa-consent-guard.js';
 import Libraries from './Libraries.js';
 import Queries from './Queries.js';
 import type TenantContext from './TenantContext.js';
+import {
+  getSigningKeyRotationState,
+  isTenantHealthy,
+  syncSigningKeyRotationStateCache,
+} from './signing-key-rotation-state.js';
 import { getTenantDatabaseDsn } from './utils.js';
 
 const consoleLog = new ConsoleLog('tenant');
+// Keep tenant disposal draining longer than the HTTP server timeout (120s in app/init.ts) so
+// ordinary in-flight requests can finish before the database pool is closed.
+const tenantDisposeDrainTimeout = 130_000;
 
 /** Data for creating a tenant instance. */
 type CreateTenant = {
@@ -61,7 +76,7 @@ export default class Tenant implements TenantContext {
       // Custom endpoint is used for building OIDC issuer URL when the request is a custom domain
       await envSet.load(customDomain);
 
-      return new Tenant(envSet, id, new WellKnownCache(id, redisCache));
+      return new Tenant(envSet, id, customDomain, new WellKnownCache(id, redisCache));
     } catch (error) {
       consoleLog.error('Failed to create tenant:', id, error);
       throw error;
@@ -75,12 +90,18 @@ export default class Tenant implements TenantContext {
 
   readonly #createdAt = Date.now();
   #requestCount = 0;
-  #onRequestEmpty?: () => Promise<void>;
+  #onRequestEmpty?: () => void;
+  /**
+   * Whether the database pool of this instance has been (or is about to be) ended by
+   * {@link dispose}. Once `true`, the instance must not serve new requests.
+   */
+  #disposed = false;
 
   // eslint-disable-next-line max-params
   private constructor(
     public readonly envSet: EnvSet,
     public readonly id: string,
+    private readonly customDomain: string | undefined,
     public readonly wellKnownCache: WellKnownCache,
     public readonly queries = new Queries(envSet.pool, wellKnownCache),
     public readonly logtoConfigs = createLogtoConfigLibrary(queries),
@@ -123,11 +144,14 @@ export default class Tenant implements TenantContext {
 
     // Mount OIDC
     const provider = initOidc(id, envSet, queries, libraries, logtoConfigs, subscription);
-    app.use(mount('/oidc', provider.app));
+
+    app.use(koaDeviceFlowShortcut());
+    app.use(mount('/oidc', provider));
 
     const tenantContext: TenantContext = {
       id,
       provider,
+      wellKnownCache: this.wellKnownCache,
       queries,
       logtoConfigs,
       cloudConnection,
@@ -136,6 +160,7 @@ export default class Tenant implements TenantContext {
       envSet,
       sentinel,
       invalidateCache: this.invalidateCache.bind(this),
+      scheduleSigningKeyRotation: this.scheduleSigningKeyRotation.bind(this),
     };
 
     // Sign-in experience callback via form submission
@@ -146,6 +171,11 @@ export default class Tenant implements TenantContext {
 
     // Mount APIs
     app.use(mount('/api', initApis(tenantContext)));
+
+    // Serve custom domain verification files when the request is on a custom domain.
+    if (this.customDomain) {
+      app.use(koaServeDomainVerificationFiles(this.customDomain, queries));
+    }
 
     const { isMultiTenancy } = EnvSet.values;
 
@@ -191,32 +221,51 @@ export default class Tenant implements TenantContext {
           })
         )
       );
+
+      // Mount device demo app (same conditions as demo app)
+      app.use(
+        mount(
+          '/' + UserApps.DeviceDemoApp,
+          koaSpaProxy({
+            mountedApps,
+            queries,
+            packagePath: UserApps.DeviceDemoApp,
+            port: 5005,
+            prefix: UserApps.DeviceDemoApp,
+          })
+        )
+      );
     }
 
     // Mount account center for all tenants (including admin tenant for profile MFA management)
     app.use(
       mount(
         '/' + UserApps.AccountCenter,
-        koaSpaProxy({
-          mountedApps,
-          queries,
-          packagePath: UserApps.AccountCenter,
-          port: 5004,
-          prefix: UserApps.AccountCenter,
-        })
+        compose([
+          koaAccountCenterSsr(libraries),
+          koaSpaProxy({
+            mountedApps,
+            queries,
+            packagePath: UserApps.AccountCenter,
+            port: 5004,
+            prefix: UserApps.AccountCenter,
+          }),
+        ])
       )
     );
 
     // Mount experience app
     app.use(
       compose([
+        koaExperienceSecurityHeaders(id, queries, mountedApps),
         koaExperienceSsr(libraries, queries),
         koaSpaSessionGuard(provider, queries),
         mount(
           `/${experience.routes.consent}`,
           compose([
-            koaConsentGuard(provider, libraries, queries),
-            koaAutoConsent(provider, queries),
+            koaInteractionDetails(provider),
+            koaConsentGuard(libraries, queries),
+            koaAutoConsent(provider, envSet, queries, libraries),
           ])
         ),
         koaSpaProxy({ mountedApps, queries }),
@@ -236,8 +285,24 @@ export default class Tenant implements TenantContext {
         : mount(this.app);
   }
 
-  public requestStart() {
+  /**
+   * Register the start of a request so that {@link dispose} waits for it to finish before
+   * ending the database pool.
+   *
+   * This is synchronous and must be called right after acquiring the instance (see
+   * {@link TenantPool.get}) to avoid a window where the instance is disposed while a request
+   * is about to use it.
+   *
+   * @returns `true` if the slot was reserved, or `false` if the instance has already been
+   * disposed and must not be used. Callers should acquire another instance when `false`.
+   */
+  public requestStart(): boolean {
+    if (this.#disposed) {
+      return false;
+    }
+
     this.#requestCount += 1;
+    return true;
   }
 
   public requestEnd() {
@@ -245,66 +310,87 @@ export default class Tenant implements TenantContext {
       this.#requestCount -= 1;
 
       if (this.#requestCount === 0) {
-        void this.#onRequestEmpty?.();
+        this.#onRequestEmpty?.();
       }
     }
   }
 
   /**
-   * Try to dispose the tenant resources. If there are any pending requests, this function will wait for them to end with 5s timeout.
+   * Try to dispose the tenant resources. If there are any pending requests, this function
+   * waits up to the tenant disposal drain timeout for them to end.
    *
    * Currently this function only ends the database pool.
    *
    * @returns Resolves `true` for a normal disposal and `'timeout'` for a timeout.
    */
   public async dispose() {
+    // Mark as disposed *synchronously* (no `await` before this point) so a concurrent
+    // `requestStart()` cannot reserve a slot after we have decided to end the pool.
+    this.#disposed = true;
+
     if (this.#requestCount <= 0) {
       await this.envSet.end();
 
       return true;
     }
 
-    return new Promise<true | 'timeout'>((resolve) => {
-      const timeout = setTimeout(async () => {
+    return new Promise<true | 'timeout'>((resolve, reject) => {
+      const endEnvSet = once((result: true | 'timeout', timeout: ReturnType<typeof setTimeout>) => {
         this.#onRequestEmpty = undefined;
-        await this.envSet.end();
-        resolve('timeout');
-      }, 5000);
-
-      this.#onRequestEmpty = async () => {
         clearTimeout(timeout);
-        await this.envSet.end();
-        resolve(true);
+
+        void (async () => {
+          try {
+            await this.envSet.end();
+            resolve(result);
+          } catch (error: unknown) {
+            reject(error instanceof Error ? error : new Error(String(error)));
+          }
+        })();
+      });
+
+      const timeout = setTimeout(() => {
+        endEnvSet('timeout', timeout);
+      }, tenantDisposeDrainTimeout);
+
+      this.#onRequestEmpty = () => {
+        endEnvSet(true, timeout);
       };
     });
   }
 
   /**
-   * Set a expiration timestamp in redis cache, and check it before returning the tenant LRU cache. This helps
-   * determine when to invalidate the cached tenant and force a in-place rolling reload of the OIDC provider.
+   * Force the cached tenant instance to be recreated so the next bootstrap reloads OIDC config
+   * and lets the oidc-provider observe newly generated signing keys from storage.
    */
   public async invalidateCache() {
-    await this.wellKnownCache.set('tenant-cache-expires-at', WellKnownCache.defaultKey, Date.now());
+    const tenantCacheExpiresAt = Date.now();
+    const signingKeyRotationState =
+      await this.queries.logtoConfigs.setTenantCacheExpiresAt(tenantCacheExpiresAt);
+    await syncSigningKeyRotationStateCache(this.wellKnownCache, signingKeyRotationState);
   }
 
   /**
-   * Check if the tenant cache is healthy by comparing its creation timestamp with the global expiration timestamp.
+   * Schedule the delayed signing-key activation reload for a future timestamp.
    *
-   * The global tenant expiration timestamp is stored in redis and shared across all server cluster instances. It
-   * can be set by calling `invalidateCache()` method on any tenant instance.
-   *
-   * @returns Resolves `true` if the tenant cache is healthy, `false` if it should be invalidated.
+   * Unlike `invalidateCache()`, which forces the next request to rebuild the tenant immediately
+   * so newly generated keys are published to JWKS, this method records when the staged `Next` key
+   * should become active for signing. Once the scheduled time is reached, `checkHealth()` marks the
+   * cached tenant as stale and the next bootstrap promotes the signing-key statuses before loading
+   * OIDC config.
    */
-  public async checkHealth() {
-    // `tenant-cache-expires-at` is a timestamp set in redis, which indicates all existing tenant instances in LRU
-    // cache should be invalidated after this timestamp, effective for the entire server cluster.
-    const tenantCacheExpiresAt = await this.wellKnownCache.get(
-      'tenant-cache-expires-at',
-      WellKnownCache.defaultKey
-    );
+  public async scheduleSigningKeyRotation(timestamp: number) {
+    const signingKeyRotationState =
+      await this.queries.logtoConfigs.setSigningKeyRotationAt(timestamp);
+    await syncSigningKeyRotationStateCache(this.wellKnownCache, signingKeyRotationState);
+  }
 
-    // Healthy if there's no expiration timestamp, or the current LRU cached tenant instance is created after the
-    // expiration timestamp.
-    return !tenantCacheExpiresAt || tenantCacheExpiresAt < this.#createdAt;
+  public async checkHealth() {
+    const signingKeyRotationState = await getSigningKeyRotationState({
+      wellKnownCache: this.wellKnownCache,
+      queries: this.queries.logtoConfigs,
+    });
+
+    return isTenantHealthy(this.#createdAt, signingKeyRotationState);
   }
 }

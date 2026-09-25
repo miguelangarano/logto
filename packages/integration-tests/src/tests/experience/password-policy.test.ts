@@ -1,6 +1,6 @@
 /* Test the sign-in with different password policies. */
 
-import { ConnectorType, SignInIdentifier } from '@logto/schemas';
+import { ConnectorType, ForgotPasswordMethod, SignInIdentifier } from '@logto/schemas';
 
 import { updateSignInExperience } from '#src/api/sign-in-experience.js';
 import { demoAppUrl } from '#src/constants.js';
@@ -34,6 +34,9 @@ describe('password policy', () => {
         words: [username],
       },
     });
+    await updateSignInExperience({
+      forgotPasswordMethods: [ForgotPasswordMethod.EmailVerificationCode],
+    });
   });
 
   it('should work for username + password', async () => {
@@ -47,7 +50,12 @@ describe('password policy', () => {
     await experience.waitForPathname('register/password');
     await experience.toFillNewPasswords(
       ...invalidPasswords,
-      [username + 'A', /product context .* personal information/],
+      /**
+       * No literal spaces around the wildcard: when the random part of the username happens to
+       * contain a sequential or repeated character run (e.g. "567"), the alert gains a third
+       * reason and reads "product context, your personal information, and sequential characters".
+       */
+      [username + 'A', /product context.*personal information/],
       username + 'ABCD_ok'
     );
 

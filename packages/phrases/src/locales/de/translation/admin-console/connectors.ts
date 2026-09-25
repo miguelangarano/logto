@@ -66,7 +66,7 @@ const connectors = {
     },
     callback_uri: 'Redirect-URI (Callback-URI)',
     callback_uri_description:
-      'Die Redirect-URI ist die Adresse, zu der Benutzer nach der Social-Autorisierung zurückgeleitet werden. Fügen Sie diese URI zur Konfiguration Ihres IdP hinzu.',
+      'Die Redirect-URIs sind die Adressen, zu denen Benutzer nach der Social-Autorisierung zurückgeleitet werden. Fügen Sie alle angezeigten URIs zur Konfiguration Ihres IdP hinzu.',
     callback_uri_custom_domain_description:
       'Wenn Sie in Logto mehrere <a>benutzerdefinierte Domains</a> verwenden, fügen Sie alle entsprechenden Callback-URIs zu Ihrem IdP hinzu, damit Social Login in jeder Domain funktioniert.\n\nDie standardmäßige Logto-Domain (*.logto.app) ist immer gültig - fügen Sie sie nur hinzu, wenn Sie auch Anmeldungen unter dieser Domain unterstützen möchten.',
     acs_url: 'Assertion Consumer Service URL',
@@ -84,6 +84,11 @@ const connectors = {
   create_form: {
     third_party_connectors:
       'Integrieren Sie Drittanbieter für schnelles Social-Login, Verknüpfung von Social-Konten und API-Zugriff. <a>Erfahren Sie mehr</a>',
+    email_connector_upsell: {
+      title: 'Integrierter E-Mail-Dienst von Logto',
+      description:
+        'E-Mail-Zustellung ohne Konfiguration. Versenden Sie Verifizierungscodes und Magic Links sofort einsatzbereit.',
+    },
     standard_connectors:
       'Oder Sie können Ihren Social Connector mit einem Standardprotokoll anpassen.',
   },

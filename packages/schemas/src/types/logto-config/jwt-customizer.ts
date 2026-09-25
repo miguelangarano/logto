@@ -19,6 +19,8 @@ import { userInfoGuard, type UserInfo } from '../user.js';
 import { backupCodeVerificationRecordDataGuard } from '../verification-records/backup-code-verification.js';
 import {
   emailCodeVerificationRecordDataGuard,
+  mfaEmailCodeVerificationRecordDataGuard,
+  mfaPhoneCodeVerificationRecordDataGuard,
   phoneCodeVerificationRecordDataGuard,
 } from '../verification-records/code-verification.js';
 import { enterpriseSsoVerificationRecordDataGuard } from '../verification-records/enterprise-sso-verification.js';
@@ -27,9 +29,10 @@ import { oneTimeTokenVerificationRecordDataGuard } from '../verification-records
 import { passwordVerificationRecordDataGuard } from '../verification-records/password-verification.js';
 import { socialVerificationRecordDataGuard } from '../verification-records/social-verification.js';
 import { totpVerificationRecordDataGuard } from '../verification-records/totp-verification.js';
+import type { VerificationType } from '../verification-records/verification-type.js';
 import {
   webAuthnVerificationRecordDataGuard,
-  signInWebAuthnVerificationRecordDataGuard,
+  signInPasskeyVerificationRecordDataGuard,
 } from '../verification-records/web-authn-verification.js';
 
 import { accessTokenPayloadGuard, clientCredentialsPayloadGuard } from './oidc-provider.js';
@@ -38,6 +41,7 @@ export const jwtCustomizerGuard = z.object({
   script: z.string(),
   environmentVariables: z.record(z.string()).optional(),
   contextSample: jsonObjectGuard.optional(),
+  blockIssuanceOnError: z.boolean().optional(),
 });
 
 export enum LogtoJwtTokenKeyType {
@@ -99,6 +103,8 @@ const jwtCustomizerUserInteractionVerificationRecordGuard = z.discriminatedUnion
   passwordVerificationRecordDataGuard,
   emailCodeVerificationRecordDataGuard,
   phoneCodeVerificationRecordDataGuard,
+  mfaEmailCodeVerificationRecordDataGuard,
+  mfaPhoneCodeVerificationRecordDataGuard,
   socialVerificationRecordDataGuard.omit({
     connectorSession: true,
     encryptedTokenSet: true,
@@ -125,7 +131,7 @@ const jwtCustomizerUserInteractionVerificationRecordGuard = z.discriminatedUnion
     authenticationChallenge: true,
     registrationInfo: true,
   }),
-  signInWebAuthnVerificationRecordDataGuard.omit({
+  signInPasskeyVerificationRecordDataGuard.omit({
     registrationChallenge: true,
     authenticationChallenge: true,
     registrationInfo: true,
@@ -137,6 +143,18 @@ const jwtCustomizerUserInteractionVerificationRecordGuard = z.discriminatedUnion
     passwordEncryptionMethod: true,
   }),
 ]);
+
+type JwtCustomizerUserInteractionVerificationRecordType = z.infer<
+  typeof jwtCustomizerUserInteractionVerificationRecordGuard
+>['type'];
+
+// This is to ensure that all the verification types are covered in the `jwtCustomizerUserInteractionVerificationRecordGuard`.
+const _jwtCustomizerUserInteractionVerificationRecordTypeCoverage = true satisfies Exclude<
+  VerificationType,
+  JwtCustomizerUserInteractionVerificationRecordType
+> extends never
+  ? true
+  : false;
 
 export const jwtCustomizerUserInteractionContextGuard = z.object({
   interactionEvent: z.nativeEnum(InteractionEvent),
@@ -155,6 +173,24 @@ export const jwtCustomizerApplicationContextGuard = Applications.guard.omit({
   secret: true,
 });
 
+/**
+ * The target organization context for organization (API resource) access tokens.
+ *
+ * Only populated when the token is being issued for a specific organization (i.e. the
+ * `organization_id` request parameter is present), letting the customizer attach per-org
+ * claims without embedding every organization the user belongs to.
+ */
+export const jwtCustomizerOrganizationContextGuard = Organizations.guard.pick({
+  id: true,
+  name: true,
+  description: true,
+  customData: true,
+});
+
+export type JwtCustomizerOrganizationContext = z.infer<
+  typeof jwtCustomizerOrganizationContextGuard
+>;
+
 export const accessTokenJwtCustomizerGuard = jwtCustomizerGuard
   .extend({
     // Use partial token guard since users customization may not rely on all fields.
@@ -165,6 +201,7 @@ export const accessTokenJwtCustomizerGuard = jwtCustomizerGuard
         grant: jwtCustomizerGrantContextGuard.partial().optional(),
         interaction: jwtCustomizerUserInteractionContextGuard.partial().optional(),
         application: jwtCustomizerApplicationContextGuard.partial().optional(),
+        organization: jwtCustomizerOrganizationContextGuard.partial().optional(),
       })
       .optional(),
   })
@@ -178,7 +215,7 @@ export const clientCredentialsJwtCustomizerGuard = jwtCustomizerGuard
     tokenSample: clientCredentialsPayloadGuard.partial().optional(),
     contextSample: z
       .object({
-        application: jwtCustomizerApplicationContextGuard.partial(),
+        application: jwtCustomizerApplicationContextGuard.partial().optional(),
       })
       .optional(),
   })
@@ -229,7 +266,9 @@ export const customJwtFetcherGuard = z.discriminatedUnion('tokenType', [
   }),
   commonJwtCustomizerGuard.extend({
     tokenType: z.literal(LogtoJwtTokenKeyType.ClientCredentials),
-    context: jsonObjectGuard,
+    // TODO: @xiaoyijun Make `context` required once the application context feature is fully launched
+    // and all core instances are sending `context` for client credentials requests.
+    context: jsonObjectGuard.optional(),
   }),
 ]);
 
@@ -243,7 +282,7 @@ export enum CustomJwtErrorCode {
   AccessDenied = 'AccessDenied',
   /** General JWT customizer error,
    * this is the fallback custom jwt error code
-   * for any internal error thrown by the JWT customizer (localVM, azure function, or CF worker).
+   * for any internal error thrown by the JWT customizer on any runtime.
    */
   General = 'General',
 }
@@ -257,7 +296,7 @@ export type CustomJwtErrorBody = z.infer<typeof customJwtErrorBodyGuard>;
 
 export type CustomJwtApiContext = {
   /**
-   * Reject the the current token request.
+   * Reject the current token request.
    *
    * @remarks
    * By calling this function, the current token request will be rejected,

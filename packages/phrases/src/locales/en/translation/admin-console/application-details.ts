@@ -1,3 +1,5 @@
+import concurrent_device_limit from './concurrent-device-limit.js';
+
 const application_details = {
   page_title: 'Application details',
   back_to_applications: 'Back to applications',
@@ -84,6 +86,10 @@ const application_details = {
     'Allow this application to initiate token exchange requests. This is required for <impersonationLink>user impersonation</impersonationLink> and <patLink>personal access tokens</patLink>.',
   allow_token_exchange_public_client_warning:
     'Enabling token exchange for public clients (single-page app / native app) is not recommended. Public clients cannot securely store credentials, which may expose your application to token impersonation risks.',
+  device_flow_tag: 'Device flow',
+  device_flow_notification:
+    'This app enables OAuth 2.0 Device Authorization Flow for input-limited devices or headless apps (e.g., TVs, CLI). Users complete login on a separate device by entering a device code or scanning a QR code. <a>Learn more</a>',
+  device_flow_try_demo: 'Try the demo',
   delete_description:
     'This action cannot be undone. It will permanently delete the application. Please enter the application name <span>{{name}}</span> to confirm.',
   enter_your_application_name: 'Enter your application name',
@@ -114,6 +120,42 @@ const application_details = {
   field_custom_data_tip:
     'Additional custom application info not listed in the pre-defined application properties, such as business-specific settings and configurations.',
   custom_data_invalid: 'Custom data must be a valid JSON object',
+  access_control: {
+    name: 'Rules',
+    title: 'Access control',
+    description: 'Customize your rules for the app-level access control.',
+    enable: 'Enable app-level access control',
+    enable_description:
+      'Enable granular access control to restrict which users can access this application. If disabled, all registered users in the system can access it.',
+    enable_without_rules_notice: 'Add at least one access rule before enabling access control.',
+    load_error: 'Failed to load access control rules.',
+    custom_allow_rules: 'Custom allow rules',
+    custom_allow_rules_description:
+      'Create rules so users with certain attributes can access automatically. At least one rule is required when enabled.',
+    rules: 'Access rules',
+    add_rules: 'Add rules',
+    rules_description: 'Users can access this app when they match any one of the configured rules.',
+    empty_rules_description: 'No rules are configured yet.',
+    delete_rule_confirmation: 'Are you sure you want to remove this rule?',
+    rule_table_rules: 'Rules',
+    rule_table_description: 'Description',
+    rule_table_users: 'Users',
+    rule_table_members: 'Members',
+    rule_table_user_id: 'User ID',
+    rule_count: '{{count}} rule',
+    rule_count_other: '{{count}} rules',
+    rule_users: 'Users',
+    rule_users_description: 'Specific users can access this app.',
+    rule_roles: 'Roles',
+    rule_user_roles: 'User roles',
+    rule_user_roles_description: 'Users assigned to selected user roles can access this app.',
+    rule_organizations: 'Organizations',
+    rule_organizations_description:
+      'All current and future members of selected organizations can access this app.',
+    rule_organization_roles: 'Organization roles',
+    rule_organization_roles_description:
+      'Members with selected organization roles in selected organizations can access this app.',
+  },
   branding: {
     name: 'Branding',
     description: 'Customize your app logo and branding color for the app-level experience.',
@@ -258,6 +300,13 @@ const application_details = {
     email_address: 'Email address',
     email_address_description: 'Use email address as Name ID',
   },
+  saml_idp_authentication: {
+    always_force_authn: 'Always force authentication',
+    always_force_authn_description:
+      'Require users to sign in again each time they access this application, even if they already have a Logto session.',
+    always_force_authn_tip:
+      'When enabled, Logto always asks users to sign in again for this application. When disabled, an existing Logto session is reused unless the service provider requests fresh authentication with ForceAuthn.',
+  },
   saml_encryption_config: {
     encrypt_assertion: 'Encrypt SAML assertion',
     encrypt_assertion_description: 'By enabling this option, the SAML assertion will be encrypted.',
@@ -281,6 +330,7 @@ const application_details = {
     col_sp_claims: 'Value name of your application',
     add_button: 'Add another',
   },
+  concurrent_device_limit,
 };
 
 export default Object.freeze(application_details);

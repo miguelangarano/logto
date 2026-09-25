@@ -1,5 +1,14 @@
 const user = {
+  id_already_in_use: 'This user ID is already in use.',
   username_already_in_use: 'This username is already in use.',
+  username_starts_with_number: 'Username cannot start with a number.',
+  username_invalid_charset_hard: 'Username can only contain letters, numbers, and underscores.',
+  username_too_short: 'Username is too short.',
+  username_too_long: 'Username is too long.',
+  username_uppercase_not_allowed: 'Username cannot contain uppercase letters.',
+  username_lowercase_not_allowed: 'Username cannot contain lowercase letters.',
+  username_numbers_not_allowed: 'Username cannot contain numbers.',
+  username_underscore_not_allowed: 'Username cannot contain underscores.',
   email_already_in_use: 'This email is associated with an existing account.',
   phone_already_in_use: 'This phone number is associated with an existing account.',
   invalid_email: 'Invalid email address.',
@@ -30,6 +39,7 @@ const user = {
   missing_profile: 'You need to provide additional info before signing-in.',
   role_exists: 'The role id {{roleId}} is already been added to this user',
   invalid_role_type: 'Invalid role type, can not assign machine-to-machine role to user.',
+  suggest_mfa: 'For better account security, we recommend binding MFA to your account.',
   missing_mfa: 'You need to bind additional MFA before signing-in.',
   totp_already_in_use: 'TOTP is already in use.',
   backup_code_already_in_use: 'Backup code is already in use.',
@@ -41,6 +51,7 @@ const user = {
   username_required: 'Username is a required identifier, you can not set it to null.',
   email_or_phone_required:
     'Email address or phone number is a required identifier, at least one is required.',
+  last_sign_in_method_required: 'You need to keep at least one identifier in your account.',
   email_required: 'Email address is a required identifier, you can not set it to null.',
   phone_required: 'Phone number is a required identifier, you can not set it to null.',
   enterprise_sso_identity_not_exists:

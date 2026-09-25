@@ -28,12 +28,24 @@ const sign_in_experiences = {
   phone_verification_code_cannot_be_used_for_sign_in:
     'ไม่สามารถใช้รหัสยืนยัน SMS เพื่อเข้าสู่ระบบเมื่อเปิดใช้งานกับ MFA',
   adaptive_mfa_requires_mfa: 'ต้องเปิดใช้ MFA ก่อนจึงจะเปิดใช้ Adaptive MFA ได้',
+  adaptive_mfa_requires_non_skippable_policy:
+    'Adaptive MFA ต้องการนโยบาย MFA แจ้งเตือนที่ไม่สามารถข้ามได้ ใช้ PromptOnlyAtSignInMandatory หรือ PromptAtSignInAndSignUpMandatory.',
+  non_adaptive_mfa_requires_skippable_policy:
+    'เมื่อปิดใช้งาน Adaptive MFA นโยบายแจ้งเตือน MFA จะต้องสามารถข้ามได้ ห้ามใช้ PromptOnlyAtSignInMandatory หรือ PromptAtSignInAndSignUpMandatory.',
   duplicated_sign_up_identifiers: 'ตรวจพบตัวระบุสมัครสมาชิกซ้ำ',
   missing_sign_up_identifiers: 'ตัวระบุสมัครสมาชิกหลักต้องไม่เว้นว่าง',
   invalid_custom_email_blocklist_format:
     'รายการบล็อคอีเมลแบบกำหนดเองไม่ถูกต้อง: {{items, list(type:conjunction)}} แต่ละรายการต้องเป็นอีเมลหรือโดเมนอีเมลที่ถูกต้อง เช่น foo@example.com หรือ @example.com',
   forgot_password_method_requires_connector:
     'วิธีกู้คืนรหัสผ่านต้องมีตัวเชื่อมต่อ {{method}} ที่เกี่ยวข้องกำหนดค่าไว้',
+  password_expiration_requires_forgot_password:
+    'การหมดอายุของรหัสผ่านต้องมีวิธีลืมรหัสผ่านอย่างน้อยหนึ่งวิธีพร้อมคอนเน็กเตอร์ที่ใช้งานได้',
+  password_expiration_not_enabled:
+    'นโยบายการหมดอายุของรหัสผ่านไม่ได้เปิดใช้งาน โปรดเปิดใช้งานในการตั้งค่าประสบการณ์การลงชื่อเข้าใช้ก่อนที่จะกำหนดวันหมดอายุของรหัสผ่าน',
+  password_expiration_invalid_period_days:
+    'จำนวนวันของระยะเวลาที่ใช้งานได้ต้องเป็นจำนวนเต็มบวกเมื่อเปิดใช้การหมดอายุรหัสผ่าน',
+  username_policy_case_conflicts_exist:
+    'ไม่สามารถเปลี่ยนไปใช้นโยบายชื่อผู้ใช้ที่ไม่แยกตัวพิมพ์ใหญ่เล็กได้ในขณะที่ชื่อผู้ใช้ที่แตกต่างกันเพียงตัวพิมพ์เล็กยังคงอยู่ โปรดยุติปัญหาความขัดแย้งแล้วลองอีกครั้ง',
 };
 
 export default Object.freeze(sign_in_experiences);

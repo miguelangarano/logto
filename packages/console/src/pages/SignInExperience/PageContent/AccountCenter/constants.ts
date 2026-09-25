@@ -47,6 +47,22 @@ export const accountCenterSections: AccountCenterFieldSection[] = [
             key: 'mfa',
             title: 'sign_in_exp.account_center.fields.mfa',
           },
+          { key: 'passkey', title: 'sign_in_exp.account_center.fields.passkey' },
+        ],
+      },
+      {
+        key: 'sessionManagement',
+        title:
+          'sign_in_exp.account_center.sections.account_security.groups.session_management.title',
+        items: [
+          {
+            key: 'session',
+            title: 'sign_in_exp.account_center.fields.sessions',
+          },
+          {
+            key: 'trustedDevice',
+            title: 'sign_in_exp.account_center.fields.trusted_devices',
+          },
         ],
       },
     ],

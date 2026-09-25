@@ -27,7 +27,9 @@ type StatusTag = {
   text: AdminConsoleKey;
 };
 
-type Identifier = { name: string; value: string } | { name: string; tags: string[] };
+type Identifier =
+  /** Represents an identifier with a name and value, optionally allowing copy to clipboard functionality, default is true */
+  { name: string; value: string; copyToClipboard?: boolean } | { name: string; tags: string[] };
 
 type AdditionalActionButton = {
   title: AdminConsoleKey;
@@ -172,6 +174,24 @@ function DetailsPageHeader({
     }
   });
 
+  const renderIdentifierValue = (identifier: Extract<Identifier, { value: string }>) => {
+    if (identifier.copyToClipboard === false) {
+      return <div className={styles.text}>{identifier.value}</div>;
+    }
+
+    return (
+      <CopyToClipboard
+        ref={identifierRef}
+        className={styles.copyId}
+        // It's OK to use `ch` here because the font is monospace. 40px is the copy icon + padding.
+        style={{ maxWidth: `calc(${identifier.value.length}ch + 40px)` }}
+        valueStyle={{ width: 0 }}
+        size="small"
+        value={identifier.value}
+      />
+    );
+  };
+
   return (
     <Card className={styles.header}>
       {showIcon && isValidElement(icon) && cloneElement(icon, { className: styles.icon })}
@@ -188,7 +208,10 @@ function DetailsPageHeader({
               ) : (
                 primaryTag
               )}
-              <div className={styles.verticalBar} />
+              {/* The bar separates the tags from what follows, it must not trail the row. */}
+              {[subtitle, statusTag, identifier].some(Boolean) && (
+                <div className={styles.verticalBar} />
+              )}
             </>
           )}
           {subtitle && (
@@ -208,17 +231,7 @@ function DetailsPageHeader({
           {identifier && (
             <>
               <div className={styles.text}>{identifier.name}</div>
-              {'value' in identifier && (
-                <CopyToClipboard
-                  ref={identifierRef}
-                  className={styles.copyId}
-                  // It's OK to use `ch` here because the font is monospace. 40px is the copy icon + padding.
-                  style={{ maxWidth: `calc(${identifier.value.length}ch + 40px)` }}
-                  valueStyle={{ width: 0 }}
-                  size="small"
-                  value={identifier.value}
-                />
-              )}
+              {'value' in identifier && renderIdentifierValue(identifier)}
               {'tags' in identifier && (
                 <div className={styles.tags}>
                   {identifier.tags.map((tag) => (

@@ -5,7 +5,9 @@ import paywall from './paywall.js';
 const upsell = {
   upgrade_plan: 'อัปเกรดแผน',
   compare_plans: 'เปรียบเทียบแผน',
+  try_with_product_name: 'ลองใช้ {{productName}} ตอนนี้',
   view_plans: 'ดูแผน',
+  explore_self_hosted_plans: 'สำรวจแผน self-hosted',
   create_tenant: {
     title: 'เลือกแผนสำหรับผู้เช่า',
     description:

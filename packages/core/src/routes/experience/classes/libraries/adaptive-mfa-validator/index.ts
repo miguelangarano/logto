@@ -1,7 +1,7 @@
 import { InteractionEvent, type User, type UserGeoLocation } from '@logto/schemas';
 import { conditional, type Nullable, type Optional, trySafe } from '@silverhand/essentials';
 
-import { EnvSet } from '#src/env-set/index.js';
+import { type WithLogContext, type LogEntry } from '#src/middleware/koa-audit-log.js';
 import type Queries from '#src/tenants/Queries.js';
 import { getInjectedHeaderValues } from '#src/utils/injected-header-mapping.js';
 
@@ -16,11 +16,10 @@ import { NewCountryRule } from './rules/new-country.js';
 import { UntrustedIpRule } from './rules/untrusted-ip.js';
 import type {
   AdaptiveMfaContext,
-  AdaptiveMfaEvaluationOptions,
   AdaptiveMfaEvaluationState,
+  AdaptiveMfaInteractionContext,
   AdaptiveMfaRule,
   AdaptiveMfaResult,
-  AdaptiveMfaValidatorContext,
   AdaptiveMfaValidatorOptions,
   RecentCountry,
   TriggeredRule,
@@ -31,7 +30,8 @@ export { adaptiveMfaNewCountryWindowDays } from './constants.js';
 export class AdaptiveMfaValidator {
   private readonly queries: Pick<Queries, 'userGeoLocations' | 'userSignInCountries'>;
   private readonly signInExperienceValidator: SignInExperienceValidator;
-  private readonly ctx?: AdaptiveMfaValidatorContext;
+  private readonly interactionContext: AdaptiveMfaInteractionContext;
+  private readonly ctx?: WithLogContext;
   private readonly recentCountriesCache = new Map<string, RecentCountry[]>();
   private readonly ruleValidators: Array<AdaptiveMfaRuleValidator<AdaptiveMfaRule>>;
 
@@ -40,9 +40,15 @@ export class AdaptiveMfaValidator {
   private adaptiveMfaContext?: AdaptiveMfaContext;
   private isAdaptiveMfaEnabledCache?: boolean;
 
-  constructor({ queries, signInExperienceValidator, ctx }: AdaptiveMfaValidatorOptions) {
+  constructor({
+    queries,
+    signInExperienceValidator,
+    interactionContext,
+    ctx,
+  }: AdaptiveMfaValidatorOptions) {
     this.queries = queries;
     this.signInExperienceValidator = signInExperienceValidator;
+    this.interactionContext = interactionContext;
     this.ctx = ctx;
 
     const ruleDependencies: RuleDependencies = {
@@ -59,37 +65,57 @@ export class AdaptiveMfaValidator {
   }
 
   /**
-   * @remarks Record geo context on sign-in event only.
+   * @remarks Record geo context on successful sign-in and register events only.
    */
   public async recordSignInGeoContext(user: User, interactionEvent: InteractionEvent) {
-    if (interactionEvent !== InteractionEvent.SignIn) {
+    if (interactionEvent === InteractionEvent.ForgotPassword) {
       return;
     }
 
     await this.persistContext(user);
   }
 
-  public async getResult(
-    user: User,
-    options: AdaptiveMfaEvaluationOptions = {}
-  ): Promise<Optional<AdaptiveMfaResult>> {
+  public async getResult(log?: LogEntry): Promise<Optional<AdaptiveMfaResult>> {
     if (!(await this.isAdaptiveMfaEnabled())) {
       return;
     }
 
-    const state = this.buildEvaluationState(user, options);
-    return this.evaluateRules(state);
+    const adaptiveMfaContext = this.getCurrentContext();
+
+    log?.append({
+      adaptiveMfaContext,
+    });
+
+    const user = await this.interactionContext.getIdentifiedUser();
+    const state = this.buildEvaluationState(user);
+    const result = await this.evaluateRules(state);
+
+    log?.append({
+      adaptiveMfaResult: result,
+    });
+
+    return result;
   }
 
-  public getCurrentContext(contextOverride?: AdaptiveMfaContext): Optional<AdaptiveMfaContext> {
-    if (!EnvSet.values.isDevFeaturesEnabled) {
+  public getSignInContext(): Optional<Record<string, string>> {
+    if (!this.ctx) {
       return;
     }
 
-    if (contextOverride !== undefined) {
-      return contextOverride;
-    }
+    const {
+      request: { ip, headers },
+    } = this.ctx;
 
+    const { 'user-agent': userAgent } = headers;
+
+    return {
+      ip,
+      ...conditional(userAgent && { userAgent }),
+      ...getInjectedHeaderValues(headers),
+    };
+  }
+
+  public getCurrentContext(): Optional<AdaptiveMfaContext> {
     if (this.adaptiveMfaContext) {
       return this.adaptiveMfaContext;
     }
@@ -100,20 +126,8 @@ export class AdaptiveMfaValidator {
     return this.adaptiveMfaContext;
   }
 
-  public getSignInContext(): Optional<Record<string, string>> {
-    if (!EnvSet.values.isDevFeaturesEnabled) {
-      return;
-    }
-
-    return conditional(this.ctx && getInjectedHeaderValues(this.ctx.request.headers));
-  }
-
-  private async persistContext(user: User, options: AdaptiveMfaEvaluationOptions = {}) {
-    if (!EnvSet.values.isDevFeaturesEnabled) {
-      return;
-    }
-
-    const context = this.getCurrentContext(options.currentContext);
+  private async persistContext(user: User) {
+    const context = this.getCurrentContext();
     if (!context) {
       return;
     }
@@ -142,14 +156,11 @@ export class AdaptiveMfaValidator {
     await Promise.all(tasks);
   }
 
-  private buildEvaluationState(
-    user: User,
-    options: AdaptiveMfaEvaluationOptions
-  ): AdaptiveMfaEvaluationState {
+  private buildEvaluationState(user: User): AdaptiveMfaEvaluationState {
     return {
       user,
-      now: options.now ?? new Date(),
-      context: this.getCurrentContext(options.currentContext),
+      now: new Date(),
+      context: this.getCurrentContext(),
     };
   }
 
@@ -196,10 +207,6 @@ export class AdaptiveMfaValidator {
   }
 
   private async isAdaptiveMfaEnabled(): Promise<Optional<boolean>> {
-    if (!EnvSet.values.isDevFeaturesEnabled) {
-      return;
-    }
-
     if (this.isAdaptiveMfaEnabledCache !== undefined) {
       return this.isAdaptiveMfaEnabledCache;
     }

@@ -4,6 +4,8 @@ const applications = {
   subtitle:
     'Kimlik doğrulaması için Logtoyu kullanmak üzere mobil, tek sayfa, machine to machine veya geleneksel bir uygulama ayarlayınız',
   subtitle_with_app_type: 'Logto Doğrulamasını {{name}} uygulamanız için yapılandırın',
+  create_device_flow_description:
+    'Giriş kısıtlı cihazlar veya headless uygulamalar için OAuth 2.0 Cihaz Yetkilendirme Hakkı kullanan yerel bir uygulama oluşturun.',
   create: 'Uygulama oluştur',
   create_third_party: 'Üçüncü taraf uygulama oluştur',
   create_thrid_party_modal_title: 'Üçüncü taraf uygulaması oluştur ({{type}})',
@@ -23,7 +25,7 @@ const applications = {
     native: {
       title: 'Yerel Uygulama',
       subtitle: 'Nativede çalışan bir uygulama ',
-      description: 'Örneğin, iOS uygulaması, Android uygulaması',
+      description: 'Örneğin, iOS uygulaması, Android uygulaması, masaüstü uygulaması, TV, CLI',
     },
     spa: {
       title: 'Tek Sayfalı Uygulama',
@@ -57,11 +59,70 @@ const applications = {
       description: 'Ör., OIDC, SAML',
     },
   },
+  authorization_flow: {
+    title: 'Yetkilendirme akışı',
+    tooltip: 'Uygulamanız için yetkilendirme akışını seçin. Bir kez ayarlandığında değiştirilemez.',
+    authorization_code: {
+      title: 'Authorization code',
+      description:
+        'Varsayılan ve en yaygın yetkilendirme türü. Kullanıcılar, erişimi doğrudan yetkilendirmek için oturum açma sayfasına yönlendirilir.',
+    },
+    device_flow: {
+      title: 'Device flow',
+      description:
+        "Giriş kısıtlı cihazlar veya arayüzsüz uygulamalar (ör. TV'ler, CLI) için. Kullanıcılar, bir cihaz kodu girerek veya QR kodu tarayarak ayrı bir cihazda oturum açmayı tamamlar.",
+    },
+  },
   placeholder_title: 'Devam etmek için bir uygulama tipi seçin',
   placeholder_description:
     'Logto, uygulamanızı tanımlamaya, oturum açmayı yönetmeye ve denetim kayıtları oluşturmaya yardımcı olmak için OIDC için bir uygulama varlığı kullanır.',
   third_party_application_placeholder_description:
     'Üçüncü taraf hizmetlere OAuth yetkilendirmesi sağlamak için Logtoyu bir Kimlik Sağlayıcı olarak kullanın. \n Kaynak erişimi için önceden oluşturulmuş bir kullanıcı onay ekranı içerir. <a>Daha fazla bilgi edinin</a>',
+  dynamic_app: {
+    title: 'Dinamik uygulama',
+    subtitle: 'CIMD',
+    description:
+      'Dinamik uygulama, OAuth istemcilerinin önceden kayıt olmadan bağlanmasına olanak tanır.',
+    settings_description:
+      'Dinamik uygulama, OAuth istemcilerinin önceden kayıt olmadan bağlanmasına olanak tanır. OAuth Client ID Metadata Document (CIMD) belirtimini kullanır.',
+    beta_notice:
+      'Dinamik uygulama şu anda beta sürümünde. Keşfetmeye hoş geldiniz ve <ContactLink>geri bildiriminizi paylaşın</ContactLink>.',
+    app_id_placeholder: 'Her istemci tarafından dinamik olarak sağlanır',
+    enable_confirm_modal: {
+      title: 'Dinamik istemci erişimi etkinleştirilsin mi?',
+      content:
+        "Geçerli bir genel HTTPS istemci kimliği URL'sine sahip her OAuth istemcisi, önceden kayıt olmadan bu kiracı için yetkilendirme başlatabilir. Erişim, azami izinleriniz ve kullanıcı onayı ile sınırlı kalmaya devam eder.",
+      beta_pricing_notice:
+        'Dinamik uygulama beta sürecinde ücretsizdir. Beta sonrasında eklenti ücreti uygulanabilir. Sizi önceden bilgilendireceğiz ve dilediğiniz zaman kapatabilirsiniz.',
+    },
+    enabled: 'Dinamik uygulama başarıyla etkinleştirildi.',
+    disable_confirm_modal: {
+      title: 'Dinamik uygulama devre dışı bırakılsın mı?',
+      content:
+        'CIMD istemcileri artık yeni yetkilendirme istekleri başlatamaz. Mevcut izinler korunur ve verilmiş erişim belirteçleri süreleri dolana kadar geçerli kalabilir.',
+    },
+    disabled: 'Dinamik uygulama başarıyla devre dışı bırakıldı.',
+    permissions: {
+      user_title: 'Kullanıcı',
+      user_description:
+        'OAuth istemcilerinin belirli kullanıcı verilerine erişmek için istediği izinleri seçin.',
+      grant_user_level_permissions: 'Kullanıcı izinlerini ver',
+      organization_title: 'Organizasyon',
+      organization_description:
+        'OAuth istemcilerinin belirli organizasyon verilerine erişmek için istediği izinleri seçin.',
+      grant_organization_level_permissions: 'Organizasyon izinlerini ver',
+      permission_delete_confirm:
+        'Bu işlem, izni dinamik uygulamadan kaldıracak ve OAuth istemcilerinin bu izin için kullanıcı yetkilendirmesi istemesini engelleyecektir. Devam etmek istediğinizden emin misiniz?',
+    },
+    client_compatibility: {
+      title: 'İstemci uyumluluğu',
+      description:
+        "Logto'nun, OpenID Connect'i henüz tam olarak desteklemeyen OAuth istemcilerinden gelen yetkilendirme isteklerini nasıl işlediğini ayarlayın. Bu ayarlar deneyseldir ve değiştirilebilir veya kaldırılabilir.",
+      add_consent_prompt_for_offline_access: 'Çevrimdışı erişim için onay istemi ekle',
+      add_consent_prompt_for_offline_access_description:
+        'Bir OAuth istemcisi `prompt=consent` olmadan `offline_access` istediğinde Logto, istemcinin bir yenileme belirteci alabilmesi için onay istemini ekler. ChatGPT ve Codex gibi istemciler için önerilir.',
+    },
+  },
   guide: {
     third_party: {
       title: 'Üçüncü taraf uygulamayı entegre et',

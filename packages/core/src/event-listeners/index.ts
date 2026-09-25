@@ -1,9 +1,12 @@
+import { appInsights } from '@logto/app-insights/node';
 import { type Provider } from 'oidc-provider';
 
 import { TokenUsageType } from '#src/queries/daily-token-usage.js';
 import type Queries from '#src/tenants/Queries.js';
 import { getConsoleLogFromContext } from '#src/utils/console.js';
+import { buildAppInsightsTelemetry } from '#src/utils/request.js';
 
+import { createAuthorizationSuccessListener, type TriggerEvent } from './authorization-success.js';
 import { grantListener, grantRevocationListener } from './grant.js';
 import { interactionEndedListener, interactionStartedListener } from './interaction.js';
 import { recordActiveUsers } from './record-active-users.js';
@@ -13,7 +16,12 @@ import { deleteSessionExtensions } from './session.js';
  * @see {@link https://github.com/panva/node-oidc-provider/blob/v7.x/docs/README.md#im-getting-a-client-authentication-failed-error-with-no-details Getting auth error with no details?}
  * @see {@link https://github.com/panva/node-oidc-provider/blob/v7.x/docs/events.md OIDC Provider events}
  */
-export const addOidcEventListeners = (tenantId: string, provider: Provider, queries: Queries) => {
+export const addOidcEventListeners = (
+  tenantId: string,
+  provider: Provider,
+  queries: Queries,
+  triggerEvent?: TriggerEvent
+) => {
   const { recordTokenUsage } = queries.dailyTokenUsage;
 
   // Listener for user access tokens (increment user_token_usage)
@@ -27,6 +35,12 @@ export const addOidcEventListeners = (tenantId: string, provider: Provider, quer
   provider.addListener('grant.success', grantListener);
   provider.addListener('grant.error', grantListener);
   provider.addListener('grant.revoked', grantRevocationListener);
+
+  provider.addListener(
+    'authorization.success',
+    createAuthorizationSuccessListener(provider, queries, triggerEvent)
+  );
+
   provider.addListener('access_token.issued', async (token) => {
     return recordActiveUsers(token, queries);
   });
@@ -37,6 +51,22 @@ export const addOidcEventListeners = (tenantId: string, provider: Provider, quer
   provider.addListener('interaction.ended', interactionEndedListener);
   provider.addListener('server_error', (ctx, error) => {
     getConsoleLogFromContext(ctx).error('server_error:', error);
+
+    const telemetry = buildAppInsightsTelemetry(ctx);
+
+    void appInsights.trackException(error, {
+      ...telemetry,
+      properties: {
+        ...telemetry.properties,
+        event: 'oidc.server_error',
+        oidcRequestPath: ctx.path,
+        ...(ctx.oidc.route ? { oidcRoute: ctx.oidc.route } : {}),
+        ...(ctx.oidc.client?.clientId ? { oidcClientId: ctx.oidc.client.clientId } : {}),
+        ...(typeof ctx.oidc.params?.grant_type === 'string'
+          ? { oidcGrantType: ctx.oidc.params.grant_type }
+          : {}),
+      },
+    });
   });
 
   /**

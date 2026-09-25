@@ -18,6 +18,10 @@ const mfa = {
   verify_phone_verification_code_description: 'Введіть код, надісланий на ваш телефон',
   send_to_email: 'Надіслати на {{identifier}}',
   send_to_phone: 'Надіслати на {{identifier}}',
+  onboarding: 'Увімкнути двоетапну перевірку',
+  onboarding_description:
+    'Захистіть свій обліковий запис за допомогою двоетапної перевірки. Виберіть один або кілька методів: ключ доступу, додаток для автентифікації (OTP), SMS-код перевірки або резервні коди.',
+  enable_mfa: 'Увімкнути двоетапну перевірку',
   add_mfa_factors: 'Додати двоетапну перевірку',
   add_mfa_description:
     'Двофакторна перевірка увімкнена. Виберіть другий метод перевірки для безпечного входу.',
@@ -27,6 +31,7 @@ const mfa = {
   verify_mfa_description:
     'Для цього облікового запису ввімкнено двоетапну перевірку. Виберіть другий спосіб перевірки вашої особи.',
   add_authenticator_app: 'Додати програму автентифікації',
+  replace_authenticator_app: 'Замінити програму автентифікації',
   step: 'Крок {{step, number}}: {{content}}',
   scan_qr_code: 'Скануйте цей QR-код',
   scan_qr_code_description:
@@ -64,6 +69,14 @@ const mfa = {
   verify_via_passkey: 'Перевірити через ключ доступу',
   verify_via_passkey_description:
     'Використовуйте ключ доступу для перевірки за допомогою пароля пристрою, біометричних даних, сканування QR-коду або USB-ключа безпеки, як-от YubiKey.',
+  trust_this_device_title: 'Довіряти цьому пристрою',
+  trust_this_device_description:
+    'Під час наступних входів на цьому пристрої можна пропустити перевірку MFA.',
+  trust_this_device_one: 'Довіряти цьому пристрою протягом {{count}} дня',
+  trust_this_device_two: 'Довіряти цьому пристрою протягом {{count}} днів',
+  trust_this_device_few: 'Довіряти цьому пристрою протягом {{count}} днів',
+  trust_this_device_many: 'Довіряти цьому пристрою протягом {{count}} днів',
+  trust_this_device_other: 'Довіряти цьому пристрою протягом {{count}} дня',
   secret_key_copied: 'Секретний ключ скопійовано.',
   backup_code_copied: 'Резервний код скопійовано.',
   webauthn_not_ready: 'WebAuthn ще не готовий. Будь ласка, спробуйте ще раз пізніше.',

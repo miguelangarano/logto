@@ -37,6 +37,8 @@ const description = {
   reset_password: 'Mot de passe oublié',
   reset_password_description:
     'Entrez le {{types, list(type: disjunction;)}} associé à votre compte et nous vous enverrons le code de vérification pour réinitialiser votre mot de passe.',
+  reset_password_magic_link_description:
+    'Saisis l’adresse e-mail associée à ton compte pour continuer la réinitialisation de ton mot de passe.',
   new_password: 'Nouveau mot de passe',
   set_password: 'Définir un mot de passe',
   password_changed: 'Mot de passe modifié',
@@ -47,6 +49,8 @@ const description = {
   enter_username: "Définir un nom d'utilisateur",
   enter_username_description:
     "Le nom d'utilisateur est une alternative pour la connexion. Le nom d'utilisateur doit contenir uniquement des lettres, des chiffres et des underscores.",
+  enter_username_policy_description:
+    "Le nom d'utilisateur est une alternative pour la connexion. {{requirements}}",
   link_email: "Lier l'adresse e-mail",
   link_phone: 'Lier le numéro de téléphone',
   link_email_or_phone: "Lier l'adresse e-mail ou le numéro de téléphone",
@@ -59,6 +63,12 @@ const description = {
     'Pour une sécurité accrue, veuillez compléter les détails du compte ci-dessous.',
   create_your_account: 'Créer votre compte',
   sign_in_to_your_account: 'Connectez-vous à votre compte',
+  device_activation: "Activation de l'appareil",
+  device_activation_description:
+    "Entrez le code affiché sur votre appareil. Assurez-vous qu'il correspond, puis continuez pour vous connecter à cet appareil.",
+  device_activation_error_description: 'Entrez le code affiché sur votre appareil.',
+  device_activation_success: 'Votre appareil est maintenant connecté !',
+  device_activation_success_description: 'Retournez sur votre appareil pour continuer.',
   no_region_code_found: 'Aucun code de région trouvé',
   verify_email: 'Vérifiez votre e-mail',
   verify_phone: 'Vérifiez votre numéro de téléphone',
@@ -80,12 +90,25 @@ const description = {
     character_types_other:
       'doit contenir au moins {{count}} types de lettres majuscules, lettres minuscules, chiffres et symboles',
   },
+  username_requirements: "Nom d'utilisateur {{items, list}}.",
+  username_requirement: {
+    length: 'doit comporter entre {{min}} et {{max}} caractères',
+    characters: 'ne peut contenir que {{characters, list}}',
+  },
+  username_character: {
+    uppercase: 'lettres majuscules',
+    lowercase: 'lettres minuscules',
+    number: 'chiffres',
+    underscore: 'traits de soulignement',
+  },
   use: 'Utiliser',
   single_sign_on_email_form: "Entrez votre adresse e-mail d'entreprise",
   single_sign_on_connectors_list:
     'Votre entreprise a activé la connexion unique (Single Sign-On) pour le compte email {{email}}. Vous pouvez continuer à vous connecter avec les fournisseurs SSO suivants.',
   single_sign_on_enabled: 'La connexion unique (Single Sign-On) est activée pour ce compte',
   authorize_title: 'Autoriser {{name}}',
+  unregistered_client_notice:
+    "Cette application est auto-déclarée par <hostname>{{host}}</hostname>, y compris son nom et son logo. Veuillez vérifier le nom d'hôte avant de continuer.",
   request_permission: "{{name}} demande l'accès à :",
   grant_organization_access: "Accorder l'accès à l'organisation :",
   authorize_personal_data_usage: "Autoriser l'utilisation de vos données personnelles :",
@@ -104,6 +127,9 @@ const description = {
   identifier_register_description:
     'Entrez votre {{types, list(type: disjunction;)}} pour créer un nouveau compte.',
   all_account_creation_options: 'Toutes les options de création de compte',
+  password_expired:
+    'Votre mot de passe a expiré et doit être réinitialisé avant de pouvoir vous connecter.',
+  password_expiration_reset: 'Réinitialiser le mot de passe',
   back_to_sign_in: 'Retour à la connexion',
   support_email: 'Email de support: <link></link>',
   support_website: 'Site web de support: <link></link>',
@@ -111,6 +137,17 @@ const description = {
   switch_account_description:
     'Pour continuer, vous serez déconnecté du compte actuel, et le passage au nouveau compte se fera automatiquement.',
   about_yourself: 'Parlez-nous de vous',
+  verify_identity: 'Vérifiez votre identité',
+  choose_verification_method: 'Choisissez comment vous connecter',
+  verification_method: {
+    passkey: "Clé d'accès",
+    passkey_description: 'Vérifiez via votre appareil ou un matériel USB',
+    password: 'Mot de passe',
+    password_description: 'Entrez votre mot de passe',
+    email_verification_code: 'Code de vérification par e-mail',
+    phone_verification_code: 'Code de vérification par téléphone',
+    verification_code_description: 'Envoyer à {{target}}',
+  },
 };
 
 export default Object.freeze(description);

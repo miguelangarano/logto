@@ -1,7 +1,21 @@
+/* eslint-disable max-lines -- Locale catalog mirrors the complete Account Center phrase schema. */
 const account_center = {
   home: {
     title: 'Page not found',
     description: 'This page is not available.',
+  },
+  page: {
+    title: 'Account',
+    security_title: 'Security',
+    security_description: 'Change your account settings here to ensure your account security.',
+    profile_title: 'Personal info',
+    profile_description: 'Change your personal information here.',
+    sidebar_personal_info: 'Personal info',
+    sidebar_security: 'Security',
+    sidebar_sessions: 'Sessions',
+    support: 'Support',
+    user_menu: 'User menu',
+    sign_out: 'Sign out',
   },
   verification: {
     title: 'Security verification',
@@ -12,6 +26,9 @@ const account_center = {
     error_verify_failed: 'Verification failed. Please enter the code again.',
     verification_required: 'Verification expired. Please verify your identity again.',
     try_another_method: 'Try another method to verify',
+    no_available_methods_title: 'No verification methods available',
+    no_available_methods_description:
+      "You don't have any verification methods set up. Please add a password, email, or phone number to your account first.",
   },
   password_verification: {
     title: 'Verify password',
@@ -52,7 +69,84 @@ const account_center = {
   username: {
     title: 'Set username',
     description: 'Username must contain only letters, numbers, and underscores.',
+    policy_description: '{{requirements}}',
     success: 'Username updated successfully.',
+  },
+  security: {
+    add: 'Add',
+    change: 'Change',
+    remove: 'Remove',
+    not_set: 'Not set',
+    social_sign_in: 'Social sign-in',
+    social_not_linked: 'Not linked',
+    email_phone: 'Email / Phone',
+    email: 'Email',
+    phone: 'Phone',
+    password: 'Password',
+    configured: 'Configured',
+    not_configured: 'Not configured',
+    two_step_verification: '2-step verification',
+    authenticator_app: 'Authenticator app',
+    passkeys: 'Passkeys',
+    backup_codes: 'Backup codes',
+    email_verification_code: 'Email verification code',
+    phone_verification_code: 'Phone verification code',
+    passkeys_count_one: '{{count}} passkey',
+    passkeys_count_other: '{{count}} passkeys',
+    backup_codes_count_one: '{{count}} code remaining',
+    backup_codes_count_other: '{{count}} codes remaining',
+    view: 'View',
+    manage: 'Manage',
+    turn_on_2_step_verification_description:
+      "Add an extra layer of security. You'll be prompted for a second verification step at sign-in.",
+    turn_off_2_step_verification: 'Turn off 2-step verification',
+    turn_off_2_step_verification_description:
+      'Disabling 2-step verification will remove the extra layer of protection from your account at sign-in. Are you sure you want to continue?',
+    disable_2_step_verification: 'Disable',
+    no_verification_method_warning:
+      "You haven't added a second verification method. Add at least one to enable 2-step verification at sign-in.",
+    passkey_sign_in_prompt: 'Prompt to set up a passkey',
+    passkey_sign_in_prompt_description:
+      "When on, you'll be asked to set up a passkey for faster, more secure sign-in.",
+    account_removal: 'Account removal',
+    delete_your_account: 'Delete your account',
+    delete_account: 'Delete account',
+    remove_username_confirmation_title: 'Remove username',
+    remove_username_confirmation_description:
+      'Once removed, you will no longer be able to sign in with this username. Are you sure you want to continue?',
+    remove_email_confirmation_title: 'Remove email address',
+    remove_email_confirmation_description:
+      'Once removed, you will no longer be able to sign in with this email address. Are you sure you want to continue?',
+    remove_phone_confirmation_title: 'Remove phone number',
+    remove_phone_confirmation_description:
+      'Once removed, you will no longer be able to sign in with this phone number. Are you sure you want to continue?',
+    email_removed: 'Email address removed successfully.',
+    phone_removed: 'Phone number removed successfully.',
+    username_removed: 'Username removed successfully.',
+    trusted_devices: {
+      title: 'MFA trusted devices',
+      current_device: 'Current device',
+      expires_on: 'Expire on {{date}}',
+      unknown_location: 'Unknown location',
+      remove: 'Remove',
+      removed: 'Trusted device removed successfully.',
+      loading: 'Loading...',
+      empty: 'No trusted devices.',
+      load_failed: 'Failed to load trusted devices. Please try again.',
+      retry: 'Try again',
+      remove_confirmation_title: 'Remove trusted device?',
+      remove_confirmation_description:
+        "You'll need to complete MFA again on this device the next time you sign in. Your current session will stay active.",
+    },
+  },
+  social: {
+    linked: '{{connector}} linked successfully.',
+    removed: '{{connector}} removed successfully.',
+    not_enabled:
+      'This social sign-in method is not enabled. Please contact your administrator for assistance.',
+    remove_confirmation_title: 'Remove social account',
+    remove_confirmation_description:
+      'If you remove {{connector}}, you may not be able to sign in with it until you add it back again.',
   },
   password: {
     title: 'Set password',
@@ -136,6 +230,10 @@ const account_center = {
       title: 'Authenticator app added!',
       description: 'Your authenticator app has been successfully linked to your account.',
     },
+    totp_replaced: {
+      title: 'Authenticator app replaced!',
+      description: 'Your authenticator app has been successfully replaced.',
+    },
     backup_code: {
       title: 'Backup codes generated!',
       description: 'Your backup codes have been saved. Keep them in a safe place.',
@@ -179,6 +277,31 @@ const account_center = {
       'You have successfully verified this device for 2-step authentication. Customize the name to recognize if you have multiple keys.',
     name_input_label: 'Name',
   },
+  sessions: {
+    page_title: 'Sessions',
+    page_description: 'Manage your active sessions and authorized third-party applications.',
+    title: 'Sessions',
+    current_session: 'Current session',
+    signed_in_at: 'Signed in {{date}}',
+    revoke_session: 'Sign out',
+    revoke_session_title: 'Sign out session',
+    revoke_session_description:
+      'This will sign out the session and revoke all associated access. Are you sure you want to continue?',
+    no_other_sessions: 'No other active sessions.',
+    loading: 'Loading...',
+    third_party_apps_title: 'Third-party apps',
+    no_third_party_apps: 'No authorized third-party applications.',
+    third_party_apps_load_failed: 'Failed to load third-party apps. Please try again.',
+    granted_at: 'Authorized {{date}}',
+    dynamic_app: 'Dynamic app',
+    client_id: 'Client ID: {{clientId}}',
+    revoke_grant: 'Remove',
+    revoke_grant_title: 'Remove third-party app access',
+    revoke_grant_description:
+      'This will revoke the access granted to this application. Previously issued access tokens may remain valid until they expire. Are you sure you want to continue?',
+    revoke_grant_failed: 'Failed to revoke some grants. Please try again.',
+  },
 };
 
 export default Object.freeze(account_center);
+/* eslint-enable max-lines */

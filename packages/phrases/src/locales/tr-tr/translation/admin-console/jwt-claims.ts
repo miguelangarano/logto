@@ -35,6 +35,7 @@ const jwt_claims = {
   restore: 'Varsayılanları geri yükle',
   restored: 'Geri yüklendi',
   data_source_tab: 'Veri kaynağı',
+  error_handling_tab: 'Hata yönetimi',
   test_tab: 'Test bağlamı',
   jwt_claims_description:
     "Varsayılan iddialar JWT'de otomatik olarak dahil edilir ve geçersiz kılınabilir.",
@@ -51,12 +52,17 @@ const jwt_claims = {
   interaction_data: {
     title: 'Kullanıcı etkileşim bağlamı',
     subtitle:
-      'Kullanıcının etkileşim ayrıntılarına, mevcut kimlik doğrulama oturumu için `context.interaction` parametresini kullanarak erişin, `interactionEvent`, `userId` ve `verificationRecords` dahil.',
+      'Kullanıcının etkileşim ayrıntılarına, mevcut kimlik doğrulama oturumu için `context.interaction` parametresini kullanarak erişin.',
   },
   application_data: {
     title: 'Uygulama bağlamı',
     subtitle:
       'Token ile ilişkili uygulama bilgilerini sağlamak için `context.application` giriş parametresini kullanın.',
+  },
+  organization_data: {
+    title: 'Kuruluş bağlamı',
+    subtitle:
+      'Hedef kuruluş bilgilerini sağlamak için `context.organization` giriş parametresini kullanın, yalnızca kuruluş tokenları için kullanılabilir.',
   },
   token_data: {
     title: 'Belge verisi',
@@ -65,6 +71,19 @@ const jwt_claims = {
   api_context: {
     title: 'API bağlamı: erişim kontrolü',
     subtitle: '`api.denyAccess` yöntemini kullanarak belge isteğini reddedin.',
+  },
+  error_handling: {
+    title: 'Hata yönetimi',
+    subtitle:
+      'Betik başarısız olduğunda token verilmesinin engellenip engellenmeyeceğini kontrol eder.',
+    input_field_title: 'Betik hatasında token verme davranışı',
+    block_issuance_switch: 'Betik hata verdiğinde token verilmesini engelle',
+    default_hint_create:
+      "Yeni özel claim script'leri, script başarısız olduğunda varsayılan olarak token verilmesini engeller. API zaten bir değer sağlıyorsa bunun yerine kaydedilmiş değer kullanılır.",
+    default_hint_edit:
+      "Bu ayara sahip olmayan mevcut özel claim script'leri, siz açıkça bir değer kaydedene kadar bu seçeneği eski varsayılan olan kapalı durumda tutar.",
+    warning:
+      'Etkinleştirildiğinde, betik çalışma zamanı hataları token isteğini `invalid_request` (400) ve yerelleştirilmiş bir `error_description` ile reddeder. `api.denyAccess` çağrıları ise hâlâ `access_denied` döndürür.',
   },
   fetch_external_data: {
     title: 'Harici veri al',
@@ -84,6 +103,11 @@ const jwt_claims = {
     subtitle: 'Test için sahte belge ve kullanıcı verilerini ayarlayın.',
     run_button: 'Testi Çalıştır',
     result_title: 'Test sonucu',
+  },
+  sandbox_warning: {
+    title: 'Komut dosyaları sunucu ayrıcalıklarıyla çalışır',
+    description:
+      'Kendi barındırılan Logto’da bu komut dosyası, Logto’nun kendisiyle aynı ortamda çalışır: sunucu ortam değişkenlerini okuyabilir ve iç ağınızdaki hizmetlere erişebilir. Sandbox’lanmamıştır. Bu sayfaya yalnızca sunucuya erişim vereceğiniz kişilere erişim verin.',
   },
   form_error: {
     invalid_json: 'Geçersiz JSON biçimi',

@@ -1,5 +1,270 @@
 # Change Log
 
+## 1.40.0
+
+### Minor Changes
+
+- b64d46d495: unify social callback URI between Sign-in Experience and Account Center
+- 8b2aaab9b0: add dynamic app support (OAuth Client ID Metadata Documents)
+
+  The dynamic app lets compatible public clients, such as MCP clients, connect to your tenant without registering an application. Following the OAuth Client ID Metadata Documents (CIMD) draft, such a client presents a public HTTPS URL as its `client_id`, and Logto fetches the client metadata from that URL.
+
+  Enable it from the dynamic app card in the third-party app section on the create application page in Console. The switch is tenant-level and off by default, and requires the OIDC provider SSRF protection to be active. Control what dynamic app clients can request with the permission settings on the dynamic app page.
+
+- 28885b42d5: add optional signed SAML authentication requests for enterprise SSO connectors
+
+  Enterprise SSO SAML connectors can now sign the SAML authentication request (AuthnRequest) sent to the identity provider. Generate a service-provider signing key on the connector, download its certificate and register it at the identity provider, then enable "Sign authentication request". RSA-SHA256 (default) and RSA-SHA512 are supported, and staged keys allow graceful, zero-downtime certificate rotation. Identity-provider metadata advertising `WantAuthnRequestsSigned` no longer breaks SAML sign-in when signing is disabled.
+
+- 860188898f: run Custom JWT and Actions scripts on the consolidated script runtime
+
+  Self-hosted deployments execute Custom JWT and Actions scripts on a pooled worker-thread runner with a 5-second wall-clock deadline and a 128 MB memory budget, so a runaway or never-settling async script fails instead of hanging token issuance. Script return values must be JSON-serializable.
+
+### Patch Changes
+
+- f0d369f377: drop deleted profile fields from account center and sign-up configs on save
+
+  When a custom profile field is removed from Collect user profile, saving Account Center (or sign-up) settings no longer fails with `custom_profile_fields.entity_not_exists_with_names`. Stale field references are ignored on save, and deleted fields remain removable in the Console editor even when their permission control is Off.
+
+- 28c3c9283e: treat Gmail address aliases as the same address in custom email allowlist and blocklist rules
+
+  The matcher treats gmail.com and googlemail.com as equivalent and ignores local-part dots. The Console now shows custom email rule examples and Gmail matching behavior in the field descriptions, with shorter input placeholders.
+
+## 1.39.0
+
+### Minor Changes
+
+- 829646a4a: add custom domain verification file support
+
+  Admins can configure small text or JSON verification files for active custom domains. Files are limited to root-level filenames or paths under `/.well-known/`, with caps on count and content size. Exact GET and HEAD matches are served with safe content types while existing Logto routes take precedence.
+
+- 893860c636: add email allowlist support for email registration and account email updates
+
+### Patch Changes
+
+- 292da8db9: support wildcard email address patterns in custom email blocklist rules
+- a1e0f2b680: prevent internal application secrets from being exposed through Management APIs
+
+## 1.38.0
+
+### Minor Changes
+
+- a305713bb2: expose the target organization to the access token JWT customizer for organization (API resource) tokens
+
+  When Logto issues an organization access token (a token requested with both `organization_id` and `resource`), the access token JWT customizer now receives a `context.organization` object with the target organization's `id`, `name`, `description` and `customData`. Previously the customizer was invoked with the same payload as a regular user access token and had no way to know which organization the token was being issued for — the `organization_id` claim is only injected after the customizer runs.
+
+  This lets scripts attach per-organization claims (for example mapping the Logto organization id to an internal id stored in `organization.customData`) without embedding a map of every organization the user belongs to into every token.
+
+- c7f17d6c5c: rate-limit outbound verification-code and message sends per recipient and suppress delivery to unknown recipients
+
+  Adds a mandatory, system-level per-recipient send rate limit across all email/SMS send paths (experience verification codes including MFA, the account and management verification-code APIs, `/me`, organization invitations, and the legacy interaction API), emits a `Message.RateLimited` webhook when a send is throttled, and suppresses verification-code delivery to unregistered recipients when registration is disabled to prevent account enumeration. The `Message.RateLimited` event is now selectable in the Console webhook settings.
+
+- d41082bd7d: add app-level access control for applications
+
+  Add a new application access control feature that allows administrators to restrict user access to applications. When enabled, users who do not have permission to access an application will see an access denied error message when they attempt to sign in or access the application. This feature can be configured in the Console Security settings.
+
+  Supported custom control rules include:
+
+  - User IDs
+  - User roles
+  - Organizations
+  - Organization roles
+
+  Refer to the documentation for more details: https://docs.logto.io/integrate-logto/app-level-access-control
+
+- 3d38ae2074: add account center session management
+
+  Users can now configure and use the account center Sessions page to review active sessions and connected third-party applications.
+
+- c1ff0c114: release account center profile page, custom profile fields at sign-up, and experience/account avatar upload from dev feature gates
+
+  The collect-user-profile sign-up flow now respects the explicit `signUpProfileFields` list instead of always showing the full catalog. The account center profile page and avatar upload endpoints are no longer gated behind a dev feature flag.
+
+- bcd517bacf: add independent Account Center passkey controls for passkey sign-in
+
+  Admins can now configure passkey visibility separately from MFA in Account Center, and users can manage passkeys plus their passkey sign-in prompt preference when passkey sign-in is enabled.
+
+- c2016a044c: add a configurable per-tenant password expiration policy
+
+  Operators can enable password expiration from Console → Security → Password policy and set the number of days a password stays valid. When a password reaches the end of its valid period — or is manually expired for a specific user — the end user is forced through the forgot-password flow on their next password sign-in before they can continue. Users signing in via SSO or passkey are not affected.
+
+  - **Console**: a new "Password expiration" card with an enable toggle and a valid-period (days) input, an inline reminder when sign-up requires no contact identifier to guarantee password recovery, and a per-user "Expire password" action on the user details page.
+  - **Core / API**: the policy is stored on the sign-in experience (`passwordExpiration`) and enforced after password verification. `PATCH /api/users/:userId/password/expiration` lets admins manually expire a user's password, and deleting the last forgot-password connector is rejected while the policy is enabled.
+  - **Experience**: an expired password prompts the user to reset it via the configured recovery method before sign-in completes.
+
+  Legacy users without a recorded password-change date are anchored to the timestamp the policy was enabled, so they get a full valid period instead of being expired immediately.
+
+- c73d32b5ee: support passkeys (WebAuthn) as an MFA factor for native apps using Logto's native SDKs
+
+  Logto's native SDKs (Android and iOS) now sign users in through the system's default browser, where passkeys (WebAuthn) are available. Upgrade to Android SDK v3 or iOS SDK v2 to enable it.
+
+- 67b99bba85: add username policy management to the sign-in experience advanced options
+
+  Operators can configure the tenant username policy — case sensitivity, length bounds, and allowed character types — from Console → Sign-in experience → Sign-up and sign-in → Advanced options. Switching to case-insensitive proactively detects existing usernames that differ only by case and blocks the save until the conflicts are resolved.
+
+- eb45edbe34: allow customizing verification code settings
+
+  Admins can configure the verification code expiration duration and maximum retry attempts in Console Security settings.
+
+### Patch Changes
+
+- 92560f6b2e: fix Console username update returning 401 by redirecting to Account Center
+
+  The Account API requires identity verification for username changes, which the
+  Console profile page does not implement. Redirect username editing to the
+  Account Center's `/account/username` page (same pattern as MFA) where the full
+  verification flow is already implemented.
+
+## 1.37.0
+
+### Minor Changes
+
+- 8407ecd410: add a time-range picker to the audit logs page with a default of the last 7 days.
+
+  the picker offers preset windows (`Last 1 hour` / `Last 24 hours` / `Last 7 days` / `Last 30 days`) plus a custom date range. it scopes every request to a bounded `start_time` / `end_time` window — reducing latency on tenants with very large log volumes — while keeping older logs reachable by widening the range.
+
+- 42f3969840: add protected app ID token claim scopes and tenant custom domain SDK endpoint support
+
+  Protected App settings in Console let you choose which ID token claims (such as `roles`, `custom_data`, and `organizations`) are forwarded to your origin via the `Logto-ID-Token` header. When a tenant custom domain is active, Protected App remote config uses that domain as the SDK endpoint.
+
+### Patch Changes
+
+- 7b7a5c8f6: the Audit Logs page now opts into the count-cap behavior introduced in `@logto/core` by passing `?enableCap=true` to `GET /api/logs`.
+
+  For tenants with very large log volumes (more than 10,000 matching entries), the page renders a Prev/Next layout when the server reports a capped count instead of hitting `statement_timeout`.
+
+## 1.36.0
+
+### Minor Changes
+
+- ab073bb65f: support blocking token issuance when custom JWT scripts fail
+
+  This update adds configurable JWT customizer error handling for access tokens and client credentials flows.
+
+  - core now preserves `api.denyAccess()` as `access_denied` and converts other blocking-mode script failures into localized `invalid_request` responses
+  - console adds a dedicated `Error handling` tab for configuring the behavior, defaults `blockIssuanceOnError` to enabled for newly created scripts, keeps existing scripts without a saved value on the legacy disabled default, and aligns the related guidance copy
+  - schemas, phrases, and integration coverage are updated to match the new blocking behavior and localized error messages
+
+- d4570beed5: add the account center security page
+
+  End users can now manage their account security from the account center:
+
+  - `@logto/account` ships the `/account/security` route with social account linking and unlinking, MFA 2-step verification, and account deletion.
+  - `@logto/console` exposes the delete-account URL field on the sign-in experience account center settings, and surfaces the account center and social prebuilt UI entries.
+
+- 3350b13ec8: add grace period support to private signing key rotation
+
+  This update adds support for a grace period during private signing key rotation, through the environment variable `PRIVATE_KEY_ROTATION_GRACE_PERIOD`, or CLI `--gracePeriod` option.
+
+  During the grace period, the new signing key is marked as "Next", and the existing signing key remains active. This allows for a smoother transition when rotating keys, as it provides a window of time for clients to refresh cached JWKS without experiencing downtime or authentication failures.
+
+  After the grace period ends, the new private signing key will transition to "Current" state, and the old signing key will be marked as "Previous".
+
+  Check out the [documentation](https://docs.logto.io/logto-oss/using-cli/rotate-signing-keys) for more details.
+
+## 1.35.0
+
+### Minor Changes
+
+- 7cee48bd97: support OAuth 2.0 Device Authorization Grant (device flow)
+
+  Device flow lets users sign in on input-limited devices such as smart TVs, CLI tools, IoT gadgets, and gaming consoles by completing authentication on a separate device like a phone or laptop.
+
+  How it works:
+
+  1. The device displays a short user code and a verification URL.
+  2. The user opens the URL on another device, enters the code, and signs in.
+  3. Once approved, the original device receives tokens and completes authentication.
+
+  To create a device flow application in Console:
+
+  - Select "Input-limited app / CLI" under the Native framework list, or
+  - Create an app without framework, then choose "Device flow" as the authorization flow, or
+  - Create a third-party Native app, then choose "Device flow" as the authorization flow.
+
+  The application settings page shows a device-flow-specific guide and a built-in demo you can try immediately.
+
+- d189d8f5aa: introduce an "Authorized third-party apps" section on the user details page
+
+  - Added a new section under user details to list active third-party application authorizations for a user.
+  - Displayed app name, app ID, and access creation time for each authorized app.
+  - Added revoke action with confirmation modal.
+  - Revoking an app removes all active third-party grants associated with that app for the user.
+
+- a023a97c7c: add a new MFA onboarding page for users to explicitly enable optional MFA
+
+  For users who are not required to set up MFA, we added a new page after credential verification in the sign-in flow to explicitly ask whether they want to enable optional MFA for better account security.
+
+  This is especially important when the passkey sign-in feature is available, since passkeys can be used for both sign-in and MFA verification, and users who set up a passkey for sign-in might not want to enable it as an MFA factor at the same time.
+
+- d2afe7351f: add app-level concurrent device limit configuration in application details
+
+  - Added a new **Concurrent device limit** section to the Application details page.
+  - Developers can configure the max number of concurrent active grants (devices) per user for the current app.
+  - When configured, on each successful authorization, Logto checks the total active grants for the user in the current app and revokes the oldest grants if the limit is exceeded.
+
+- a816cf77cb: support adaptive MFA
+
+  - In Console, the MFA settings page always exposes the adaptive MFA option and saves `adaptiveMfa` configuration in the sign-in experience payload.
+  - In Core, when adaptive MFA is enabled in the sign-in experience config, the sign-in flow evaluates adaptive MFA rules against the current sign-in context and requires MFA verification when those rules are triggered.
+  - The sign-in context is now consistently persisted into interaction data, so custom-claims scripts can read it from `context.interaction.signInContext`.
+  - The `PostSignInAdaptiveMfaTriggered` webhook event is emitted when adaptive MFA forces MFA during sign-in.
+
+- 5b7f1cb794: introduce tenant settings page and migrate signing key configs to oidc settings
+
+  - Added a new tenant-level **Settings** page in OSS, accessible from the left menu: **Tenant -> Settings**.
+  - Deprecated and removed the original **Signing keys** page.
+  - Added a new **OIDC settings** tab under **Tenant -> Settings** for managing tenant-level OIDC configurations.
+  - Migrated signing key configurations from the old page to **Settings -> OIDC settings**.
+  - Added a new **Session maximum time to live** field to configure tenant-level session TTL in days (default: `14`).
+  - Note: this console field uses days for input/display, while the underlying OIDC session TTL config/API uses seconds.
+
+- a023a97c7c: support passkey sign-in authentication method
+
+  ### Summary
+
+  Passkey sign-in provides a faster, passwordless sign-in experience that reduces friction for end users and helps improve account security. It removes repeated password entry for returning users, works with platform authenticators users already trust (for example Face ID, Touch ID, Windows Hello), and offers a smoother path from account creation to subsequent sign-ins.
+
+  #### Bind passkey for sign-in
+
+  After passkey sign-in is enabled, new users are prompted to bind a passkey during registration. Existing users who have not bound a passkey (WebAuthn) factor yet can be guided to bind one in a later sign-in flow. If a user already has a WebAuthn credential from MFA setup, that credential can be reused directly for passkey sign-in without requiring another registration step.
+
+  #### Various sign-in flows to support different user journeys and preferences
+
+  1. **Passkey sign-in button**: When **Show passkey sign-in button** is enabled, users can click **Continue with passkey** on the sign-in page to immediately trigger the browser passkey chooser and complete sign-in.
+  2. **Identifier-first flow (button hidden)**: When **Show passkey sign-in button** is disabled, sign-in follows an identifier-first flow. Users first enter an identifier (for example email or username) on the first screen. On the next step, the flow prioritizes passkey and prompts users to **Verify via passkey** before falling back to password or verification code when needed.
+  3. **Allow autofill**: When **Allow autofill** is enabled, supported browsers can show passkey suggestions directly from the identifier input on the sign-in page. Users can select a previously saved passkey from the autofill popup and sign in with minimal extra input.
+
+  Check out our [documentation](https://docs.logto.io/end-user-flows/sign-up-and-sign-in/passkey-sign-in) for more details.
+
+- 74c993a91e: introduce user session management in Console.
+
+  Account center settings:
+
+  - Added a new `session` permission control for account API access, with `off`, `readOnly`, and `edit` options.
+
+  User sessions page:
+
+  - Added an Active sessions section on the user details page, listing the user's active sessions.
+  - Allow navigation to session details from the `Manage` button or a session entry.
+
+  User session details page:
+
+  - Added a session details page with a revoke action in the top bar.
+  - Revoking the session removes the sign-in session and revokes associated first-party app grants.
+  - Previously issued opaque access tokens and refresh tokens for those apps become invalid, and new auth requests require reauthentication.
+
+## 1.34.0
+
+### Minor Changes
+
+- eced1f02d4: add application context to JWT customizer
+
+  The application context is now available in the JWT customizer script for both access token and client credentials token types. This allows you to access application details (e.g., name, description, custom data) when customizing JWT claims.
+
+- b8ca1a40c7: support ID token claims configuration
+
+  You can now customize which additional claims (e.g., `custom_data`, `identities`, `roles`, `organizations`, `organization_roles`) are included in the ID token via Console or Management API.
+
 ## 1.33.0
 
 ### Minor Changes

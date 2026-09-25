@@ -1,14 +1,14 @@
 import { type VerificationCodeIdentifier } from '@logto/schemas';
 import classNames from 'classnames';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 
+import SwitchToVerificationMethodsLink from '@/components/SwitchToVerificationMethodsLink';
 import TextLink from '@/components/TextLink';
 import Button from '@/shared/components/Button';
 import VerificationCodeInput, { defaultLength } from '@/shared/components/VerificationCode';
 import { UserFlow } from '@/types';
 
-import PasswordSignInLink from './PasswordSignInLink';
 import styles from './index.module.scss';
 import useResendVerificationCode from './use-resend-verification-code';
 import { getCodeVerificationHookByFlow } from './utils';
@@ -62,22 +62,39 @@ const VerificationCode = ({
 
   const handleSubmit = useCallback(
     async (code: string[]) => {
-      setInputErrorMessage(undefined);
+      if (isSubmitting) {
+        return;
+      }
 
+      setInputErrorMessage(undefined);
       setIsSubmitting(true);
 
-      await onSubmit(code.join(''));
-
-      setIsSubmitting(false);
+      try {
+        await onSubmit(code.join(''));
+      } finally {
+        // Always reset, even if `onSubmit` throws, so the button does not spin forever.
+        setIsSubmitting(false);
+      }
     },
-    [onSubmit]
+    [isSubmitting, onSubmit]
   );
+
+  /**
+   * Auto-submit once the code is fully entered. `handleSubmit` is intentionally accessed through
+   * a ref so this effect does not depend on its identity: the submission callback chain is rebuilt
+   * mid-flow (e.g. agreeing to the terms when a sign-in turns into a registration updates
+   * `termsAgreement`), and depending on it would re-run this effect and resubmit the same — already
+   * consumed — code, surfacing a spurious `verification_code.not_found` error.
+   */
+  const handleSubmitRef = useRef(handleSubmit);
+  // eslint-disable-next-line @silverhand/fp/no-mutation
+  handleSubmitRef.current = handleSubmit;
 
   useEffect(() => {
     if (isCodeInputReady) {
-      void handleSubmit(codeInput);
+      void handleSubmitRef.current(codeInput);
     }
-  }, [codeInput, handleSubmit, isCodeInputReady]);
+  }, [codeInput, isCodeInputReady]);
 
   return (
     <form className={classNames(styles.form, className)}>
@@ -112,8 +129,13 @@ const VerificationCode = ({
           </Trans>
         )}
       </div>
-      {flow === UserFlow.SignIn && hasPasswordButton && (
-        <PasswordSignInLink className={styles.switch} />
+      {flow === UserFlow.SignIn && (
+        <SwitchToVerificationMethodsLink
+          hasPassword={hasPasswordButton}
+          identifier={identifier.type}
+          value={identifier.value}
+          className={styles.switch}
+        />
       )}
       <Button
         title="action.continue"

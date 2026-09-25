@@ -20,6 +20,8 @@ import {
   devFeatureTag,
   findSupplementFiles,
   pruneSwaggerDocument,
+  removeDevFeatureParameters,
+  removeDevFeatureSchemaProperties,
   removeUnnecessaryOperations,
   shouldThrow,
   validateSupplement,
@@ -52,7 +54,10 @@ const managementApiIdentifiableEntityNames = Object.freeze(
     'saml-application',
     'secret',
     'email-template',
-    'one-time-token'
+    'one-time-token',
+    'session',
+    'trusted-device',
+    'grant'
   )
 );
 
@@ -70,15 +75,24 @@ const additionalTags = Object.freeze(
   )
 );
 
+/**
+ * Build the `servers[0].url` of an OpenAPI document from the request origin.
+ *
+ * Fall back to a relative URL when the origin is unavailable (i.e. the request `Host` header is
+ * malformed), so the document keeps resolving against the host it was fetched from.
+ */
+const buildServerUrl = (origin: string | undefined): string =>
+  EnvSet.values.isCloud ? 'https://[tenant_id].logto.app/' : (origin ?? '/');
+
 export const buildManagementApiBaseDocument = (
   pathMap: Map<string, OpenAPIV3.PathItemObject>,
   tags: Set<string>,
-  origin: string
+  origin: string | undefined
 ): OpenAPIV3.Document => ({
   openapi: '3.0.1',
   servers: [
     {
-      url: EnvSet.values.isCloud ? 'https://[tenant_id].logto.app/' : origin,
+      url: buildServerUrl(origin),
       description: 'Logto endpoint address.',
     },
   ],
@@ -127,12 +141,12 @@ const experienceIdentifiableEntityNames = Object.freeze(['connector', 'verificat
 export const buildExperienceApiBaseDocument = (
   pathMap: Map<string, OpenAPIV3.PathItemObject>,
   tags: Set<string>,
-  origin: string
+  origin: string | undefined
 ): OpenAPIV3.Document => ({
   openapi: '3.0.1',
   servers: [
     {
-      url: EnvSet.values.isCloud ? 'https://[tenant_id].logto.app/' : origin,
+      url: buildServerUrl(origin),
       description: 'Logto endpoint address.',
     },
   ],
@@ -168,17 +182,20 @@ export const buildExperienceApiBaseDocument = (
   tags: [...tags].map((tag) => ({ name: tag })),
 });
 
-const userApiIdentifiableEntityNames = Object.freeze(['profile', 'verification', 'connector']);
+// ID parameters for account API entities.
+const userApiIdentifiableEntityNames = Object.freeze(
+  condArray<string>('profile', 'verification', 'connector', 'session', 'trusted-device', 'grant')
+);
 
 export const buildUserApiBaseDocument = (
   pathMap: Map<string, OpenAPIV3.PathItemObject>,
   tags: Set<string>,
-  origin: string
+  origin: string | undefined
 ): OpenAPIV3.Document => ({
   openapi: '3.0.1',
   servers: [
     {
-      url: EnvSet.values.isCloud ? 'https://[tenant_id].logto.app/' : origin,
+      url: buildServerUrl(origin),
       description: 'Logto endpoint address.',
     },
   ],
@@ -267,6 +284,14 @@ export const assembleSwaggerDocument = <ContextT extends IRouterParamContext>(
     baseDocument
   );
 
+  /**
+   * Supplements are pruned before merging, but the base document is generated from the env-free
+   * zod guards in `@logto/schemas` and can still carry dev-feature properties — prune the
+   * assembled result as well. Parameters must be pruned first, as
+   * `removeDevFeatureSchemaProperties` strips the marker from every record unconditionally.
+   */
+  removeDevFeatureParameters(data);
+  removeDevFeatureSchemaProperties(data);
   pruneSwaggerDocument(data);
 
   if (EnvSet.values.isUnitTest) {

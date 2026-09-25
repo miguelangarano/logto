@@ -1,5 +1,167 @@
 # Change Log
 
+## 1.22.0
+
+### Minor Changes
+
+- b64d46d495: unify social callback URI between Sign-in Experience and Account Center
+- 8b2aaab9b0: add dynamic app support (OAuth Client ID Metadata Documents)
+
+  The dynamic app lets compatible public clients, such as MCP clients, connect to your tenant without registering an application. Following the OAuth Client ID Metadata Documents (CIMD) draft, such a client presents a public HTTPS URL as its `client_id`, and Logto fetches the client metadata from that URL.
+
+  Enable it from the dynamic app card in the third-party app section on the create application page in Console. The switch is tenant-level and off by default, and requires the OIDC provider SSRF protection to be active. Control what dynamic app clients can request with the permission settings on the dynamic app page.
+
+### Patch Changes
+
+- 317fa41400: allow users to complete CAPTCHA when switching from passkey to verification code sign-in
+- 7978c638a9: let browsers suggest a strong password when setting a new password
+
+  The sign-in experience keeps a hidden copy of the identifier next to the new password field so password managers can save the credential under the right account. That field carried no `autocomplete` hint and was hidden with the HTML `hidden` attribute, which browsers skip when they look for the username context of a password field. As a result, Safari on iOS and macOS never offered to generate a strong password on the "Set password" step. The field is now marked as the username and hidden visually instead, and it carries the identifier the user actually entered in the current flow, including when resetting a password.
+
+- e6ed7d8be9: remove the unused Experience Springboard route to prevent untrusted redirects
+- c62e043982: validate the URL scheme of the social sign-in redirect target and native callback link
+
+  The social landing page now requires `redirect_to` to be an `http(s)` URL, and accepts a native
+  callback link only when it is a custom app scheme. The callback page re-checks the stored link
+  before handing control back to the native app, and falls back to the web flow otherwise.
+
+## 1.21.0
+
+### Minor Changes
+
+- bfbe9c40b: support password reset flows that verify one-time-token magic links from the reset password landing page
+
+### Patch Changes
+
+- b4ef434b3b: return users to the Logto sign-in page after blocked social or SSO registration
+
+  When a social or SSO registration flow rejects the email by email access rules, acknowledging the error now returns the user to the Logto sign-in page instead of navigating back to the external identity provider
+
+## 1.20.0
+
+### Minor Changes
+
+- d41082bd7d: add app-level access control for applications
+
+  Add a new application access control feature that allows administrators to restrict user access to applications. When enabled, users who do not have permission to access an application will see an access denied error message when they attempt to sign in or access the application. This feature can be configured in the Console Security settings.
+
+  Supported custom control rules include:
+
+  - User IDs
+  - User roles
+  - Organizations
+  - Organization roles
+
+  Refer to the documentation for more details: https://docs.logto.io/integrate-logto/app-level-access-control
+
+- c2016a044c: add a configurable per-tenant password expiration policy
+
+  Operators can enable password expiration from Console → Security → Password policy and set the number of days a password stays valid. When a password reaches the end of its valid period — or is manually expired for a specific user — the end user is forced through the forgot-password flow on their next password sign-in before they can continue. Users signing in via SSO or passkey are not affected.
+
+  - **Console**: a new "Password expiration" card with an enable toggle and a valid-period (days) input, an inline reminder when sign-up requires no contact identifier to guarantee password recovery, and a per-user "Expire password" action on the user details page.
+  - **Core / API**: the policy is stored on the sign-in experience (`passwordExpiration`) and enforced after password verification. `PATCH /api/users/:userId/password/expiration` lets admins manually expire a user's password, and deleting the last forgot-password connector is rejected while the policy is enabled.
+  - **Experience**: an expired password prompts the user to reset it via the configured recovery method before sign-in completes.
+
+  Legacy users without a recorded password-change date are anchored to the timestamp the policy was enabled, so they get a full valid period instead of being expired immediately.
+
+- 67b99bba85: apply the tenant username policy in sign-in experience and account center username forms
+
+  Usernames entered during sign-up, profile fulfillment, and account center editing are validated against the tenant username policy with localized inline errors. The dedicated username pages (continue flow and account center) state the policy requirements in their page description, and the sign-up identifier form surfaces the full requirements sentence when an entered username violates the policy.
+
+### Patch Changes
+
+- 72820ac41e: prevent theme flash in sign-in experience and account center
+
+  Sign-in experience and account center now apply tenant theme, platform, and brand color before the app hydrates, reducing flashes of the wrong theme during initial page load.
+
+## 1.19.2
+
+### Patch Changes
+
+- 346816a350: fix: require terms agreement when the sign-in flow turns into a registration
+
+  When the agreement policy is `ManualRegistrationOnly` ("Require checkbox agreement on registration only"), signing in with an unregistered email or phone and then confirming "create a new account" used to create the account without ever asking the user to agree to the terms. The terms agreement is now prompted before the account is created on this path, matching the dedicated registration form and the social/SSO registration flows.
+
+## 1.19.1
+
+### Patch Changes
+
+- cc9857d073: fix: add localStorage fallback for social/SSO redirect state in in-app browsers
+
+  Some in-app browsers (e.g., Instagram, Facebook, LINE) open OAuth IdP pages in a new WebView, causing sessionStorage to be lost when redirecting back. This change adds a localStorage-based fallback mechanism:
+
+  - Before redirecting to the IdP, continue storing state in sessionStorage and also store a fallback redirect context bundle (state, verificationId, connectorId) in localStorage
+  - On callback, if sessionStorage state is missing, attempt to restore from localStorage
+  - localStorage entries are consumed on read and auto-swept after 10 minutes
+  - If both storages are empty, show an error toast to the user
+
+## 1.19.0
+
+### Minor Changes
+
+- 7cee48bd97: support OAuth 2.0 Device Authorization Grant (device flow)
+
+  Device flow lets users sign in on input-limited devices such as smart TVs, CLI tools, IoT gadgets, and gaming consoles by completing authentication on a separate device like a phone or laptop.
+
+  How it works:
+
+  1. The device displays a short user code and a verification URL.
+  2. The user opens the URL on another device, enters the code, and signs in.
+  3. Once approved, the original device receives tokens and completes authentication.
+
+  To create a device flow application in Console:
+
+  - Select "Input-limited app / CLI" under the Native framework list, or
+  - Create an app without framework, then choose "Device flow" as the authorization flow, or
+  - Create a third-party Native app, then choose "Device flow" as the authorization flow.
+
+  The application settings page shows a device-flow-specific guide and a built-in demo you can try immediately.
+
+- a023a97c7c: add a new MFA onboarding page for users to explicitly enable optional MFA
+
+  For users who are not required to set up MFA, we added a new page after credential verification in the sign-in flow to explicitly ask whether they want to enable optional MFA for better account security.
+
+  This is especially important when the passkey sign-in feature is available, since passkeys can be used for both sign-in and MFA verification, and users who set up a passkey for sign-in might not want to enable it as an MFA factor at the same time.
+
+- a023a97c7c: support passkey sign-in authentication method
+
+  ### Summary
+
+  Passkey sign-in provides a faster, passwordless sign-in experience that reduces friction for end users and helps improve account security. It removes repeated password entry for returning users, works with platform authenticators users already trust (for example Face ID, Touch ID, Windows Hello), and offers a smoother path from account creation to subsequent sign-ins.
+
+  #### Bind passkey for sign-in
+
+  After passkey sign-in is enabled, new users are prompted to bind a passkey during registration. Existing users who have not bound a passkey (WebAuthn) factor yet can be guided to bind one in a later sign-in flow. If a user already has a WebAuthn credential from MFA setup, that credential can be reused directly for passkey sign-in without requiring another registration step.
+
+  #### Various sign-in flows to support different user journeys and preferences
+
+  1. **Passkey sign-in button**: When **Show passkey sign-in button** is enabled, users can click **Continue with passkey** on the sign-in page to immediately trigger the browser passkey chooser and complete sign-in.
+  2. **Identifier-first flow (button hidden)**: When **Show passkey sign-in button** is disabled, sign-in follows an identifier-first flow. Users first enter an identifier (for example email or username) on the first screen. On the next step, the flow prioritizes passkey and prompts users to **Verify via passkey** before falling back to password or verification code when needed.
+  3. **Allow autofill**: When **Allow autofill** is enabled, supported browsers can show passkey suggestions directly from the identifier input on the sign-in page. Users can select a previously saved passkey from the autofill popup and sign in with minimal extra input.
+
+  Check out our [documentation](https://docs.logto.io/end-user-flows/sign-up-and-sign-in/passkey-sign-in) for more details.
+
+## 1.18.2
+
+### Patch Changes
+
+- 3c47f4f947: fix broken social link flow when username and email are both enabled as required sign-up identifiers and social IdP returns no verified email.
+
+  Repro:
+
+  - enable username+email as required sign-up identifiers;
+  - enable “require users to provide missing sign-up identifiers for social sign-in”;
+  - sign in with a new social identity lacking verified email;
+  - create new account, fulfill required username, then fulfill required email with an address already registered.
+
+  Expected: show a link-and-sign-in modal and link the new social identity to the existing email account when the user clicks the `Link` button.
+
+  Actual: the `link_social` state is lost. Users are prompted with a simple email-exists confirmation modal instead. Clicking the `Sign In` button performs a normal sign-in flow without linking the social identity.
+
+  Root cause: `link_social` query parameter wasn’t propagated after username fulfillment, so the email verification step lost linking context.
+
+  Fix: generate and append `link_social` during username fulfillment so it carries through to email verification and preserves the linking flow.
+
 ## 1.18.1
 
 ### Patch Changes

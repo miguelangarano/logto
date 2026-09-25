@@ -65,7 +65,7 @@ const connectors = {
     },
     callback_uri: 'URI przekierowania (URI zwrotu)',
     callback_uri_description:
-      'URI przekierowania to miejsce, do którego użytkownicy są kierowani po autoryzacji społecznościowej. Dodaj ten adres URI do konfiguracji swojego IdP.',
+      'Adresy URI przekierowania to miejsca, do których użytkownicy są kierowani po autoryzacji społecznościowej. Dodaj wszystkie wyświetlone adresy URI do konfiguracji swojego IdP.',
     callback_uri_custom_domain_description:
       'Jeśli używasz w Logto wielu <a>domen niestandardowych</a>, dodaj wszystkie odpowiadające im adresy URI zwrotu do IdP, aby logowanie społecznościowe działało w każdej domenie.\n\nDomyślna domena Logto (*.logto.app) jest zawsze ważna - uwzględnij ją tylko wtedy, gdy chcesz obsługiwać logowania także w tej domenie.',
     acs_url: 'Assertion consumer service URL',
@@ -83,6 +83,11 @@ const connectors = {
   create_form: {
     third_party_connectors:
       'Zintegruj zewnętrznych dostawców, aby szybko zalogować się przez nich społecznościowo, połączyć konta społecznościowe i uzyskać dostęp do API. <a>Dowiedz się więcej</a>',
+    email_connector_upsell: {
+      title: 'Wbudowana usługa e-mail Logto',
+      description:
+        'Wysyłka e-maili bez konfiguracji. Od razu wysyłaj kody weryfikacyjne i magiczne linki.',
+    },
     standard_connectors:
       'Lub możesz dostosować swój łącznik społecznościowy, korzystając ze standardowego protokołu.',
   },

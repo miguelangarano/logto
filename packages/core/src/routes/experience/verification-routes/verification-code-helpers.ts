@@ -1,5 +1,6 @@
 import {
   InteractionEvent,
+  MfaFactor,
   SentinelActivityAction,
   SignInIdentifier,
   type VerificationCodeIdentifier,
@@ -11,6 +12,7 @@ import { Action } from '@logto/schemas/lib/types/log/interaction.js';
 import RequestError from '#src/errors/RequestError/index.js';
 import { type PasscodeLibrary } from '#src/libraries/passcode.js';
 import { type LogContext } from '#src/middleware/koa-audit-log.js';
+import { buildMessageRateGuard, withMessageRateGuard } from '#src/sentinel/message-rate-guard.js';
 import type Libraries from '#src/tenants/Libraries.js';
 import type Queries from '#src/tenants/Queries.js';
 import { getLogtoCookie } from '#src/utils/cookie.js';
@@ -69,7 +71,51 @@ type SendCodeParams = {
   interactionEvent?: InteractionEvent;
   createVerificationRecord: () => CodeVerificationRecord;
   libraries: Libraries;
+  queries: Queries;
   ctx: ExperienceInteractionRouterContext;
+};
+
+/** Whether a user exists with the given identifier (email or phone). */
+const hasUserWithIdentifier = async (
+  queries: Queries,
+  identifier: VerificationCodeIdentifier
+): Promise<boolean> => {
+  const { type, value } = identifier;
+
+  if (type === SignInIdentifier.Email) {
+    return queries.users.hasUserWithEmail(value);
+  }
+
+  return queries.users.hasUserWithNormalizedPhone(value);
+};
+
+/**
+ * Whether to create the passcode record but suppress delivery, for a recipient with no legitimate
+ * reason to receive a code (anti-enumeration / anti-spam). The record is still created, so a later
+ * verify returns `code_mismatch`, not `not_found`. Two cases:
+ *
+ * - Forgot-password to an identifier no user owns (always on).
+ * - Sign-in from an unidentified session to an identifier no user owns when registration is
+ *   disabled; identified sessions always deliver.
+ */
+const shouldSkipDelivery = async (
+  experienceInteraction: ExperienceInteraction,
+  queries: Queries,
+  identifier: VerificationCodeIdentifier,
+  interactionEvent?: InteractionEvent
+): Promise<boolean> => {
+  if (interactionEvent === InteractionEvent.ForgotPassword) {
+    return !(await hasUserWithIdentifier(queries, identifier));
+  }
+
+  if (interactionEvent === InteractionEvent.SignIn && !experienceInteraction.identifiedUserId) {
+    const registrationDisabled =
+      await experienceInteraction.signInExperienceValidator.isRegistrationDisabled();
+
+    return registrationDisabled && !(await hasUserWithIdentifier(queries, identifier));
+  }
+
+  return false;
 };
 
 /**
@@ -81,6 +127,7 @@ export const sendCode = async ({
   interactionEvent,
   createVerificationRecord,
   libraries,
+  queries,
   ctx,
 }: SendCodeParams): Promise<{ verificationId: string }> => {
   const { experienceInteraction } = ctx;
@@ -104,18 +151,44 @@ export const sendCode = async ({
     await experienceInteraction.signInExperienceValidator.guardEmailBlocklist(codeVerification);
   }
 
-  // Build template context
-  const templateContext = await buildVerificationCodeTemplateContext(
-    libraries.passcodes,
-    ctx,
-    identifier
+  const skipDelivery = await shouldSkipDelivery(
+    experienceInteraction,
+    queries,
+    identifier,
+    interactionEvent
   );
 
-  // Send verification code
-  await codeVerification.sendVerificationCode({
-    ...ctx.emailI18n,
-    ...templateContext,
-  });
+  const payload = skipDelivery
+    ? undefined
+    : {
+        ...ctx.emailI18n,
+        ...(await buildVerificationCodeTemplateContext(libraries.passcodes, ctx, identifier)),
+        /** The client IP address for rate limiting and fraud detection. */
+        ...(ctx.request.ip && { ip: ctx.request.ip }),
+      };
+
+  // Send verification code. When delivery is skipped (see `shouldSkipDelivery`) the passcode record is
+  // still created but nothing is sent.
+  const send = async () => codeVerification.sendVerificationCode(payload, { skipDelivery });
+
+  const messageRateLimit = {
+    action: SentinelActivityAction.VerificationCodeSend,
+    recipient: identifier.value,
+  };
+
+  // The rate guard runs even for suppressed sends: a suppressed send must still count toward the
+  // per-recipient cap, otherwise an unknown recipient never hits 429 while a registered one does —
+  // leaking registration status (account enumeration) and defeating the point of suppression.
+  await withMessageRateGuard(
+    await buildMessageRateGuard(queries),
+    {
+      ...messageRateLimit,
+      onRateLimited: () => {
+        ctx.appendExceptionHookContext('Message.RateLimited', messageRateLimit);
+      },
+    },
+    send
+  );
 
   // Save state
   experienceInteraction.setVerificationRecord(codeVerification);
@@ -136,6 +209,7 @@ type VerifyCodeParams = {
     | VerificationType.MfaEmailVerificationCode
     | VerificationType.MfaPhoneVerificationCode;
   sentinel: Sentinel;
+  queries: Queries;
   ctx: ExperienceInteractionRouterContext;
 };
 
@@ -149,6 +223,7 @@ export const verifyCode = async ({
   identifier,
   verificationType,
   sentinel,
+  queries,
   ctx,
 }: VerifyCodeParams): Promise<{ verificationId: string }> => {
   const { experienceInteraction } = ctx;
@@ -178,6 +253,7 @@ export const verifyCode = async ({
     {
       ctx,
       sentinel,
+      queries,
       action: SentinelActivityAction.VerificationCode,
       identifier,
       payload: {
@@ -187,6 +263,15 @@ export const verifyCode = async ({
     },
     codeVerificationRecord.verify(identifier, code)
   );
+
+  // For an MFA challenge, verifying is the use: record the `mfa` proof here. A primary email /
+  // phone code is consumed later, by identification or by a profile bind, which records its proof.
+  if (
+    verificationType === VerificationType.MfaEmailVerificationCode ||
+    verificationType === VerificationType.MfaPhoneVerificationCode
+  ) {
+    experienceInteraction.consumeForMfa(verificationType, codeVerificationRecord.id);
+  }
 
   // Save state
   await experienceInteraction.save();
@@ -203,7 +288,9 @@ type GetMfaIdentifierParams = {
 };
 
 /**
- * Helper to get MFA identifier from user profile
+ * Helper to get MFA identifier from user profile. The factor must be enabled in the sign-in
+ * experience: otherwise a sign-in could request a second code for the very contact that already
+ * identified the user, which is a second proof of the same factor and not a second factor.
  * @internal
  */
 export const getMfaIdentifier = async ({
@@ -211,14 +298,27 @@ export const getMfaIdentifier = async ({
   experienceInteraction,
   queries,
 }: GetMfaIdentifierParams): Promise<VerificationCodeIdentifier> => {
-  if (!experienceInteraction.identifiedUserId) {
+  if (!experienceInteraction.subjectUserId) {
     throw new RequestError({
       code: 'session.identifier_not_found',
       status: 400,
     });
   }
 
-  const user = await queries.users.findUserById(experienceInteraction.identifiedUserId);
+  const { factors } = await experienceInteraction.signInExperienceValidator.getMfaSettings();
+  const factor =
+    identifierType === SignInIdentifier.Email
+      ? MfaFactor.EmailVerificationCode
+      : MfaFactor.PhoneVerificationCode;
+
+  if (!factors.includes(factor)) {
+    throw new RequestError({
+      code: 'session.mfa.mfa_factor_not_enabled',
+      status: 400,
+    });
+  }
+
+  const user = await queries.users.findUserById(experienceInteraction.subjectUserId);
   const identifierValue =
     identifierType === SignInIdentifier.Email ? user.primaryEmail : user.primaryPhone;
 

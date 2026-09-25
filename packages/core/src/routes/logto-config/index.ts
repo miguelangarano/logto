@@ -1,5 +1,3 @@
-import crypto from 'node:crypto';
-
 import {
   generateOidcCookieKey,
   generateOidcPrivateKey,
@@ -9,64 +7,44 @@ import {
   adminConsoleDataGuard,
   oidcConfigKeysResponseGuard,
   SupportedSigningKeyAlgorithm,
-  type OidcConfigKeysResponse,
-  type OidcConfigKey,
   LogtoOidcConfigKeyType,
+  oidcSessionConfigGuard,
 } from '@logto/schemas';
 import { z } from 'zod';
 
+import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';
+import defaults from '#src/oidc/defaults.js';
 import { getConsoleLogFromContext } from '#src/utils/console.js';
-import { exportJWK } from '#src/utils/jwks.js';
 
 import type { ManagementApiRouter, RouterInitArgs } from '../types.js';
 
+import logtoConfigActionRoutes from './action.js';
+import logtoConfigCimdRoutes from './cimd.js';
 import idTokenRoutes from './id-token.js';
 import logtoConfigJwtCustomizerRoutes from './jwt-customizer.js';
 
 /**
  * Provide a simple API router key type and DB config key mapping
  */
-const getOidcConfigKeyDatabaseColumnName = (key: LogtoOidcConfigKeyType): LogtoOidcConfigKey =>
+const getOidcConfigKeyDatabaseColumnName = (
+  key: LogtoOidcConfigKeyType
+): LogtoOidcConfigKey.PrivateKeys | LogtoOidcConfigKey.CookieKeys =>
   key === LogtoOidcConfigKeyType.PrivateKeys
     ? LogtoOidcConfigKey.PrivateKeys
     : LogtoOidcConfigKey.CookieKeys;
 
-/**
- * Remove actual values of the private keys from response.
- * @param type Logto config key DB column name. Values are either `oidc.privateKeys` or `oidc.cookieKeys`.
- * @param keys Logto OIDC private keys.
- * @returns Redacted Logto OIDC private keys without actual private key value.
- */
-const getRedactedOidcKeyResponse = async (
-  type: LogtoOidcConfigKey,
-  keys: OidcConfigKey[]
-): Promise<OidcConfigKeysResponse[]> =>
-  Promise.all(
-    keys.map(async ({ id, value, createdAt }) => {
-      if (type === LogtoOidcConfigKey.PrivateKeys) {
-        const jwk = await exportJWK(crypto.createPrivateKey(value));
-        const parseResult = oidcConfigKeysResponseGuard.safeParse({
-          id,
-          createdAt,
-          signingKeyAlgorithm: jwk.kty,
-        });
-        if (!parseResult.success) {
-          throw new RequestError({ code: 'request.general', status: 422 });
-        }
-        return parseResult.data;
-      }
-      return { id, createdAt };
-    })
-  );
+// Keep `ttl` constraints from `oidcSessionConfigGuard` while requiring this field in API responses.
+const oidcSessionConfigResponseGuard = oidcSessionConfigGuard.required({ ttl: true });
 
 export default function logtoConfigRoutes<T extends ManagementApiRouter>(
   ...[router, tenant]: RouterInitArgs<T>
 ) {
   const { getAdminConsoleConfig, updateAdminConsoleConfig, updateOidcConfigsByKey } =
     tenant.queries.logtoConfigs;
-  const { getOidcConfigs } = tenant.logtoConfigs;
+  const { getOidcConfigs, getRedactedOidcKeyResponse } = tenant.logtoConfigs;
+  const { oidcPrivateKeys } = tenant.libraries;
 
   router.get(
     '/configs/admin-console',
@@ -89,6 +67,52 @@ export default function logtoConfigRoutes<T extends ManagementApiRouter>(
     async (ctx, next) => {
       const { value } = await updateAdminConsoleConfig(ctx.guard.body);
       ctx.body = value;
+
+      return next();
+    }
+  );
+
+  router.get(
+    '/configs/oidc/session',
+    koaGuard({
+      response: oidcSessionConfigResponseGuard,
+      status: [200],
+    }),
+    async (ctx, next) => {
+      const configs = await getOidcConfigs(getConsoleLogFromContext(ctx));
+      const sessionConfig = configs[LogtoOidcConfigKey.Session];
+
+      ctx.body = {
+        // Add default TTL value if session config is not set.
+        ttl: defaults.sessionTtl,
+        ...sessionConfig,
+      };
+
+      // Intentionally do not call next() to avoid falling through to /configs/oidc/:keyType.
+      // Running next() will trigger all the downstream middleware including the route handler for /configs/oidc/:keyType, which is not expected for this endpoint.
+    }
+  );
+
+  router.patch(
+    '/configs/oidc/session',
+    koaGuard({
+      body: oidcSessionConfigGuard.partial(),
+      response: oidcSessionConfigResponseGuard,
+      status: [200],
+    }),
+    async (ctx, next) => {
+      const configs = await getOidcConfigs(getConsoleLogFromContext(ctx));
+      const sessionConfig = configs[LogtoOidcConfigKey.Session];
+
+      const updatedSessionConfig = { ...sessionConfig, ...ctx.guard.body };
+
+      await updateOidcConfigsByKey(LogtoOidcConfigKey.Session, updatedSessionConfig);
+      void tenant.invalidateCache();
+
+      ctx.body = {
+        ttl: defaults.sessionTtl,
+        ...updatedSessionConfig,
+      };
 
       return next();
     }
@@ -127,20 +151,25 @@ export default function logtoConfigRoutes<T extends ManagementApiRouter>(
     async (ctx, next) => {
       const { keyType, keyId } = ctx.guard.params;
       const configKey = getOidcConfigKeyDatabaseColumnName(keyType);
-      const configs = await getOidcConfigs(getConsoleLogFromContext(ctx));
-      const existingKeys = configs[configKey];
+      await (configKey === LogtoOidcConfigKey.PrivateKeys
+        ? oidcPrivateKeys.deletePrivateSigningKey(keyId)
+        : (async () => {
+            const configs = await getOidcConfigs(getConsoleLogFromContext(ctx));
+            const existingKeys = configs[configKey];
 
-      if (existingKeys.length <= 1) {
-        throw new RequestError({ code: 'oidc.key_required', status: 422 });
-      }
+            if (existingKeys.length <= 1) {
+              throw new RequestError({ code: 'oidc.key_required', status: 422 });
+            }
 
-      if (!existingKeys.some(({ id }) => id === keyId)) {
-        throw new RequestError({ code: 'oidc.key_not_found', id: keyId, status: 404 });
-      }
+            if (!existingKeys.some(({ id }) => id === keyId)) {
+              throw new RequestError({ code: 'oidc.key_not_found', id: keyId, status: 404 });
+            }
 
-      const updatedKeys = existingKeys.filter(({ id }) => id !== keyId);
-
-      await updateOidcConfigsByKey(configKey, updatedKeys);
+            await updateOidcConfigsByKey(
+              configKey,
+              existingKeys.filter(({ id }) => id !== keyId)
+            );
+          })());
       void tenant.invalidateCache();
 
       ctx.status = 204;
@@ -157,27 +186,40 @@ export default function logtoConfigRoutes<T extends ManagementApiRouter>(
       }),
       body: z.object({
         signingKeyAlgorithm: z.nativeEnum(SupportedSigningKeyAlgorithm).optional(),
+        rotationGracePeriod: z.number().int().nonnegative().optional(),
       }),
       response: z.array(oidcConfigKeysResponseGuard),
       status: [200, 422],
     }),
     async (ctx, next) => {
       const { keyType } = ctx.guard.params;
-      const { signingKeyAlgorithm } = ctx.guard.body;
+      const { signingKeyAlgorithm, rotationGracePeriod } = ctx.guard.body;
       const configKey = getOidcConfigKeyDatabaseColumnName(keyType);
-      const configs = await getOidcConfigs(getConsoleLogFromContext(ctx));
-      const existingKeys = configs[configKey];
+      const effectiveRotationGracePeriod =
+        rotationGracePeriod ?? EnvSet.values.privateKeyRotationGracePeriod;
+
+      if (configKey !== LogtoOidcConfigKey.PrivateKeys && rotationGracePeriod !== undefined) {
+        throw new RequestError({ code: 'oidc.invalid_request', status: 422 });
+      }
 
       const newPrivateKey =
         configKey === LogtoOidcConfigKey.PrivateKeys
           ? await generateOidcPrivateKey(signingKeyAlgorithm)
           : generateOidcCookieKey();
 
-      // Clamp and only keep the 2 most recent private keys.
-      // Also make sure the new key is always on top of the list.
-      const updatedKeys = [newPrivateKey, ...existingKeys].slice(0, 2);
-
-      await updateOidcConfigsByKey(configKey, updatedKeys);
+      const updatedKeys =
+        configKey === LogtoOidcConfigKey.PrivateKeys
+          ? await oidcPrivateKeys.rotatePrivateSigningKeys(
+              newPrivateKey,
+              effectiveRotationGracePeriod
+            )
+          : await (async () => {
+              const configs = await getOidcConfigs(getConsoleLogFromContext(ctx));
+              const existingKeys = configs[configKey];
+              const updatedKeys = [newPrivateKey, ...existingKeys].slice(0, 2);
+              await updateOidcConfigsByKey(configKey, updatedKeys);
+              return updatedKeys;
+            })();
       void tenant.invalidateCache();
 
       // Remove actual values of the private keys from response
@@ -188,6 +230,7 @@ export default function logtoConfigRoutes<T extends ManagementApiRouter>(
   );
 
   logtoConfigJwtCustomizerRoutes(router, tenant);
-
   idTokenRoutes(router, tenant);
+  logtoConfigActionRoutes(router, tenant);
+  logtoConfigCimdRoutes(router, tenant);
 }

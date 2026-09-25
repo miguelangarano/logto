@@ -1,6 +1,6 @@
 const oidc = {
   aborted: "L'utilisateur a abandonné l'interaction.",
-  invalid_scope: 'Scope invalide : {{error_description}}.',
+  invalid_scope: 'Scope invalide : {{scope}}.',
   invalid_token: 'Jeton fourni invalide.',
   invalid_client_metadata: 'Les métadonnées du client fournies sont invalides.',
   insufficient_scope: 'Manque de champ `{{scope}}` dans le jeton.',
@@ -17,8 +17,15 @@ const oidc = {
   provider_error: "Erreur interne de l'OIDC : {{message}}.",
   server_error: "Une erreur OIDC inconnue s'est produite. Veuillez réessayer plus tard.",
   provider_error_fallback: "Une erreur OIDC s'est produite : {{code}}.",
+  custom_claims_script_error: 'Erreur du script de claims personnalisés : {{error_description}}',
   key_required: 'Au moins une clé est requise.',
   key_not_found: "La clé avec l'ID {{id}} n'est pas trouvée.",
+  only_previous_key_can_be_deleted: 'Seule une clé précédente peut être supprimée.',
+  invalid_session_payload: 'Charge utile de session invalide.',
+  session_not_found: 'Session non trouvée.',
+  invalid_session_account_id: "incohérence de l'accountId de session.",
+  failed_to_revoke_grant: "Échec de la révocation de l'autorisation.",
+  failed_to_cleanup_session_authorization: "Échec du nettoyage de l'autorisation de session.",
 };
 
 export default Object.freeze(oidc);

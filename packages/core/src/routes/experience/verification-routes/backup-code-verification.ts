@@ -8,7 +8,6 @@ import { Action } from '@logto/schemas/lib/types/log/interaction.js';
 import type Router from 'koa-router';
 import { z } from 'zod';
 
-import { EnvSet } from '#src/env-set/index.js';
 import RequestError from '#src/errors/RequestError/index.js';
 import koaGuard from '#src/middleware/koa-guard.js';
 import type TenantContext from '#src/tenants/TenantContext.js';
@@ -92,7 +91,7 @@ export default function backupCodeVerificationRoutes<T extends ExperienceInterac
       });
 
       assertThat(
-        experienceInteraction.identifiedUserId,
+        experienceInteraction.subjectUserId,
         new RequestError({
           code: 'session.identifier_not_found',
           status: 404,
@@ -102,28 +101,31 @@ export default function backupCodeVerificationRoutes<T extends ExperienceInterac
       const backupCodeVerificationRecord = BackupCodeVerification.create(
         libraries,
         queries,
-        experienceInteraction.identifiedUserId
+        experienceInteraction.subjectUserId
       );
 
-      await (EnvSet.values.isDevFeaturesEnabled
-        ? withSentinel(
-            {
-              ctx,
-              sentinel,
-              action: SentinelActivityAction.MfaBackupCode,
-              identifier: {
-                type: AdditionalIdentifier.UserId,
-                value: experienceInteraction.identifiedUserId,
-              },
-              payload: {
-                verificationId: backupCodeVerificationRecord.id,
-              },
-            },
-            backupCodeVerificationRecord.verify(code)
-          )
-        : backupCodeVerificationRecord.verify(code));
+      await withSentinel(
+        {
+          ctx,
+          sentinel,
+          queries,
+          action: SentinelActivityAction.MfaBackupCode,
+          identifier: {
+            type: AdditionalIdentifier.UserId,
+            value: experienceInteraction.subjectUserId,
+          },
+          payload: {
+            verificationId: backupCodeVerificationRecord.id,
+          },
+        },
+        backupCodeVerificationRecord.verify(code)
+      );
 
       ctx.experienceInteraction.setVerificationRecord(backupCodeVerificationRecord);
+      ctx.experienceInteraction.consumeForMfa(
+        VerificationType.BackupCode,
+        backupCodeVerificationRecord.id
+      );
 
       await ctx.experienceInteraction.save();
 

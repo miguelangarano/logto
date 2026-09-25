@@ -11,6 +11,8 @@ const application = {
     'Сторонние приложения не могут включать обмен токенов.',
   user_consent_scopes_not_found: 'Недействительные области согласия пользователя.',
   consent_management_api_scopes_not_allowed: 'API-области управления не разрешены.',
+  device_flow_native_only: 'Поток устройства доступен только для нативных приложений.',
+  device_flow_not_changeable: 'Поток устройства нельзя изменить после создания приложения.',
   protected_app_metadata_is_required: 'Требуется защищенная метаданные приложения.',
   protected_app_not_configured:
     'Поставщик защищенного приложения не настроен. Эта функция недоступна для версии с открытым исходным кодом.',
@@ -23,6 +25,7 @@ const application = {
   should_delete_custom_domains_first: 'Сначала следует удалить пользоватские домены.',
   no_legacy_secret_found: 'Приложение не имеет устаревшего секрета.',
   secret_name_exists: 'Имя секрета уже существует.',
+  sync_application_secret_failed: 'Не удалось синхронизировать секрет приложения.',
   saml: {
     use_saml_app_api:
       'Используйте API `[METHOD] /saml-applications(/.*)?`, чтобы управлять приложением SAML.',
@@ -31,6 +34,8 @@ const application = {
       'Вы не можете создать больше приложений SAML, так как достигнут лимит {{limit}}.',
     acs_url_binding_not_supported:
       'Только HTTP-POST привязка поддерживается для получения утверждений SAML.',
+    acs_url_scheme_not_supported:
+      'Для URL-адреса Assertion Consumer Service поддерживаются только схемы HTTP и HTTPS.',
     can_not_delete_active_secret: 'Невозможно удалить активный секрет.',
     no_active_secret: 'Активный секрет не найден.',
     entity_id_required: 'Для создания метаданных требуется идентификатор сущности.',

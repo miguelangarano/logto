@@ -10,6 +10,9 @@ const application = {
     'Drittanbieteranwendungen dürfen den Token-Austausch nicht aktivieren.',
   user_consent_scopes_not_found: 'Ungültige Benutzerzustimmungsbereiche.',
   consent_management_api_scopes_not_allowed: 'Management API scopes sind nicht erlaubt.',
+  device_flow_native_only: 'Der Gerätefluss ist nur für native Anwendungen verfügbar.',
+  device_flow_not_changeable:
+    'Der Gerätefluss kann nach der Erstellung der Anwendung nicht geändert werden.',
   protected_app_metadata_is_required: 'Geschützte App-Metadaten sind erforderlich.',
   protected_app_not_configured:
     'Geschützter App-Anbieter ist nicht konfiguriert. Dieses Feature ist in der Open-Source-Version nicht verfügbar.',
@@ -23,6 +26,7 @@ const application = {
   should_delete_custom_domains_first: 'Benutzerdefinierte Domains sollten zuerst gelöscht werden.',
   no_legacy_secret_found: 'Die Anwendung hat kein altes Geheimnis.',
   secret_name_exists: 'Geheimnisname existiert bereits.',
+  sync_application_secret_failed: 'Synchronisierung des Anwendungsgeheimnisses fehlgeschlagen.',
   saml: {
     use_saml_app_api:
       'Nutze die `[METHOD] /saml-applications(/.*)?` API, um die SAML-App zu betreiben.',
@@ -31,6 +35,8 @@ const application = {
       'Du kannst keine weiteren SAML-Apps erstellen, da das Limit von {{limit}} erreicht wurde.',
     acs_url_binding_not_supported:
       'Nur HTTP-POST-Bindung wird für den Empfang von SAML-Aussagen unterstützt.',
+    acs_url_scheme_not_supported:
+      'Nur die HTTP- und HTTPS-Schemata werden für die Assertion Consumer Service-URL unterstützt.',
     can_not_delete_active_secret: 'Das aktive Geheimnis kann nicht gelöscht werden.',
     no_active_secret: 'Kein aktives Geheimnis gefunden.',
     entity_id_required: 'Entity ID ist erforderlich, um Metadaten zu generieren.',

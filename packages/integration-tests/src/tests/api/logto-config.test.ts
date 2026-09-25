@@ -4,7 +4,9 @@ import {
   LogtoOidcConfigKeyType,
   LogtoJwtTokenKey,
   LogtoJwtTokenKeyType,
+  OidcSigningKeyStatus,
 } from '@logto/schemas';
+import ky from 'ky';
 
 import {
   accessTokenJwtCustomizerPayload,
@@ -26,12 +28,39 @@ import {
   getJwtCustomizers,
   deleteJwtCustomizer,
   testJwtCustomizer,
+  getSessionConfig,
+  updateSessionConfig,
 } from '#src/api/index.js';
+import { discoveryUrl } from '#src/constants.js';
 import { expectRejects } from '#src/helpers/index.js';
+import { waitFor } from '#src/utils.js';
 
 const defaultAdminConsoleConfig: AdminConsoleData = {
   signInExperienceCustomized: false,
   organizationCreated: false,
+};
+
+const fetchDeclaredSigningAlgs = async () => {
+  const { id_token_signing_alg_values_supported: algs } = await ky
+    .get(discoveryUrl)
+    .json<{ id_token_signing_alg_values_supported: string[] }>();
+
+  return algs.slice().sort();
+};
+
+/**
+ * The tenant rebuild after a signing key change is fire-and-forget, so briefly poll until the
+ * discovery document reflects the new key set before asserting.
+ */
+const expectDeclaredSigningAlgs = async (expected: string[], retries = 10): Promise<void> => {
+  const algs = await fetchDeclaredSigningAlgs();
+
+  if (retries > 0 && algs.join(',') !== expected.join(',')) {
+    await waitFor(200);
+    return expectDeclaredSigningAlgs(expected, retries - 1);
+  }
+
+  expect(algs).toEqual(expected);
 };
 
 describe('logto config', () => {
@@ -57,23 +86,34 @@ describe('logto config', () => {
     const privateKeys = await getOidcKeys(LogtoOidcConfigKeyType.PrivateKeys);
     const cookieKeys = await getOidcKeys(LogtoOidcConfigKeyType.CookieKeys);
 
-    expect(privateKeys).toHaveLength(1);
-    expect(privateKeys[0]).toMatchObject(
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      { id: expect.any(String), signingKeyAlgorithm: 'EC', createdAt: expect.any(Number) }
-    );
+    expect(privateKeys.length).toBeGreaterThanOrEqual(1);
+    expect(
+      privateKeys.filter(({ status }) => status === OidcSigningKeyStatus.Current)
+    ).toHaveLength(1);
+    expect(
+      privateKeys.filter(({ status }) => status === OidcSigningKeyStatus.Next).length
+    ).toBeLessThanOrEqual(1);
+    expect(
+      privateKeys.filter(({ status }) => status === OidcSigningKeyStatus.Previous).length
+    ).toBeLessThanOrEqual(1);
+    for (const privateKey of privateKeys) {
+      expect(privateKey.id).toEqual(expect.any(String));
+      expect(privateKey.signingKeyAlgorithm).toBeDefined();
+      expect(privateKey.createdAt).toEqual(expect.any(Number));
+      expect(privateKey.status).toBeDefined();
+    }
     expect(cookieKeys).toHaveLength(1);
-    expect(cookieKeys[0]).toMatchObject(
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      { id: expect.any(String), createdAt: expect.any(Number) }
-    );
+    expect(cookieKeys[0]?.id).toEqual(expect.any(String));
+    expect(cookieKeys[0]?.createdAt).toEqual(expect.any(Number));
   });
 
-  it('should not be able to delete the only private key', async () => {
+  it('should not allow deleting the active private signing key', async () => {
     const privateKeys = await getOidcKeys(LogtoOidcConfigKeyType.PrivateKeys);
-    expect(privateKeys).toHaveLength(1);
-    await expectRejects(deleteOidcKey(LogtoOidcConfigKeyType.PrivateKeys, privateKeys[0]!.id), {
-      code: 'oidc.key_required',
+    const currentKey = privateKeys.find(({ status }) => status === OidcSigningKeyStatus.Current);
+    expect(currentKey).toBeDefined();
+    await expectRejects(deleteOidcKey(LogtoOidcConfigKeyType.PrivateKeys, currentKey!.id), {
+      code:
+        privateKeys.length === 1 ? 'oidc.key_required' : 'oidc.only_previous_key_can_be_deleted',
       status: 422,
     });
 
@@ -93,37 +133,39 @@ describe('logto config', () => {
     );
 
     expect(newPrivateKeys).toHaveLength(2);
-    expect(newPrivateKeys).toMatchObject([
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      { id: expect.any(String), signingKeyAlgorithm: 'RSA', createdAt: expect.any(Number) },
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      { id: expect.any(String), signingKeyAlgorithm: 'EC', createdAt: expect.any(Number) },
-    ]);
+    expect(newPrivateKeys[0]?.id).toEqual(expect.any(String));
+    expect(newPrivateKeys[0]?.signingKeyAlgorithm).toBe('RSA');
+    expect(newPrivateKeys[0]?.createdAt).toEqual(expect.any(Number));
+    expect(newPrivateKeys[0]?.status).toBe(OidcSigningKeyStatus.Current);
+    expect(newPrivateKeys[1]?.id).toEqual(expect.any(String));
+    expect(newPrivateKeys[1]?.signingKeyAlgorithm).toBe('EC');
+    expect(newPrivateKeys[1]?.createdAt).toEqual(expect.any(Number));
+    expect(newPrivateKeys[1]?.status).toBe(OidcSigningKeyStatus.Previous);
     expect(newPrivateKeys[1]?.id).toBe(existingPrivateKeys[0]?.id);
 
     const existingCookieKeys = await getOidcKeys(LogtoOidcConfigKeyType.CookieKeys);
     const newCookieKeys = await rotateOidcKeys(LogtoOidcConfigKeyType.CookieKeys);
 
     expect(newCookieKeys).toHaveLength(2);
-    expect(newCookieKeys).toMatchObject([
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      { id: expect.any(String), createdAt: expect.any(Number) },
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      { id: expect.any(String), createdAt: expect.any(Number) },
-    ]);
+    expect(newCookieKeys[0]?.id).toEqual(expect.any(String));
+    expect(newCookieKeys[0]?.createdAt).toEqual(expect.any(Number));
+    expect(newCookieKeys[1]?.id).toEqual(expect.any(String));
+    expect(newCookieKeys[1]?.createdAt).toEqual(expect.any(Number));
     expect(newCookieKeys[1]?.id).toBe(existingCookieKeys[0]?.id);
   });
 
-  it('should only keep 2 recent OIDC keys', async () => {
+  it('should keep the immediate rotation flow at 2 private keys', async () => {
     const privateKeys = await rotateOidcKeys(LogtoOidcConfigKeyType.PrivateKeys); // Defaults to 'EC' algorithm
 
     expect(privateKeys).toHaveLength(2);
-    expect(privateKeys).toMatchObject([
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      { id: expect.any(String), signingKeyAlgorithm: 'EC', createdAt: expect.any(Number) },
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      { id: expect.any(String), signingKeyAlgorithm: 'RSA', createdAt: expect.any(Number) },
-    ]);
+    expect(privateKeys[0]?.id).toEqual(expect.any(String));
+    expect(privateKeys[0]?.signingKeyAlgorithm).toBe('EC');
+    expect(privateKeys[0]?.createdAt).toEqual(expect.any(Number));
+    expect(privateKeys[0]?.status).toBe(OidcSigningKeyStatus.Current);
+    expect(privateKeys[1]?.id).toEqual(expect.any(String));
+    expect(privateKeys[1]?.signingKeyAlgorithm).toBe('RSA');
+    expect(privateKeys[1]?.createdAt).toEqual(expect.any(Number));
+    expect(privateKeys[1]?.status).toBe(OidcSigningKeyStatus.Previous);
 
     const privateKeys2 = await rotateOidcKeys(
       LogtoOidcConfigKeyType.PrivateKeys,
@@ -131,13 +173,99 @@ describe('logto config', () => {
     );
 
     expect(privateKeys2).toHaveLength(2);
-    expect(privateKeys2).toMatchObject([
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      { id: expect.any(String), signingKeyAlgorithm: 'RSA', createdAt: expect.any(Number) },
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      { id: expect.any(String), signingKeyAlgorithm: 'EC', createdAt: expect.any(Number) },
-    ]);
+    expect(privateKeys2[0]?.id).toEqual(expect.any(String));
+    expect(privateKeys2[0]?.signingKeyAlgorithm).toBe('RSA');
+    expect(privateKeys2[0]?.createdAt).toEqual(expect.any(Number));
+    expect(privateKeys2[0]?.status).toBe(OidcSigningKeyStatus.Current);
+    expect(privateKeys2[1]?.id).toEqual(expect.any(String));
+    expect(privateKeys2[1]?.signingKeyAlgorithm).toBe('EC');
+    expect(privateKeys2[1]?.createdAt).toEqual(expect.any(Number));
+    expect(privateKeys2[1]?.status).toBe(OidcSigningKeyStatus.Previous);
     expect(privateKeys2[1]?.id).toBe(privateKeys[0]?.id);
+  });
+
+  it('should only allow deleting a Previous private key', async () => {
+    const rotatedPrivateKeys = await rotateOidcKeys(LogtoOidcConfigKeyType.PrivateKeys);
+
+    await expectRejects(
+      deleteOidcKey(LogtoOidcConfigKeyType.PrivateKeys, rotatedPrivateKeys[0]!.id),
+      {
+        code: 'oidc.only_previous_key_can_be_deleted',
+        status: 422,
+      }
+    );
+
+    await expect(
+      deleteOidcKey(LogtoOidcConfigKeyType.PrivateKeys, rotatedPrivateKeys[1]!.id)
+    ).resolves.not.toThrow();
+
+    const remainingPrivateKeys = await getOidcKeys(LogtoOidcConfigKeyType.PrivateKeys);
+
+    expect(remainingPrivateKeys).toHaveLength(1);
+    expect(remainingPrivateKeys[0]).toMatchObject({
+      id: rotatedPrivateKeys[0]!.id,
+      status: OidcSigningKeyStatus.Current,
+    });
+  });
+
+  it('should declare the signing algorithms of every coexisting key in the discovery document', async () => {
+    await expectDeclaredSigningAlgs(['ES384']);
+
+    const mixedKeys = await rotateOidcKeys(
+      LogtoOidcConfigKeyType.PrivateKeys,
+      SupportedSigningKeyAlgorithm.RSA
+    );
+    expect(mixedKeys).toHaveLength(2);
+
+    /**
+     * Both the RSA current key and the EC previous key remain usable during the rotation grace
+     * window, so the discovery document must declare the algorithms of both.
+     */
+    await expectDeclaredSigningAlgs(['ES384', 'PS256', 'RS256']);
+
+    const restoredKeys = await rotateOidcKeys(LogtoOidcConfigKeyType.PrivateKeys);
+    const previousKey = restoredKeys.find(({ status }) => status === OidcSigningKeyStatus.Previous);
+    await deleteOidcKey(LogtoOidcConfigKeyType.PrivateKeys, previousKey!.id);
+
+    /** Removing the last RSA key must also drop its algorithms from the declaration. */
+    await expectDeclaredSigningAlgs(['ES384']);
+  });
+
+  it('should support staged private-key rotation with a grace period', async () => {
+    const existingPrivateKeys = await getOidcKeys(LogtoOidcConfigKeyType.PrivateKeys);
+    const currentKey = existingPrivateKeys.find(
+      ({ status }) => status === OidcSigningKeyStatus.Current
+    );
+    expect(currentKey).toBeDefined();
+
+    const stagedPrivateKeys = await rotateOidcKeys(
+      LogtoOidcConfigKeyType.PrivateKeys,
+      SupportedSigningKeyAlgorithm.RSA,
+      14_400
+    );
+
+    expect(stagedPrivateKeys.length).toBeGreaterThanOrEqual(2);
+    expect(stagedPrivateKeys.length).toBeLessThanOrEqual(3);
+    expect(stagedPrivateKeys[0]?.id).toEqual(expect.any(String));
+    expect(stagedPrivateKeys[0]?.signingKeyAlgorithm).toBe('RSA');
+    expect(stagedPrivateKeys[0]?.createdAt).toEqual(expect.any(Number));
+    expect(stagedPrivateKeys[0]?.status).toBe(OidcSigningKeyStatus.Next);
+    expect(stagedPrivateKeys[1]?.id).toEqual(currentKey?.id);
+    expect(stagedPrivateKeys[1]?.status).toBe(OidcSigningKeyStatus.Current);
+
+    const rerotatedPrivateKeys = await rotateOidcKeys(
+      LogtoOidcConfigKeyType.PrivateKeys,
+      SupportedSigningKeyAlgorithm.EC,
+      7200
+    );
+
+    expect(rerotatedPrivateKeys.length).toBeGreaterThanOrEqual(2);
+    expect(rerotatedPrivateKeys.length).toBeLessThanOrEqual(3);
+    expect(rerotatedPrivateKeys[0]?.id).not.toBe(stagedPrivateKeys[0]?.id);
+    expect(rerotatedPrivateKeys[0]?.signingKeyAlgorithm).toBe('EC');
+    expect(rerotatedPrivateKeys[0]?.status).toBe(OidcSigningKeyStatus.Next);
+    expect(rerotatedPrivateKeys[1]?.id).toEqual(currentKey?.id);
+    expect(rerotatedPrivateKeys[1]?.status).toBe(OidcSigningKeyStatus.Current);
   });
 
   it('should successfully PUT/GET/DELETE a JWT customizer (access token)', async () => {
@@ -302,5 +430,27 @@ describe('logto config', () => {
         status: 403,
       }
     );
+  });
+});
+
+describe('OIDC session config', () => {
+  it('should get OIDC session config successfully with default TTL value', async () => {
+    const sessionConfig = await getSessionConfig();
+
+    expect(sessionConfig).toBeTruthy();
+    expect(sessionConfig).toHaveProperty('ttl');
+    expect(sessionConfig.ttl).toBe(14 * 24 * 60 * 60); // Default TTL value in seconds (14 days)
+  });
+
+  it('should update OIDC session config successfully', async () => {
+    const newTtl = 7200;
+    const updatedSessionConfig = await updateSessionConfig({ ttl: newTtl });
+    expect(updatedSessionConfig).toBeTruthy();
+    expect(updatedSessionConfig).toHaveProperty('ttl', newTtl);
+
+    const sessionConfig = await getSessionConfig();
+    expect(sessionConfig).toHaveProperty('ttl', newTtl);
+
+    await updateSessionConfig({ ttl: 14 * 24 * 60 * 60 }); // Reset to default TTL value
   });
 });

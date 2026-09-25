@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { type ToZodObject } from '../../utils/zod.js';
+
 export enum AccountCenterControlValue {
   Off = 'Off',
   ReadOnly = 'ReadOnly',
@@ -23,6 +25,9 @@ export const accountCenterFieldControlGuard = z
     social: z.nativeEnum(AccountCenterControlValue),
     customData: z.nativeEnum(AccountCenterControlValue),
     mfa: z.nativeEnum(AccountCenterControlValue),
+    passkey: z.nativeEnum(AccountCenterControlValue),
+    session: z.nativeEnum(AccountCenterControlValue),
+    trustedDevice: z.nativeEnum(AccountCenterControlValue),
   })
   .partial();
 
@@ -31,3 +36,36 @@ export type AccountCenterFieldControl = z.infer<typeof accountCenterFieldControl
 export const webauthnRelatedOriginsGuard = z.array(z.string());
 
 export type WebauthnRelatedOrigins = z.infer<typeof webauthnRelatedOriginsGuard>;
+
+/**
+ * Configuration for which custom profile fields are exposed in the prebuilt account center and
+ * in which order. Each entry references an existing field by name in the `custom_profile_fields`
+ * catalog; fields in the catalog but not in this list are not shown in the account center.
+ *
+ * Kept separate from `signUpProfileFields` so the sign-up and account-center surfaces can be
+ * configured independently against the same catalog.
+ */
+export type AccountCenterProfileFieldItem = {
+  name: string;
+};
+
+export const accountCenterProfileFieldItemGuard = z.object({
+  name: z.string(),
+}) satisfies ToZodObject<AccountCenterProfileFieldItem>;
+
+export const accountCenterProfileFieldsGuard = z.array(accountCenterProfileFieldItemGuard);
+
+export type AccountCenterProfileFields = z.infer<typeof accountCenterProfileFieldsGuard>;
+
+export const deleteAccountUrlGuard = z
+  .string()
+  .max(2048)
+  .refine(
+    (value) =>
+      value === '' ||
+      ((value.startsWith('https://') || value.startsWith('http://')) &&
+        z.string().url().safeParse(value).success),
+    {
+      message: 'deleteAccountUrl must be a valid http(s) URL',
+    }
+  );

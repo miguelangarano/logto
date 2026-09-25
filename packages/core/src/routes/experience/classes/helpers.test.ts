@@ -1,4 +1,11 @@
-import { MfaFactor, MfaPolicy, type Mfa, type User } from '@logto/schemas';
+import {
+  InteractionEvent,
+  MfaFactor,
+  MfaPolicy,
+  type Mfa,
+  type User,
+  userMfaDataKey,
+} from '@logto/schemas';
 
 import {
   mockUser,
@@ -7,7 +14,28 @@ import {
   mockUserWebAuthnMfaVerification,
 } from '#src/__mocks__/user.js';
 
-import { getAllUserEnabledMfaVerifications, sortMfaFactors } from './helpers.js';
+import {
+  getAllUserEnabledMfaVerifications,
+  getProfileMfaFactors,
+  parseMfaPropertiesToUserConfig,
+  sortMfaFactors,
+} from './helpers.js';
+
+describe('getProfileMfaFactors', () => {
+  it('returns email and phone factors based on sign-in experience settings and profile', () => {
+    const mfaSettings: Mfa = {
+      factors: [MfaFactor.EmailVerificationCode, MfaFactor.PhoneVerificationCode],
+      policy: MfaPolicy.PromptAtSignInAndSignUp,
+    };
+
+    expect(
+      getProfileMfaFactors(mfaSettings, {
+        primaryEmail: 'foo@example.com',
+        primaryPhone: '+123456789',
+      })
+    ).toEqual([MfaFactor.PhoneVerificationCode, MfaFactor.EmailVerificationCode]);
+  });
+});
 
 describe('getAllUserEnabledMfaVerifications', () => {
   it('puts WebAuthn first when available', () => {
@@ -59,5 +87,48 @@ describe('sortMfaFactors', () => {
       MfaFactor.EmailVerificationCode,
       MfaFactor.BackupCode,
     ]);
+  });
+});
+
+describe('parseMfaPropertiesToUserConfig', () => {
+  it('preserves existing mfa.enabled from db on subsequent interaction submit', () => {
+    const existingLogtoConfig = {
+      [userMfaDataKey]: {
+        enabled: true,
+      },
+    };
+
+    const parsed = parseMfaPropertiesToUserConfig(
+      existingLogtoConfig,
+      {
+        mfaVerifications: [],
+      },
+      InteractionEvent.SignIn
+    );
+
+    expect(parsed).toEqual({
+      [userMfaDataKey]: {
+        enabled: true,
+      },
+    });
+  });
+
+  it('persists additionalBindingSuggestionSkipped to user mfa config', () => {
+    expect(
+      parseMfaPropertiesToUserConfig(
+        {},
+        {
+          mfaEnabled: true,
+          additionalBindingSuggestionSkipped: true,
+          mfaVerifications: [],
+        },
+        InteractionEvent.SignIn
+      )
+    ).toEqual({
+      [userMfaDataKey]: {
+        enabled: true,
+        additionalBindingSuggestionSkipped: true,
+      },
+    });
   });
 });

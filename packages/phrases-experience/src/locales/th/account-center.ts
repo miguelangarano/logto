@@ -3,6 +3,19 @@ const account_center = {
     title: 'ไม่พบหน้าเว็บ',
     description: 'ไม่สามารถใช้หน้านี้ได้',
   },
+  page: {
+    title: 'บัญชี',
+    security_title: 'ความปลอดภัย',
+    security_description: 'เปลี่ยนการตั้งค่าบัญชีของคุณที่นี่เพื่อให้บัญชีของคุณปลอดภัย',
+    profile_title: 'ข้อมูลส่วนบุคคล',
+    profile_description: 'เปลี่ยนข้อมูลส่วนบุคคลของคุณที่นี่',
+    sidebar_personal_info: 'ข้อมูลส่วนบุคคล',
+    sidebar_security: 'ความปลอดภัย',
+    sidebar_sessions: 'เซสชัน',
+    support: 'ฝ่ายช่วยเหลือ',
+    user_menu: 'เมนูผู้ใช้',
+    sign_out: 'ออกจากระบบ',
+  },
   verification: {
     title: 'การยืนยันความปลอดภัย',
     description:
@@ -12,6 +25,9 @@ const account_center = {
     error_verify_failed: 'ยืนยันไม่สำเร็จ กรุณากรอกรหัสอีกครั้ง',
     verification_required: 'การยืนยันหมดอายุ โปรดยืนยันตัวตนอีกครั้ง',
     try_another_method: 'ลองใช้วิธีอื่นเพื่อยืนยันตัวตน',
+    no_available_methods_title: 'ไม่มีวิธีการยืนยันตัวตนที่พร้อมใช้งาน',
+    no_available_methods_description:
+      'คุณยังไม่ได้ตั้งค่าวิธีการยืนยันตัวตน กรุณาเพิ่มรหัสผ่าน อีเมล หรือหมายเลขโทรศัพท์ให้กับบัญชีของคุณก่อน',
   },
   password_verification: {
     title: 'ยืนยันรหัสผ่าน',
@@ -51,20 +67,95 @@ const account_center = {
   username: {
     title: 'ตั้งชื่อผู้ใช้',
     description: 'ชื่อผู้ใช้ต้องมีเฉพาะตัวอักษร ตัวเลข และขีดล่างเท่านั้น',
+    policy_description: '{{requirements}}',
     success: 'อัปเดตชื่อผู้ใช้เรียบร้อยแล้ว',
+  },
+  security: {
+    add: 'เพิ่ม',
+    change: 'เปลี่ยน',
+    remove: 'ลบ',
+    not_set: 'ยังไม่ได้ตั้งค่า',
+    social_sign_in: 'การเข้าสู่ระบบด้วยโซเชียล',
+    social_not_linked: 'ยังไม่ได้เชื่อมโยง',
+    email_phone: 'อีเมล / โทรศัพท์',
+    email: 'อีเมล',
+    phone: 'โทรศัพท์',
+    password: 'รหัสผ่าน',
+    configured: 'ตั้งค่าแล้ว',
+    not_configured: 'ยังไม่ได้ตั้งค่า',
+    two_step_verification: 'การยืนยันแบบ 2 ขั้นตอน',
+    authenticator_app: 'แอป Authenticator',
+    passkeys: 'Passkeys',
+    backup_codes: 'รหัสสำรอง',
+    email_verification_code: 'รหัสยืนยันทางอีเมล',
+    phone_verification_code: 'รหัสยืนยันทางโทรศัพท์',
+    passkeys_count_one: '{{count}} passkey',
+    passkeys_count_other: '{{count}} passkeys',
+    backup_codes_count_one: 'เหลือ {{count}} รหัส',
+    backup_codes_count_other: 'เหลือ {{count}} รหัส',
+    view: 'ดู',
+    manage: 'จัดการ',
+    turn_on_2_step_verification_description:
+      'เพิ่มชั้นความปลอดภัยเพิ่มเติม คุณจะถูกขอให้ทำการยืนยันขั้นตอนที่สองเมื่อลงชื่อเข้าใช้',
+    turn_off_2_step_verification: 'ปิดการยืนยันตัวตนสองขั้นตอน',
+    turn_off_2_step_verification_description:
+      'การปิดการยืนยันตัวตนสองขั้นตอนจะลบชั้นการป้องกันเพิ่มเติมออกจากบัญชีของคุณเมื่อลงชื่อเข้าใช้ คุณแน่ใจหรือไม่ว่าต้องการดำเนินการต่อ?',
+    disable_2_step_verification: 'ปิด',
+    no_verification_method_warning:
+      'คุณยังไม่ได้เพิ่มวิธีการยืนยันตัวตนที่สอง เพิ่มอย่างน้อยหนึ่งวิธีเพื่อเปิดใช้งานการยืนยันตัวตนสองขั้นตอนเมื่อลงชื่อเข้าใช้',
+    passkey_sign_in_prompt: 'แจ้งให้ตั้งค่า passkey',
+    passkey_sign_in_prompt_description:
+      'เมื่อเปิดใช้งาน คุณจะถูกขอให้ตั้งค่า passkey เพื่อการลงชื่อเข้าใช้ที่รวดเร็วและปลอดภัยยิ่งขึ้น',
+    account_removal: 'การลบบัญชี',
+    delete_your_account: 'ลบบัญชีของคุณ',
+    delete_account: 'ลบบัญชี',
+    remove_username_confirmation_title: 'ลบชื่อผู้ใช้',
+    remove_username_confirmation_description:
+      'เมื่อลบแล้ว คุณจะไม่สามารถลงชื่อเข้าใช้ด้วยชื่อผู้ใช้นี้ได้อีก คุณแน่ใจหรือไม่ว่าต้องการดำเนินการต่อ?',
+    remove_email_confirmation_title: 'ลบที่อยู่อีเมล',
+    remove_email_confirmation_description:
+      'เมื่อลบแล้ว คุณจะไม่สามารถลงชื่อเข้าใช้ด้วยที่อยู่อีเมลนี้ได้อีก คุณแน่ใจหรือไม่ว่าต้องการดำเนินการต่อ?',
+    remove_phone_confirmation_title: 'ลบหมายเลขโทรศัพท์',
+    remove_phone_confirmation_description:
+      'เมื่อลบแล้ว คุณจะไม่สามารถลงชื่อเข้าใช้ด้วยหมายเลขโทรศัพท์นี้ได้อีก คุณแน่ใจหรือไม่ว่าต้องการดำเนินการต่อ?',
+    email_removed: 'ลบที่อยู่อีเมลเรียบร้อยแล้ว',
+    phone_removed: 'ลบหมายเลขโทรศัพท์เรียบร้อยแล้ว',
+    username_removed: 'ลบชื่อผู้ใช้เรียบร้อยแล้ว',
+    trusted_devices: {
+      title: 'อุปกรณ์ที่เชื่อถือสำหรับ MFA',
+      current_device: 'อุปกรณ์ปัจจุบัน',
+      expires_on: 'หมดอายุวันที่ {{date}}',
+      unknown_location: 'ไม่ทราบตำแหน่ง',
+      remove: 'ลบ',
+      removed: 'ลบอุปกรณ์ที่เชื่อถือเรียบร้อยแล้ว',
+      loading: 'กำลังโหลด...',
+      empty: 'ไม่มีอุปกรณ์ที่เชื่อถือ',
+      load_failed: 'โหลดอุปกรณ์ที่เชื่อถือไม่สำเร็จ โปรดลองอีกครั้ง',
+      retry: 'ลองอีกครั้ง',
+      remove_confirmation_title: 'ลบอุปกรณ์ที่เชื่อถือหรือไม่?',
+      remove_confirmation_description:
+        'คุณจะต้องทำ MFA อีกครั้งบนอุปกรณ์นี้เมื่อลงชื่อเข้าใช้ครั้งถัดไป เซสชันปัจจุบันของคุณจะยังคงทำงานอยู่',
+    },
+  },
+  social: {
+    linked: 'เชื่อมโยง {{connector}} สำเร็จแล้ว',
+    not_enabled:
+      'วิธีการเข้าสู่ระบบผ่านโซเชียลนี้ยังไม่ได้เปิดใช้งาน โปรดติดต่อผู้ดูแลระบบเพื่อขอความช่วยเหลือ',
+    removed: 'นำ {{connector}} ออกสำเร็จแล้ว',
+    remove_confirmation_title: 'ลบบัญชีโซเชียล',
+    remove_confirmation_description:
+      'หากคุณลบ {{connector}} คุณอาจไม่สามารถลงชื่อเข้าใช้ด้วยบัญชีนี้ได้จนกว่าจะเพิ่มอีกครั้ง',
   },
   password: {
     title: 'ตั้งรหัสผ่าน',
     description: 'สร้างรหัสผ่านใหม่เพื่อความปลอดภัยของบัญชี',
     success: 'อัปเดตรหัสผ่านเรียบร้อยแล้ว',
   },
-
   code_verification: {
     send: 'ส่งรหัสยืนยัน',
     resend: 'ยังไม่ได้รับใช่ไหม? <a>ส่งรหัสยืนยันอีกครั้ง</a>',
     resend_countdown: 'ยังไม่ได้รับใช่ไหม? ส่งใหม่ได้หลัง {{seconds}} วินาที',
   },
-
   email_verification: {
     title: 'ยืนยันอีเมลของคุณ',
     prepare_description:
@@ -120,7 +211,6 @@ const account_center = {
       title: 'เปลี่ยนชื่อผู้ใช้แล้ว!',
       description: 'ชื่อผู้ใช้ของคุณได้รับการอัปเดตเรียบร้อยแล้ว',
     },
-
     password: {
       title: 'เปลี่ยนรหัสผ่านแล้ว!',
       description: 'รหัสผ่านของคุณได้รับการอัปเดตเรียบร้อยแล้ว',
@@ -128,6 +218,10 @@ const account_center = {
     totp: {
       title: 'เพิ่มแอป Authenticator แล้ว!',
       description: 'แอป Authenticator ของคุณได้รับการเชื่อมต่อกับบัญชีของคุณเรียบร้อยแล้ว',
+    },
+    totp_replaced: {
+      title: 'แอป Authenticator ถูกแทนที่แล้ว!',
+      description: 'แอป Authenticator ของคุณถูกแทนที่เรียบร้อยแล้ว',
     },
     backup_code: {
       title: 'สร้างรหัสสำรองแล้ว!',
@@ -170,6 +264,30 @@ const account_center = {
     name_passkey_description:
       'คุณยืนยันอุปกรณ์นี้สำหรับการยืนยันตัวตนแบบ 2 ขั้นตอนสำเร็จแล้ว ปรับแต่งชื่อเพื่อให้จดจำได้หากคุณมีหลายคีย์',
     name_input_label: 'ชื่อ',
+  },
+  sessions: {
+    page_title: 'เซสชัน',
+    page_description: 'จัดการเซสชันที่ใช้งานอยู่และแอปพลิเคชันบุคคลที่สามที่ได้รับอนุญาต',
+    title: 'เซสชัน',
+    current_session: 'เซสชันปัจจุบัน',
+    signed_in_at: 'เข้าสู่ระบบเมื่อ {{date}}',
+    revoke_session: 'ออกจากระบบ',
+    revoke_session_title: 'ออกจากระบบเซสชัน',
+    revoke_session_description:
+      'การดำเนินการนี้จะออกจากระบบเซสชันและเพิกถอนการเข้าถึงที่เกี่ยวข้องทั้งหมด คุณแน่ใจหรือไม่ว่าต้องการดำเนินการต่อ?',
+    no_other_sessions: 'ไม่มีเซสชันที่ใช้งานอยู่อื่น',
+    loading: 'กำลังโหลด...',
+    third_party_apps_title: 'แอปบุคคลที่สาม',
+    no_third_party_apps: 'ไม่มีแอปพลิเคชันบุคคลที่สามที่ได้รับอนุญาต',
+    third_party_apps_load_failed: 'โหลดแอปบุคคลที่สามไม่สำเร็จ โปรดลองอีกครั้ง',
+    granted_at: 'อนุญาตเมื่อ {{date}}',
+    dynamic_app: 'แอปแบบไดนามิก',
+    client_id: 'Client ID: {{clientId}}',
+    revoke_grant: 'ลบ',
+    revoke_grant_title: 'ลบการเข้าถึงแอปบุคคลที่สาม',
+    revoke_grant_description:
+      'การดำเนินการนี้จะเพิกถอนการเข้าถึงที่มอบให้แอปพลิเคชันนี้ โทเค็นการเข้าถึงที่ออกไปก่อนหน้านี้อาจยังใช้งานได้จนกว่าจะหมดอายุ คุณแน่ใจหรือไม่ว่าต้องการดำเนินการต่อ?',
+    revoke_grant_failed: 'การเพิกถอนสิทธิ์บางรายการล้มเหลว กรุณาลองอีกครั้ง',
   },
 };
 

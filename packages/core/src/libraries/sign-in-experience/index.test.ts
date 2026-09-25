@@ -1,6 +1,11 @@
 import type { LanguageTag } from '@logto/language-kit';
 import { builtInLanguages } from '@logto/phrases-experience';
-import { CaptchaType, type CreateSignInExperience, type SignInExperience } from '@logto/schemas';
+import {
+  CaptchaType,
+  ForgotPasswordMethod,
+  type CreateSignInExperience,
+  type SignInExperience,
+} from '@logto/schemas';
 import { TtlCache } from '@logto/shared';
 
 import {
@@ -67,11 +72,12 @@ const connectorLibrary = createConnectorLibrary(queries, {
 
 const getLogtoConnectors = jest.spyOn(connectorLibrary, 'getLogtoConnectors');
 
-const { createSignInExperienceLibrary } = await import('./index.js');
+const { createSignInExperienceLibrary, getForgotPasswordAvailability } = await import('./index.js');
 const {
   validateLanguageInfo,
   removeUnavailableSocialConnectorTargets,
   getFullSignInExperience,
+  getAccountCenterSsrSignInExperience,
   findCaptchaPublicConfig,
 } = createSignInExperienceLibrary(
   'tenant_foo',
@@ -80,6 +86,16 @@ const {
   mockSsoConnectorLibrary,
   new WellKnownCache('foo', new TtlCache())
 );
+
+const getPublicSignInExperience = (signInExperience: SignInExperience) => {
+  const {
+    emailBlocklistPolicy: _emailBlocklistPolicy,
+    forgotPasswordMethods: _forgotPasswordMethods,
+    ...publicSignInExperience
+  } = signInExperience;
+
+  return publicSignInExperience;
+};
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -154,6 +170,21 @@ describe('remove unavailable social connector targets', () => {
   });
 });
 
+describe('getAccountCenterSsrSignInExperience()', () => {
+  it('should return only sign-in experience color data', async () => {
+    findDefaultSignInExperience.mockResolvedValueOnce(mockSignInExperience);
+
+    await expect(getAccountCenterSsrSignInExperience()).resolves.toStrictEqual({
+      color: mockSignInExperience.color,
+    });
+    expect(findDefaultSignInExperience).toBeCalledTimes(1);
+    expect(getLogtoConnectors).not.toBeCalled();
+    expect(mockSsoConnectorLibrary.getAvailableSsoConnectors).not.toBeCalled();
+    expect(findCaptchaProvider).not.toBeCalled();
+    expect(findAllCustomProfileFields).not.toBeCalled();
+  });
+});
+
 describe('getFullSignInExperience()', () => {
   it('should return full sign-in experience', async () => {
     findDefaultSignInExperience.mockResolvedValueOnce(mockSignInExperience);
@@ -167,7 +198,7 @@ describe('getFullSignInExperience()', () => {
     const connectorFactory = ssoConnectorFactories[wellConfiguredSsoConnector.providerName];
 
     expect(fullSignInExperience).toStrictEqual({
-      ...mockSignInExperience,
+      ...getPublicSignInExperience(mockSignInExperience),
       socialConnectors: [],
       socialSignInConnectorTargets: ['github', 'facebook', 'wechat'],
       ssoConnectors: [
@@ -182,11 +213,13 @@ describe('getFullSignInExperience()', () => {
       googleOneTap: undefined,
       captchaConfig: undefined,
       customProfileFields: mockCustomProfileFields,
+      customProfileFieldCatalog: mockCustomProfileFields,
       forgotPassword: {
         email: false,
         phone: false,
       },
     });
+    expect(fullSignInExperience).not.toHaveProperty('emailBlocklistPolicy');
   });
 
   it('should return full sign-in experience with google one tap', async () => {
@@ -204,7 +237,7 @@ describe('getFullSignInExperience()', () => {
     const connectorFactory = ssoConnectorFactories[wellConfiguredSsoConnector.providerName];
 
     expect(fullSignInExperience).toStrictEqual({
-      ...mockSignInExperience,
+      ...getPublicSignInExperience(mockSignInExperience),
       socialConnectors: [
         { ...mockGithubConnector.metadata, id: mockGithubConnector.dbEntry.id },
         { ...mockGoogleConnector.metadata, id: mockGoogleConnector.dbEntry.id },
@@ -227,10 +260,46 @@ describe('getFullSignInExperience()', () => {
       },
       captchaConfig: undefined,
       customProfileFields: mockCustomProfileFields,
+      customProfileFieldCatalog: mockCustomProfileFields,
       forgotPassword: {
         email: false,
         phone: false,
       },
+    });
+  });
+});
+
+describe('getForgotPasswordAvailability()', () => {
+  it('should return connector-based availability when forgotPasswordMethods is null', () => {
+    expect(
+      getForgotPasswordAvailability(
+        [mockAliyunDmConnector, mockAliyunSmsConnector],
+        mockSignInExperience.forgotPasswordMethods
+      )
+    ).toEqual({
+      email: true,
+      phone: true,
+    });
+  });
+
+  it('should return unavailable methods when forgotPasswordMethods is empty', () => {
+    expect(
+      getForgotPasswordAvailability([mockAliyunDmConnector, mockAliyunSmsConnector], [])
+    ).toEqual({
+      email: false,
+      phone: false,
+    });
+  });
+
+  it('should return method-specific availability when only email is enabled', () => {
+    expect(
+      getForgotPasswordAvailability(
+        [mockAliyunDmConnector, mockAliyunSmsConnector],
+        [ForgotPasswordMethod.EmailVerificationCode]
+      )
+    ).toEqual({
+      email: true,
+      phone: false,
     });
   });
 });

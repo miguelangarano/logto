@@ -31,12 +31,24 @@ const sign_in_experiences = {
   phone_verification_code_cannot_be_used_for_sign_in:
     "Le code de vérification SMS ne peut pas être utilisé pour la connexion lorsqu'il est activé pour la MFA.",
   adaptive_mfa_requires_mfa: "La MFA doit être activée avant d'activer l'Adaptive MFA.",
+  adaptive_mfa_requires_non_skippable_policy:
+    'La MFA adaptative nécessite une politique de demande de MFA non contournable. Utilisez PromptOnlyAtSignInMandatory ou PromptAtSignInAndSignUpMandatory.',
+  non_adaptive_mfa_requires_skippable_policy:
+    "Lorsque la MFA adaptative est désactivée, la politique de demande de MFA doit être contournable. N'utilisez pas PromptOnlyAtSignInMandatory ou PromptAtSignInAndSignUpMandatory.",
   duplicated_sign_up_identifiers: "Des identifiants d'inscription en double ont été détectés.",
   missing_sign_up_identifiers: "L'identifiant principal d'inscription ne peut pas être vide.",
   invalid_custom_email_blocklist_format:
     "Articles non valides de la liste de blocage d'e-mails personnalisés : {{items, list(type:conjunction)}}. Chaque élément doit être une adresse e-mail ou un domaine de messagerie valide, par exemple, foo@example.com ou @example.com.",
   forgot_password_method_requires_connector:
     "La méthode de mot de passe oublié nécessite qu'un connecteur {{method}} correspondant soit configuré.",
+  password_expiration_requires_forgot_password:
+    'L’expiration du mot de passe nécessite au moins une méthode de mot de passe oublié avec un connecteur valide.',
+  password_expiration_not_enabled:
+    "La politique d'expiration du mot de passe n'est pas activée. Activez-la dans les paramètres de l'expérience de connexion avant de faire expirer les mots de passe.",
+  password_expiration_invalid_period_days:
+    'La période de validité en jours doit être un entier positif lorsque l’expiration du mot de passe est activée.',
+  username_policy_case_conflicts_exist:
+    "Impossible de passer à des noms d'utilisateur insensibles à la casse tant que des noms d'utilisateur qui ne diffèrent que par la casse existent. Résolvez les conflits et réessayez.",
 };
 
 export default Object.freeze(sign_in_experiences);
