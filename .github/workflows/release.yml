@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   dockerize:
-    if: startsWith(github.ref, 'refs/tags/')
+    if: github.repository == 'logto-io/logto' && startsWith(github.ref, 'refs/tags/')
     environment: release
     runs-on: ubuntu-latest
     env:
@@ -103,7 +103,7 @@ jobs:
   # Build and push the edge image on every master push
   # Use official docker workflows since we only need to build amd64 images.
   dockerize-edge:
-    if: ${{ !startsWith(github.ref, 'refs/tags/')}}
+    if: github.repository == 'logto-io/logto' && !startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -156,7 +156,7 @@ jobs:
     env:
       NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTOMATION_TOKEN }}
 
-    if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    if: github.repository == 'logto-io/logto' && !startsWith(github.ref, 'refs/tags/')
 
     steps:
       - uses: actions/checkout@v4
@@ -191,7 +191,7 @@ jobs:
   create-github-release:
     environment: release
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: github.repository == 'logto-io/logto' && startsWith(github.ref, 'refs/tags/')
 
     steps:
       - uses: actions/checkout@v4

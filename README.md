@@ -6,6 +6,34 @@ docker-compose up -d
 docker login
 docker buildx build --platform linux/amd64 -t miguelangarano/logto:latest --push .
 
+# Personal GHCR images
+
+The [Publish Logto to GHCR](.github/workflows/ghcr.yml) workflow builds this fork's
+Dockerfile for `linux/amd64` and `linux/arm64`. It runs on pushes to `master`, pushes
+of `v*` tags, or manually from the repository's Actions tab.
+
+Images are published to `ghcr.io/miguelangarano/logto` using the built-in
+`GITHUB_TOKEN` with `packages: write`; no Docker Hub, Depot, or personal access token
+is needed. Enable GitHub Actions in the fork if they are disabled. The inherited
+upstream release jobs only run in `logto-io/logto`.
+
+On `master`, the image receives `latest`, `edge`, and `master` tags. Every build also
+receives a `sha-<full-commit-sha>` tag; `v*` builds additionally receive their Git tag.
+Manual builds from other branches do not update `latest` or `edge`.
+
+```bash
+docker pull ghcr.io/miguelangarano/logto:latest
+```
+
+This single application image includes the console, sign-in experience, CLI, and
+official connectors. PostgreSQL is still a separate service (the existing Compose
+file uses `postgres:17-alpine`) and does not need a custom build. The Compose file
+continues to use `logto:local` for local development.
+
+GHCR packages are initially private. For anonymous pulls, change the package's
+visibility to public in GitHub; otherwise authenticate to GHCR before pulling.
+See [GitHub's container registry documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
+
 # To commit changes if normal commit fails
 git commit -m "description" --no-verify
 
